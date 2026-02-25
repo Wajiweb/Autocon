@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -13,7 +14,6 @@ contract {{CONTRACT_NAME}} is ERC20, ERC20Burnable, Ownable {
         _mint(initialOwner, initialSupply * 10 ** decimals());
     }
 
-    // This allows the owner to create more tokens later if they want
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
     }
