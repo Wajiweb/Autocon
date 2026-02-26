@@ -1,12 +1,22 @@
+require('dotenv').config(); // MUST BE AT THE VERY TOP
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const solc = require('solc'); // The compiler you just installed
+const mongoose = require('mongoose'); // NEW: Import Mongoose
+const Token = require('./models/Token'); // ADD THIS LINE
 
 const app = express();
 app.use(cors()); 
 app.use(express.json()); 
+// --- NEW: MongoDB Connection ---
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('✅ Connected to MongoDB Atlas!'))
+    .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+// ------------------------------
+
+// ... (keep the rest of your api routes below here)
 
 app.get('/api/health', (req, res) => {
     res.json({ message: "AutoCon Backend is Alive and Running!" });
@@ -90,6 +100,51 @@ const contractData = output.contracts['Token.sol'][className];
         res.status(500).json({ success: false, error: "Generation failed" });
     }
 });
+// --- NEW: Save Deployed Token to Database ---
+app.post('/api/save-token', async (req, res) => {
+    try {
+        const { name, symbol, contractAddress, ownerAddress, network } = req.body;
 
+        // Create a new token record using your blueprint
+        const newToken = new Token({
+            name,
+            symbol,
+            contractAddress,
+            ownerAddress,
+            network
+        });
+               // Save it permanently to MongoDB Atlas
+        await newToken.save();
+        
+        console.log(`💾 Saved ${name} to database!`);
+        res.status(201).json({ success: true, message: 'Token saved successfully!' });
+
+    } catch (error) {
+        console.error("Database Error:", error);
+        res.status(500).json({ success: false, error: "Failed to save token" });
+    }
+});
+
+// --- NEW: Fetch Tokens for the Dashboard ---
+app.get('/api/my-tokens/:walletAddress', async (req, res) => {
+    try {
+        const { walletAddress } = req.params;
+        
+        // Find all tokens that belong to this specific MetaMask wallet
+        // .sort({ createdAt: -1 }) puts the newest tokens at the top of the list
+        const userTokens = await Token.find({ 
+            ownerAddress: { $regex: new RegExp(`^${walletAddress}$`, 'i') } 
+        }).sort({ createdAt: -1 });
+
+        res.json({ success: true, tokens: userTokens });
+        
+    } catch (error) {
+        console.error("Database Fetch Error:", error);
+        res.status(500).json({ success: false, error: "Failed to fetch tokens" });
+    }
+});
+// -------------------------------------------
+ 
+// --------------------------------------------
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

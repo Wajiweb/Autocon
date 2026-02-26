@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { ethers } from 'ethers'; // Make sure you ran 'npm install ethers'
+import { ethers } from 'ethers';
 
-export const useWeb3 = () => {
+export const useWeb3 = () => { // 🐛 FIX 1: Removed 'async' from here!
   const [formData, setFormData] = useState({
     name: '', symbol: '', supply: '1000000', ownerAddress: ''
   });
@@ -19,55 +19,66 @@ export const useWeb3 = () => {
   };
 
   const generateContract = async (e) => {
-  e.preventDefault();
-  try {
-    const res = await axios.post('http://localhost:5000/api/generate-token', formData);
-    
-    if (res.data.success) {
-      // 1. Save the text for the preview window
-      setGeneratedCode(res.data.contractCode);
+    e.preventDefault();
+    try {
+      const res = await axios.post('http://localhost:5000/api/generate-token', formData);
       
-      // 2. Save the ABI and Bytecode for the deployment logic
-      setContractData({ 
-        abi: res.data.abi, 
-        bytecode: res.data.bytecode 
-      });
-
-      alert("Contract Compiled & Ready for Deployment! 🚀");
+      if (res.data.success) {
+        setGeneratedCode(res.data.contractCode);
+        setContractData({ abi: res.data.abi, bytecode: res.data.bytecode });
+        alert("Contract Compiled & Ready for Deployment! 🚀");
+      }
+    } catch (err) {
+      console.error("Generation Error:", err);
+      alert("Backend error. Make sure server is running.");
     }
-  } catch (err) {
-    console.error("Generation Error:", err);
-    alert("Backend error. Make sure server is running.");
-  }
-};
+  };
+
   const deployContract = async () => {
     if (!contractData.abi || !contractData.bytecode) return alert("Generate code first!");
 
     try {
-      // 1. Connect to MetaMask as a Provider
       const provider = new ethers.BrowserProvider(window.ethereum);
       const network = await provider.getNetwork();
-    if (network.chainId !== 11155111n) { // 11155111 is the ID for Sepolia
-      return alert("Please switch your MetaMask to the Sepolia Test Network!");
-    }
-    const signer = await provider.getSigner();
-    const factory = new ethers.ContractFactory(contractData.abi, contractData.bytecode, signer);
-      
-      // 2. Create the Contract Factory
-     
+      if (network.chainId !== 11155111n) {
+        return alert("Please switch your MetaMask to the Sepolia Test Network!");
+      }
+      const signer = await provider.getSigner();
+      const factory = new ethers.ContractFactory(contractData.abi, contractData.bytecode, signer);
       
       alert("Confirm the transaction in MetaMask to deploy to Sepolia.");
 
-      // 3. Deploy (Passing the constructor arguments)
       const contract = await factory.deploy(formData.ownerAddress, formData.supply);
-      
       console.log("Deployment Sent! Hash:", contract.deploymentTransaction().hash);
       
-      // 4. Wait for the block to be mined
       await contract.waitForDeployment();
-      const address = await contract.getAddress();
-
+      
+      // 🐛 FIX 2: We get the address here and immediately use it to save to the database!
+      const address = await contract.getAddress(); 
       alert(`🚀 SUCCESS! Token deployed at: ${address}`);
+
+      // --- SAVE TO DATABASE ---
+      try {
+        const response = await fetch('http://localhost:5000/api/save-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            symbol: formData.symbol,
+            contractAddress: address, // Saved directly from the blockchain
+            ownerAddress: formData.ownerAddress,
+            network: 'Sepolia'
+          })
+        });
+
+        if (response.ok) {
+          console.log("✅ Token successfully saved to MongoDB Atlas!");
+        }
+      } catch (error) {
+        console.error("❌ Failed to save to database:", error);
+      }
+      // ------------------------
+
       return address;
     } catch (err) {
       console.error(err);
