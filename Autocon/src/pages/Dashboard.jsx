@@ -1,27 +1,22 @@
 import { useState, useEffect } from 'react';
+import toast, { Toaster } from 'react-hot-toast'; // 🍞 NEW: Imported the toast library!
 
 export default function Dashboard() {
   const [deployments, setDeployments] = useState([]);
   const [wallet, setWallet] = useState(null);
 
   useEffect(() => {
-    // This function automatically runs when the Dashboard loads
     const fetchMyTokens = async () => {
       try {
-        // 1. See if MetaMask is connected
         if (window.ethereum) {
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          
           if (accounts.length > 0) {
             const myAddress = accounts[0];
             setWallet(myAddress);
-
-            // 2. Ask our Node.js backend for this wallet's tokens!
             const response = await fetch(`http://localhost:5000/api/my-tokens/${myAddress}`);
             const data = await response.json();
-
             if (data.success) {
-              setDeployments(data.tokens); // 3. Save them to the table!
+              setDeployments(data.tokens); 
             }
           }
         }
@@ -29,12 +24,34 @@ export default function Dashboard() {
         console.error("Dashboard Fetch Error:", error);
       }
     };
-
     fetchMyTokens();
   }, []);
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to remove this deployment from your registry?")) return;
+
+    const deleteToast = toast.loading("Removing from registry..."); // 🍞 Loading spinner toast!
+
+    try {
+        const response = await fetch(`http://localhost:5000/api/delete-token/${id}`, {
+            method: 'DELETE',
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            setDeployments(prev => prev.filter(token => token._id !== id));
+            toast.success("Deployment removed successfully!", { id: deleteToast }); // 🍞 Success toast!
+        }
+    } catch (error) {
+        console.error("Delete Error:", error);
+        toast.error("Failed to delete. Is the server running?", { id: deleteToast });
+    }
+  };
+
   return (
-    <div className="animate-in fade-in duration-700">
+    <div className="animate-in fade-in duration-700 relative">
+      <Toaster position="bottom-right" reverseOrder={false} /> {/* 🍞 THE DASHBOARD TOASTER */}
+      
       <header className="mb-10">
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Executive Overview</h1>
         <p className="text-slate-500 mt-2 text-lg">Real-time monitoring of your blockchain assets.</p>
@@ -95,13 +112,25 @@ export default function Dashboard() {
                   <td className="px-8 py-5 text-xs text-slate-500">
                     {new Date(token.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-8 py-5 text-right flex justify-end gap-2">
+                  <td className="px-8 py-5 text-right flex justify-end gap-2 items-center">
                     <button 
-                      onClick={() => navigator.clipboard.writeText(token.contractAddress)}
+                      onClick={() => {
+                        navigator.clipboard.writeText(token.contractAddress);
+                        toast.success("Address copied to clipboard!"); // 🍞 Copy toast!
+                      }}
                       className="text-slate-500 hover:text-slate-700 font-bold text-xs bg-slate-100 px-3 py-2 rounded-lg transition-all"
                     >
                       Copy
                     </button>
+                    
+                    <button 
+                      onClick={() => handleDelete(token._id)}
+                      className="text-red-500 hover:bg-red-50 font-bold text-lg px-3 py-1.5 rounded-lg transition-all"
+                      title="Remove from Registry"
+                    >
+                      🗑️
+                    </button>
+
                     <a 
                       href={`https://sepolia.etherscan.io/address/${token.contractAddress}`}
                       target="_blank" 

@@ -143,8 +143,18 @@ app.get('/api/my-tokens/:walletAddress', async (req, res) => {
         res.status(500).json({ success: false, error: "Failed to fetch tokens" });
     }
 });
-// -------------------------------------------
- 
-// --------------------------------------------
+// --- NEW: Delete a Deployment ---
+app.delete('/api/delete-token/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Token.findByIdAndDelete(id);
+        
+        console.log(`🗑️ Token ${id} deleted from database.`);
+        res.json({ success: true, message: "Deployment removed from registry." });
+    } catch (error) {
+        console.error("Delete Error:", error);
+        res.status(500).json({ success: false, error: "Failed to delete token." });
+    }
+});
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
