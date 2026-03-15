@@ -1,0 +1,107 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract {{CONTRACT_NAME}} is Ownable {
+    // Auction Parameters
+    address public beneficiary;
+    uint256 public auctionEndTime;
+    string public itemName;
+    string public itemDescription;
+
+    // Current State
+    address public highestBidder;
+    uint256 public highestBid;
+    uint256 public minimumBid;
+    bool public ended;
+
+    // Track pending returns for outbid bidders
+    mapping(address => uint256) public pendingReturns;
+
+    // Events
+    event HighestBidIncreased(address indexed bidder, uint256 amount);
+    event AuctionEnded(address indexed winner, uint256 amount);
+    event BidWithdrawn(address indexed bidder, uint256 amount);
+
+    constructor(
+        address initialOwner,
+        uint256 _biddingTime,
+        uint256 _minimumBid,
+        string memory _itemName,
+        string memory _itemDescription
+    )
+        Ownable(initialOwner)
+    {
+        beneficiary = initialOwner;
+        auctionEndTime = block.timestamp + _biddingTime;
+        minimumBid = _minimumBid;
+        itemName = _itemName;
+        itemDescription = _itemDescription;
+    }
+
+    /// @notice Place a bid on the auction
+    function bid() public payable {
+        require(block.timestamp < auctionEndTime, "Auction already ended");
+        require(msg.value >= minimumBid, "Bid below minimum");
+        require(msg.value > highestBid, "There already is a higher bid");
+
+        if (highestBid != 0) {
+            pendingReturns[highestBidder] += highestBid;
+        }
+
+        highestBidder = msg.sender;
+        highestBid = msg.value;
+        emit HighestBidIncreased(msg.sender, msg.value);
+    }
+
+    /// @notice Withdraw a bid that was outbid
+    function withdraw() public returns (bool) {
+        uint256 amount = pendingReturns[msg.sender];
+        require(amount > 0, "No funds to withdraw");
+
+        pendingReturns[msg.sender] = 0;
+
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        require(success, "Transfer failed");
+
+        emit BidWithdrawn(msg.sender, amount);
+        return true;
+    }
+
+    /// @notice End the auction and send the highest bid to the beneficiary
+    function endAuction() public {
+        require(block.timestamp >= auctionEndTime, "Auction not yet ended");
+        require(!ended, "endAuction already called");
+
+        ended = true;
+        emit AuctionEnded(highestBidder, highestBid);
+
+        (bool success, ) = payable(beneficiary).call{value: highestBid}("");
+        require(success, "Transfer to beneficiary failed");
+    }
+
+    /// @notice Get the remaining time in seconds
+    function timeLeft() public view returns (uint256) {
+        if (block.timestamp >= auctionEndTime) return 0;
+        return auctionEndTime - block.timestamp;
+    }
+
+    /// @notice Extend auction time (owner only)
+    function extendAuction(uint256 _extraTime) public onlyOwner {
+        require(!ended, "Auction already ended");
+        auctionEndTime += _extraTime;
+    }
+
+    /// @notice Get auction info
+    function getAuctionInfo() public view returns (
+        string memory _itemName,
+        string memory _itemDescription,
+        address _highestBidder,
+        uint256 _highestBid,
+        uint256 _timeLeft,
+        bool _ended
+    ) {
+        return (itemName, itemDescription, highestBidder, highestBid, timeLeft(), ended);
+    }
+}

@@ -1,0 +1,177 @@
+# AutoCon FYP — Security Hardening & Feature Completion
+
+Complete the AutoCon Web3 token deployment platform by fixing three critical security vulnerabilities (rate limiting, authentication, CORS), then adding the remaining FYP features: MetaMask Web3 login, gas estimator, and smart contract security audit.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **JWT Secret** — A `JWT_SECRET` env variable will be added to `server/.env`. You should replace it with a strong random value before deploying to production.
+
+> [!WARNING]
+> **Breaking API change** — All protected routes will now require a `Authorization: Bearer <token>` header. The frontend will handle this automatically, but any external tools hitting the API directly will break without a valid JWT.
+
+> [!CAUTION]
+> **MongoDB credentials** — Your current `.env` has the MongoDB password in plain text (`waji12345`). Consider rotating this credential since it's been committed to Git history.
+
+---
+
+## Proposed Changes
+
+### Backend — Security Middleware
+
+#### [NEW] [rateLimiter.js](file:///d:/Autocon-fyp/server/middleware/rateLimiter.js)
+- IP-based rate limiter using `express-rate-limit`
+- Defaults: **100 req/min** general, **20 req/min** for heavy routes (`/api/generate-token`)
+- Configurable via `RATE_LIMIT_WINDOW_MS` and `RATE_LIMIT_MAX` env vars
+- Returns `429 Too Many Requests` with `Retry-After`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` headers
+
+#### [NEW] [auth.js](file:///d:/Autocon-fyp/server/middleware/auth.js)
+- JWT verification middleware — extracts `Bearer` token from `Authorization` header
+- Attaches `req.user = { walletAddress }` to request on success
+- Returns `401 Unauthorized` if token is missing/invalid/expired
+- JWT tokens expire after 24 hours
+
+---
+
+### Backend — Authentication Routes
+
+#### [NEW] [User.js](file:///d:/Autocon-fyp/server/models/User.js)
+- Mongoose model with fields: `walletAddress` (unique, lowercase), `nonce` (random string for signature verification), `createdAt`
+
+#### [NEW] [authRoutes.js](file:///d:/Autocon-fyp/server/routes/authRoutes.js)
+Three endpoints for the MetaMask sign-in flow:
+1. `GET /api/auth/nonce/:walletAddress` — Returns a random nonce for the user to sign (creates user record if first time)
+2. `POST /api/auth/verify` — Accepts `{ walletAddress, signature }`, recovers the signer using `ethers.js`, issues a JWT if the signature is valid, rotates the nonce
+3. `GET /api/auth/me` — Returns current user info from JWT (protected)
+
+---
+
+### Backend — Gas Estimator
+
+#### [NEW] [gasRoutes.js](file:///d:/Autocon-fyp/server/routes/gasRoutes.js)
+- `POST /api/estimate-gas` — Takes `{ abi, bytecode, ownerAddress, supply }`, uses `ethers.JsonRpcProvider` with a public Sepolia RPC to estimate deployment gas, fetches current gas price, returns `{ gasUnits, gasPriceGwei, estimatedCostETH }`
+
+---
+
+### Backend — Security Audit Scanner
+
+#### [NEW] [auditRoutes.js](file:///d:/Autocon-fyp/server/routes/auditRoutes.js)
+- `POST /api/audit-contract` — Takes `{ contractCode }`, runs a pattern-based static analysis checking for:
+  - Reentrancy patterns (`call.value`, state changes after external calls)
+  - Unchecked return values
+  - Use of `tx.origin` for authorization
+  - Floating pragma versions  
+  - Missing access control on sensitive functions
+  - Unsafe math (pre-0.8.0 patterns)
+- Returns `{ score, findings: [{ severity, title, description, line }] }`
+
+---
+
+### Backend — Main Server Refactor
+
+#### [MODIFY] [index.js](file:///d:/Autocon-fyp/server/index.js)
+- Replace `app.use(cors())` with strict configuration allowing only `http://localhost:5173` (Vite dev) and configurable `ALLOWED_ORIGINS` env var
+- Import and mount rate limiter middleware globally + stricter limits on `/api/generate-token`
+- Import and mount `authRoutes`, `gasRoutes`, `auditRoutes`
+- Protect `/api/save-token`, `/api/my-tokens/:walletAddress`, `/api/delete-token/:id` with auth middleware
+- Add authorization check: users can only fetch/delete their own tokens (compare `req.user.walletAddress` against the token's `ownerAddress`)
+- Add Helmet.js for HTTP security headers
+
+#### [MODIFY] [.env](file:///d:/Autocon-fyp/server/.env)
+- Add `JWT_SECRET`, `ALLOWED_ORIGINS`, `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `SEPOLIA_RPC_URL`
+
+#### [MODIFY] [package.json](file:///d:/Autocon-fyp/server/package.json)
+- Add dependencies: `express-rate-limit`, `jsonwebtoken`, `ethers`, `helmet`, `crypto` (built-in)
+
+---
+
+### Frontend — Auth System
+
+#### [NEW] [AuthContext.jsx](file:///d:/Autocon-fyp/Autocon/src/context/AuthContext.jsx)
+- React Context providing `{ user, token, login, logout, isAuthenticated, isLoading }`
+- `login()` — triggers MetaMask signature flow: fetch nonce → sign message → POST to verify → store JWT in localStorage
+- Auto-checks localStorage on mount for existing session
+- Provides an `authFetch()` helper that auto-attaches `Authorization` header
+
+#### [NEW] [LoginPage.jsx](file:///d:/Autocon-fyp/Autocon/src/pages/LoginPage.jsx)
+- Full-screen MetaMask sign-in page with branding
+- "Sign In with MetaMask" button that calls `login()` from AuthContext
+- Loading state while verifying signature
+
+#### [MODIFY] [App.jsx](file:///d:/Autocon-fyp/Autocon/src/App.jsx)
+- Wrap in `AuthProvider`
+- Show `LoginPage` when unauthenticated
+- Show existing layout (Sidebar + pages) when authenticated
+- Add "Logout" action
+
+#### [MODIFY] [Sidebar.jsx](file:///d:/Autocon-fyp/Autocon/src/components/Sidebar.jsx)
+- Add "Security Audit" nav item for the new audit page
+- Add "Logout" button at bottom
+- Show connected wallet address
+
+---
+
+### Frontend — Feature Pages
+
+#### [MODIFY] [useWeb3.js](file:///d:/Autocon-fyp/Autocon/src/hooks/useWeb3.js)
+- Use `authFetch()` from AuthContext for all API calls
+- Add `estimateGas()` function that calls `/api/estimate-gas`
+
+#### [MODIFY] [TokenGenerator.jsx](file:///d:/Autocon-fyp/Autocon/src/pages/TokenGenerator.jsx)
+- Add gas estimation panel between "Generate Code" and "Deploy" buttons
+- Show estimated gas cost in ETH before deployment
+
+#### [MODIFY] [Dashboard.jsx](file:///d:/Autocon-fyp/Autocon/src/pages/Dashboard.jsx)
+- Use `authFetch()` for all API calls
+- Remove manual wallet detection (use AuthContext wallet instead)
+
+#### [NEW] [AuditPage.jsx](file:///d:/Autocon-fyp/Autocon/src/pages/AuditPage.jsx)
+- Paste or auto-load generated contract code
+- "Run Security Audit" button
+- Display findings with severity badges (Critical/High/Medium/Low/Info)
+- Overall security score visualization
+
+---
+
+## Verification Plan
+
+### Automated Tests (curl commands to run against the backend)
+
+After starting the server with `cd d:\Autocon-fyp\server && node index.js`:
+
+1. **CORS test** — Verify that requests from unauthorized origins are blocked:
+   ```
+   curl -H "Origin: http://evil.com" -v http://localhost:5000/api/health
+   ```
+   Expected: No `Access-Control-Allow-Origin` header or value not matching `http://evil.com`
+
+2. **Rate limit test** — Hit the health endpoint rapidly:
+   ```
+   for /L %i in (1,1,105) do @curl -s -o nul -w "%{http_code}\n" http://localhost:5000/api/health
+   ```
+   Expected: After 100 requests, starts returning `429`
+
+3. **Auth test** — Try accessing a protected route without JWT:
+   ```
+   curl -v http://localhost:5000/api/my-tokens/0x123
+   ```
+   Expected: `401 Unauthorized`
+
+4. **Auth flow test** — Get nonce, (manual MetaMask signing can't be automated), verify JWT:
+   ```
+   curl http://localhost:5000/api/auth/nonce/0xYourWallet
+   ```
+   Expected: Returns `{ nonce: "..." }`
+
+### Browser-Based Verification
+- Open `http://localhost:5173` in browser
+- Verify Login Page appears when not authenticated
+- Sign in with MetaMask and verify JWT is stored
+- Navigate to Token Generator → Generate → see Gas Estimate → Deploy
+- Navigate to Dashboard → verify tokens appear
+- Navigate to Security Audit → run audit on generated code
+- Click Logout → verify redirect to login
+
+### Manual Verification (User)
+- Deploy a real token on Sepolia and verify the full flow works end-to-end
+- Confirm Etherscan link still works on deployed tokens

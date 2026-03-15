@@ -1,70 +1,259 @@
 import { useWeb3 } from '../hooks/useWeb3';
 import { Toaster } from 'react-hot-toast';
+import CodeExportTools from '../components/CodeExportTools';
 
 export default function TokenGenerator() {
-  // We added `isDeploying` to this line so the UI knows when to spin!
-  const { formData, setFormData, generatedCode, connectWallet, generateContract, deployContract, isDeploying } = useWeb3();
+  const {
+    formData, setFormData, generatedCode,
+    connectWallet, generateContract, deployContract,
+    estimateGas, gasEstimate, isEstimating,
+    isDeploying
+  } = useWeb3();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   return (
-    <div className="max-w-4xl mx-auto animate-in fade-in duration-700">
-    <Toaster position="bottom-right" reverseOrder={false} /> {/* 🍞 THIS RENDERS THE POPUPS */}
-      <h1 className="text-3xl font-bold mb-6">ERC-20 Generator</h1>
-      <div className="bg-white p-8 rounded-2xl shadow-sm border">
-        <form onSubmit={generateContract} className="space-y-6">
-          
-          <div>
-            <label className="block text-sm font-bold mb-2">Token Name</label>
-            <input name="name" className="w-full p-3 bg-gray-50 border rounded-lg" onChange={handleChange} required />
-          </div>
-          
-          <div className="flex gap-4">
-             <input name="symbol" placeholder="Symbol" className="flex-1 p-3 border rounded-lg" onChange={handleChange} required />
-             <input name="supply" type="number" className="flex-1 p-3 border rounded-lg" onChange={handleChange} value={formData?.supply || ''} required />
+    <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+      <Toaster position="bottom-right" reverseOrder={false} />
+
+      {/* Header */}
+      <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
+        <h1 style={{
+          fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
+          color: 'var(--text-primary)', marginBottom: '8px'
+        }}>
+          ERC-20 <span className="gradient-text">Generator</span>
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+          Design and deploy custom tokens in minutes — no Solidity required.
+        </p>
+      </div>
+
+      {/* Form Card */}
+      <div className="card animate-fade-in-up delay-100" style={{ padding: '36px' }}>
+        <form onSubmit={generateContract}>
+          {/* Token Name */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{
+              display: 'block', fontSize: '0.8rem', fontWeight: 700,
+              color: 'var(--text-secondary)', textTransform: 'uppercase',
+              letterSpacing: '1px', marginBottom: '10px'
+            }}>
+              Token Name
+            </label>
+            <input
+              name="name"
+              placeholder="e.g. AutoCon Token"
+              className="input"
+              onChange={handleChange}
+              required
+            />
           </div>
 
-          <div>
-            <label className="block text-sm font-bold mb-2">Owner Address</label>
-            <div className="flex gap-2">
-              <input name="ownerAddress" value={formData?.ownerAddress || ''} className="flex-1 p-3 border rounded-lg font-mono text-sm" readOnly />
-              <button type="button" onClick={connectWallet} className="bg-orange-500 text-white px-4 py-2 rounded-lg">Connect 🦊</button>
+          {/* Symbol + Supply Row */}
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{
+                display: 'block', fontSize: '0.8rem', fontWeight: 700,
+                color: 'var(--text-secondary)', textTransform: 'uppercase',
+                letterSpacing: '1px', marginBottom: '10px'
+              }}>
+                Symbol
+              </label>
+              <input
+                name="symbol"
+                placeholder="e.g. ACT"
+                className="input"
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{
+                display: 'block', fontSize: '0.8rem', fontWeight: 700,
+                color: 'var(--text-secondary)', textTransform: 'uppercase',
+                letterSpacing: '1px', marginBottom: '10px'
+              }}>
+                Initial Supply
+              </label>
+              <input
+                name="supply"
+                type="number"
+                placeholder="1000000"
+                className="input"
+                onChange={handleChange}
+                value={formData?.supply || ''}
+                required
+              />
             </div>
           </div>
 
-          <button type="submit" className="w-full bg-cyan-600 text-white py-4 rounded-xl font-bold">Generate Code</button>
-        
-          {/* THE UPDATED BUTTON WITH THE LOADING ANIMATION */}
-          <button 
-            type="button"
-            onClick={deployContract}
-            disabled={!generatedCode || isDeploying} 
-            className={`mt-6 w-full font-black py-4 rounded-2xl transition-all flex justify-center items-center gap-2 ${
-              (!generatedCode || isDeploying)
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-                : 'bg-white text-slate-900 hover:bg-cyan-400 hover:text-white transform hover:-translate-y-1 shadow-sm'
-            }`}
-          >
-            {isDeploying ? (
-              <>
-                <svg className="animate-spin h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                DEPLOYING TO BLOCKCHAIN...
-              </>
-            ) : (
-              'DEPLOY TO SEPOLIA 🚀'
-            )}
+          {/* Owner Address */}
+          <div style={{ marginBottom: '32px' }}>
+            <label style={{
+              display: 'block', fontSize: '0.8rem', fontWeight: 700,
+              color: 'var(--text-secondary)', textTransform: 'uppercase',
+              letterSpacing: '1px', marginBottom: '10px'
+            }}>
+              Owner Address
+            </label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                name="ownerAddress"
+                value={formData?.ownerAddress || ''}
+                className="input"
+                style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
+                readOnly
+                placeholder="Connect your wallet →"
+              />
+              <button
+                type="button"
+                onClick={connectWallet}
+                style={{
+                  padding: '14px 24px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #f6851b, #e2761b)',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 4px 20px rgba(246,133,27,0.3)'
+                }}
+              >
+                🦊 Connect
+              </button>
+            </div>
+          </div>
+
+          {/* Generate Button */}
+          <button type="submit" className="btn-primary" style={{ width: '100%', padding: '16px' }}>
+            ⚡ Generate Smart Contract
           </button>
         </form>
       </div>
 
+      {/* Gas Estimation Panel */}
       {generatedCode && (
-        <div className="mt-8 bg-slate-900 p-6 rounded-xl border border-slate-700">
-          <pre className="text-cyan-400 text-xs overflow-x-auto"><code>{generatedCode}</code></pre>
+        <div className="card animate-fade-in-up" style={{ padding: '28px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: gasEstimate ? '20px' : '0' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                ⛽ Gas Estimation
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Estimate deployment cost before you spend real ETH
+              </p>
+            </div>
+            <button
+              onClick={estimateGas}
+              disabled={isEstimating}
+              className="btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              {isEstimating ? (
+                <>
+                  <svg style={{ animation: 'spin-slow 1s linear infinite', width: 14, height: 14 }} viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
+                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                  Estimating...
+                </>
+              ) : 'Estimate Gas'}
+            </button>
+          </div>
+
+          {gasEstimate && (
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px'
+            }}>
+              <div style={{
+                padding: '16px', borderRadius: '14px',
+                background: 'var(--accent-glow)',
+                border: '1px solid rgba(6,182,212,0.15)'
+              }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Units</p>
+                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent)' }}>
+                  {parseInt(gasEstimate.gasUnits).toLocaleString()}
+                </p>
+              </div>
+              <div style={{
+                padding: '16px', borderRadius: '14px',
+                background: 'rgba(139,92,246,0.08)',
+                border: '1px solid rgba(139,92,246,0.15)'
+              }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Price</p>
+                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#a78bfa' }}>
+                  {gasEstimate.gasPriceGwei} Gwei
+                </p>
+              </div>
+              <div style={{
+                padding: '16px', borderRadius: '14px',
+                background: 'rgba(16,185,129,0.08)',
+                border: '1px solid rgba(16,185,129,0.15)'
+              }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Est. Cost</p>
+                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--success)' }}>
+                  {gasEstimate.estimatedCostETH} ETH
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Deploy Button */}
+      {generatedCode && (
+        <div className="animate-fade-in-up" style={{ marginTop: '20px' }}>
+          <button
+            onClick={deployContract}
+            disabled={!generatedCode || isDeploying}
+            className="btn-primary"
+            style={{
+              width: '100%', padding: '18px',
+              fontSize: '1.05rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              background: (!generatedCode || isDeploying)
+                ? 'var(--bg-input)'
+                : 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+              color: (!generatedCode || isDeploying) ? 'var(--text-muted)' : 'white',
+              cursor: (!generatedCode || isDeploying) ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isDeploying ? (
+              <>
+                <svg style={{ animation: 'spin-slow 1s linear infinite', width: 20, height: 20 }} viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
+                  <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+                DEPLOYING TO BLOCKCHAIN...
+              </>
+            ) : '🚀 Deploy to Sepolia'}
+          </button>
+        </div>
+      )}
+
+      {/* Generated Code Preview */}
+      {generatedCode && (
+        <div className="animate-fade-in-up" style={{ marginTop: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              📄 Generated Solidity Code
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CodeExportTools code={generatedCode} contractName={formData.name || 'Token'} />
+              <span className="badge badge-success">Compiled ✓</span>
+            </div>
+          </div>
+          <div className="code-block">
+            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              <code>{generatedCode}</code>
+            </pre>
+          </div>
         </div>
       )}
     </div>

@@ -1,0 +1,162 @@
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import toast, { Toaster } from 'react-hot-toast';
+
+export default function LoginPage() {
+    const { login } = useAuth();
+    const [isConnecting, setIsConnecting] = useState(false);
+
+    const handleLogin = async () => {
+        setIsConnecting(true);
+        try {
+            await login();
+            toast.success('Signed in successfully!');
+        } catch (err) {
+            console.error('Login Error:', err);
+            toast.error(err.message || 'Failed to sign in.');
+        } finally {
+            setIsConnecting(false);
+        }
+    };
+
+    return (
+        <div style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #0a0e1a 0%, #111827 40%, #0d1b2a 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            overflow: 'hidden'
+        }}>
+            <Toaster position="bottom-right" />
+
+            {/* Background decorative elements */}
+            <div style={{
+                position: 'absolute', top: '-200px', right: '-200px',
+                width: '600px', height: '600px',
+                background: 'radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)',
+                borderRadius: '50%', pointerEvents: 'none'
+            }} />
+            <div style={{
+                position: 'absolute', bottom: '-150px', left: '-150px',
+                width: '500px', height: '500px',
+                background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)',
+                borderRadius: '50%', pointerEvents: 'none'
+            }} />
+
+            {/* Grid pattern overlay */}
+            <div style={{
+                position: 'absolute', inset: 0, opacity: 0.03,
+                backgroundImage: 'linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)',
+                backgroundSize: '60px 60px', pointerEvents: 'none'
+            }} />
+
+            {/* Login Card */}
+            <div className="animate-fade-in-up" style={{
+                width: '100%', maxWidth: '440px', padding: '0 24px', position: 'relative', zIndex: 1
+            }}>
+                <div className="glass" style={{
+                    borderRadius: '28px',
+                    padding: '48px 40px',
+                    textAlign: 'center'
+                }}>
+                    {/* Logo */}
+                    <div className="animate-float" style={{
+                        width: '80px', height: '80px',
+                        background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+                        borderRadius: '22px', margin: '0 auto 28px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '36px', boxShadow: '0 8px 40px rgba(6,182,212,0.3)'
+                    }}>
+                        ⚡
+                    </div>
+
+                    <h1 style={{
+                        fontSize: '2rem', fontWeight: 900,
+                        color: '#f1f5f9', marginBottom: '8px', letterSpacing: '-0.5px'
+                    }}>
+                        AutoCon
+                    </h1>
+                    <p style={{
+                        color: '#94a3b8', fontSize: '0.95rem',
+                        marginBottom: '36px', lineHeight: 1.6
+                    }}>
+                        No-Code ERC-20 Token Generator<br />
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Connect your wallet to get started</span>
+                    </p>
+
+                    {/* MetaMask Button */}
+                    <button
+                        onClick={handleLogin}
+                        disabled={isConnecting}
+                        style={{
+                            width: '100%',
+                            padding: '16px 24px',
+                            borderRadius: '16px',
+                            border: 'none',
+                            background: isConnecting
+                                ? 'rgba(255,255,255,0.05)'
+                                : 'linear-gradient(135deg, #f6851b, #e2761b)',
+                            color: 'white',
+                            fontSize: '1rem',
+                            fontWeight: 700,
+                            cursor: isConnecting ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '12px',
+                            transition: 'all 0.3s ease',
+                            boxShadow: isConnecting ? 'none' : '0 8px 30px rgba(246,133,27,0.3)',
+                            opacity: isConnecting ? 0.7 : 1
+                        }}
+                        onMouseOver={(e) => { if (!isConnecting) e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                        {isConnecting ? (
+                            <>
+                                <svg style={{ animation: 'spin-slow 1s linear infinite', width: 20, height: 20 }} viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
+                                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                                </svg>
+                                Signing In...
+                            </>
+                        ) : (
+                            <>
+                                <span style={{ fontSize: '1.4rem' }}>🦊</span>
+                                Sign In with MetaMask
+                            </>
+                        )}
+                    </button>
+
+                    {/* Divider */}
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: 16,
+                        margin: '28px 0 20px', color: '#475569', fontSize: '0.75rem'
+                    }}>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                        <span>SECURED BY BLOCKCHAIN</span>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                    </div>
+
+                    {/* Security badges */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <span className="badge badge-accent">🔒 JWT Auth</span>
+                        <span className="badge badge-success">🛡️ CORS Protected</span>
+                        <span className="badge badge-warning">⚡ Rate Limited</span>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <p style={{
+                    textAlign: 'center',
+                    marginTop: '24px',
+                    color: '#475569',
+                    fontSize: '0.75rem'
+                }}>
+                    No-code smart contract platform • Sepolia Testnet
+                </p>
+            </div>
+        </div>
+    );
+}
