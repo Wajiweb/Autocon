@@ -17,6 +17,8 @@ const nftRoutes = require('./routes/nftRoutes');
 const auctionRoutes = require('./routes/auctionRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const ipfsRoutes = require('./routes/ipfsRoutes');
+const verifyRoutes = require('./routes/verifyRoutes');
+const siteRoutes = require('./routes/siteRoutes');
 
 const app = express();
 
@@ -244,6 +246,12 @@ app.use('/api/chat', chatRoutes);
 // ─── IPFS/UPLOAD ROUTES ───
 app.use('/api/ipfs', ipfsRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ─── VERIFY ROUTES ───
+app.use('/api/verify', verifyRoutes); // Etherscan verification
+
+// ─── SITE GENERATION ───
+app.use('/api/site', siteRoutes); // Mini-Site generator
 
 // ─── Global error handler ───
 app.use((err, req, res, next) => {

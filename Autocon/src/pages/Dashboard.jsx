@@ -408,7 +408,18 @@ export default function Dashboard() {
                     ? { bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.2)', text: '#a78bfa', icon: '🎨', label: 'ERC-721' }
                     : { bg: 'var(--accent-glow)', border: 'rgba(6,182,212,0.2)', text: 'var(--accent)', icon: '🪙', label: 'ERC-20' };
                 return (
-                  <tr key={item._id} className="table-row">
+                  <tr key={item._id} className="table-row" style={{
+                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    cursor: 'pointer'
+                  }} onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--bg-card-hover)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,240,255,0.05)';
+                  }} onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}>
                     <td style={{ padding: '18px 28px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                         <div style={{
@@ -463,6 +474,23 @@ export default function Dashboard() {
                           style={{ fontSize: '0.75rem', padding: '7px 14px' }}
                         >
                           📋 Copy
+                        </button>
+                        <button
+                          onClick={() => {
+                            const url = `http://localhost:5000/api/site/view?contractAddress=${item.contractAddress}&network=${item.network}&name=${encodeURIComponent(item.name)}&type=${item._type}`;
+                            window.open(url, '_blank');
+                            toast.success('Minting Site Opened! 🌐');
+                          }}
+                          className="btn-secondary"
+                          style={{
+                            fontSize: '0.75rem', padding: '7px 14px',
+                            background: 'rgba(0, 240, 255, 0.1)',
+                            color: 'var(--neon-primary)',
+                            border: '1px solid rgba(0, 240, 255, 0.2)'
+                          }}
+                          title="Open your hosted Web3 Minting website"
+                        >
+                          🌐 Site
                         </button>
                         <button
                           onClick={() => handleDelete(item)}

@@ -74,7 +74,7 @@ export default function AuctionGenerator() {
             </div>
 
             {/* Form */}
-            <div className="card animate-fade-in-up delay-100" style={{ padding: '36px' }}>
+            <div className="card glass animate-fade-in-up delay-100" style={{ padding: '36px' }}>
                 <form onSubmit={generateAuction}>
                     {/* Auction Name */}
                     <div style={{ marginBottom: '24px' }}>

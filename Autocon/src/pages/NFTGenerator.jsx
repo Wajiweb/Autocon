@@ -100,7 +100,7 @@ export default function NFTGenerator() {
             </div>
 
             {/* Form Card */}
-            <div className="card animate-fade-in-up delay-100" style={{ padding: '36px' }}>
+            <div className="card glass animate-fade-in-up delay-100" style={{ padding: '36px' }}>
                 <form onSubmit={generateNFT}>
                     {/* Collection Name */}
                     <div style={{ marginBottom: '24px' }}>

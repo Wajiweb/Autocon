@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
+import GasWidget from './GasWidget';
 
 export default function Navbar({ activeTab }) {
   const { user } = useAuth();
@@ -25,8 +26,16 @@ export default function Navbar({ activeTab }) {
   return (
     <header style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '16px 0', marginBottom: '24px',
-      borderBottom: '1px solid var(--border-subtle)'
+      padding: '16px 32px', marginBottom: '24px',
+      background: 'rgba(16, 20, 35, 0.4)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      borderBottom: '1px solid var(--border-neon)',
+      boxShadow: '0 4px 30px rgba(0, 240, 255, 0.05)',
+      position: 'sticky',
+      top: 0,
+      zIndex: 40,
+      margin: '0 -32px 24px -32px'
     }}>
       <div>
         <h1 style={{
@@ -42,6 +51,9 @@ export default function Navbar({ activeTab }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Live Gas Tracker */}
+        <GasWidget />
+
         {/* Network Badge */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '6px',

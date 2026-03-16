@@ -32,7 +32,7 @@ export default function TokenGenerator() {
       </div>
 
       {/* Form Card */}
-      <div className="card animate-fade-in-up delay-100" style={{ padding: '36px' }}>
+      <div className="card glass animate-fade-in-up delay-100" style={{ padding: '36px' }}>
         <form onSubmit={generateContract}>
           {/* Token Name */}
           <div style={{ marginBottom: '24px' }}>
@@ -139,7 +139,7 @@ export default function TokenGenerator() {
 
       {/* Gas Estimation Panel */}
       {generatedCode && (
-        <div className="card animate-fade-in-up" style={{ padding: '28px', marginTop: '20px' }}>
+        <div className="card glass animate-fade-in-up diff-bg" style={{ padding: '28px', marginTop: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: gasEstimate ? '20px' : '0' }}>
             <div>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>

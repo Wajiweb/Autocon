@@ -137,6 +137,39 @@ export const useWeb3 = () => {
         toast.error("Failed to save to database.");
       }
 
+      // Verify on Etherscan
+      try {
+        const verifyToast = toast.loading('Verifying contract on Etherscan...');
+        
+        // ABI Encode constructor arguments
+        const abiCoder = new ethers.AbiCoder();
+        // The ERC20 template constructor expects (address initialOwner, uint256 initialSupply)
+        // Supply passed to contract is already adjusted for decimals in the template? Wait, the template expects (address initialOwner, uint256 initialSupply)
+        const encodedArgs = abiCoder.encode(["address", "uint256"], [formData.ownerAddress, formData.supply]);
+
+        const verifyRes = await authFetch('/api/verify', {
+          method: 'POST',
+          body: JSON.stringify({
+            contractAddress: deployedAddress,
+            sourceCode: generatedCode,
+            contractName: formData.name.replace(/\s+/g, ''),
+            compilerVersion: 'v0.8.20+commit.a1b79de6', // Default compiler version used in AutoCon templates
+            network: network.name,
+            constructorArguements: encodedArgs
+          })
+        });
+
+        const verifyData = await verifyRes.json();
+        if (verifyData.success) {
+          toast.success("Etherscan Verification Submitted! ✅", { id: verifyToast });
+        } else {
+          toast.error("Etherscan verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
+        }
+      } catch (error) {
+        console.error("Verification error:", error);
+        toast.error("Failed to request Etherscan verification.");
+      }
+
       // Reset form after successful deployment
       setFormData(prev => ({ ...prev, name: '', symbol: '', supply: '1000000' }));
       setGeneratedCode('');

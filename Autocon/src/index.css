@@ -7,35 +7,36 @@
 }
 
 [data-theme="dark"] {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-card: #1a1f35;
-  --bg-card-hover: #222845;
-  --bg-input: #151b2e;
-  --bg-sidebar: #0d1117;
-  --sidebar-text: #94a3b8;
-  --sidebar-text-active: #22d3ee;
-  --sidebar-hover: rgba(255, 255, 255, 0.03);
-  --sidebar-active-bg: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(139,92,246,0.1));
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-brand: #f1f5f9;
-  --sidebar-muted: #64748b;
+  --bg-primary: #060913; /* Deep space dark */
+  --bg-secondary: #0a0e1a;
+  --bg-card: rgba(16, 20, 35, 0.4); /* Glassmorphism base */
+  --bg-card-hover: rgba(22, 28, 48, 0.6);
+  --bg-input: rgba(15, 20, 35, 0.5);
+  --bg-sidebar: rgba(6, 9, 19, 0.85); /* Frosty sidebar */
+  --sidebar-text: #8b9bb4;
+  --sidebar-text-active: #00f0ff; /* Neon cyan */
+  --sidebar-hover: rgba(0, 240, 255, 0.05);
+  --sidebar-active-bg: linear-gradient(90deg, rgba(0,240,255,0.1) 0%, transparent 100%);
+  --sidebar-border: rgba(0, 240, 255, 0.15);
+  --sidebar-brand: #ffffff;
+  --sidebar-muted: #5e6c84;
   --sidebar-section: #4a5568;
-  --border-color: #1e293b;
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
+  --border-color: rgba(255, 255, 255, 0.08); /* Subtle glass border */
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-neon: rgba(0, 240, 255, 0.3);
+  --text-primary: #ffffff;
+  --text-secondary: #a0aec0;
   --text-muted: #64748b;
-  --accent: #06b6d4;
-  --accent-glow: rgba(6, 182, 212, 0.15);
-  --accent-hover: #22d3ee;
-  --gradient-start: #06b6d4;
-  --gradient-end: #8b5cf6;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --shadow-card: 0 4px 40px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 60px rgba(6, 182, 212, 0.08);
+  --accent: #00f0ff; /* ChainGPT Neon Cyan */
+  --accent-glow: rgba(0, 240, 255, 0.2);
+  --accent-hover: #33f5ff;
+  --gradient-start: #00f0ff;
+  --gradient-end: #b026ff; /* Neon Purple */
+  --success: #00ff9d; /* Neon green */
+  --danger: #ff0055; /* Neon pink/red */
+  --warning: #ffb800; /* Neon gold */
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.15), inset 0 0 20px rgba(0, 240, 255, 0.05);
 }
 
 [data-theme="light"] {
@@ -77,6 +78,10 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.03), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(176, 38, 255, 0.03), transparent 25%);
+  background-attachment: fixed;
 }
 
 * {
@@ -256,51 +261,75 @@ body {
 /* ─── Card Styles ─── */
 .card {
   background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
   border-radius: 20px;
   box-shadow: var(--shadow-card);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent 50%, rgba(255,255,255,0.02));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 .card:hover {
   background: var(--bg-card-hover);
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.01);
   box-shadow: var(--shadow-glow);
+  border-color: var(--border-neon);
 }
 
 /* ─── Button Styles ─── */
 .btn-primary {
   background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-  color: white;
+  color: #fff;
   border: none;
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 14px 28px;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.95rem;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.2);
+  text-transform: uppercase;
 }
 
 .btn-primary::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: 0.5s;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+  transform: scale(0);
+  transition: transform 0.5s ease;
 }
 
 .btn-primary:hover::before {
-  left: 100%;
+  transform: scale(1);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(6, 182, 212, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 240, 255, 0.4), 0 0 15px rgba(176, 38, 255, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
 }
 
 .btn-primary:disabled {
@@ -308,6 +337,8 @@ body {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  background: var(--bg-input);
+  color: var(--text-muted);
 }
 
 .btn-secondary {
@@ -360,7 +391,8 @@ body {
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.2), inset 0 0 10px rgba(0, 240, 255, 0.05);
+  background: rgba(15, 20, 35, 0.7);
 }
 
 .input::placeholder {
@@ -382,25 +414,29 @@ body {
 .badge-accent {
   background: var(--accent-glow);
   color: var(--accent);
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  border: 1px solid var(--border-neon);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .badge-success {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(0, 255, 157, 0.1);
   color: var(--success);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(0, 255, 157, 0.3);
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.1);
 }
 
 .badge-danger {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(255, 0, 85, 0.1);
   color: var(--danger);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(255, 0, 85, 0.3);
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.1);
 }
 
 .badge-warning {
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(255, 184, 0, 0.1);
   color: var(--warning);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(255, 184, 0, 0.3);
+  box-shadow: 0 0 10px rgba(255, 184, 0, 0.1);
 }
 
 .badge-medium {

@@ -156,6 +156,41 @@ export const useNFT = () => {
                 toast.error("Failed to save to database.");
             }
 
+            // Verify on Etherscan
+            try {
+                const verifyToast = toast.loading('Verifying contract on Etherscan...');
+                
+                // ABI Encode constructor arguments
+                // constructor(address initialOwner, uint256 maxSupply, string memory baseURI, uint256 mintPrice)
+                const abiCoder = new ethers.AbiCoder();
+                const encodedArgs = abiCoder.encode(
+                    ["address", "uint256", "string", "uint256"], 
+                    [formData.ownerAddress, formData.maxSupply, formData.baseURI || '', mintPriceWei]
+                );
+
+                const verifyRes = await authFetch('/api/verify', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        contractAddress: deployedAddress,
+                        sourceCode: generatedCode,
+                        contractName: formData.name.replace(/\s+/g, ''),
+                        compilerVersion: 'v0.8.20+commit.a1b79de6',
+                        network: network.name,
+                        constructorArguements: encodedArgs
+                    })
+                });
+
+                const verifyData = await verifyRes.json();
+                if (verifyData.success) {
+                    toast.success("Etherscan Verification Submitted! ✅", { id: verifyToast });
+                } else {
+                    toast.error("Etherscan verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
+                }
+            } catch (error) {
+                console.error("Verification error:", error);
+                toast.error("Failed to request Etherscan verification.");
+            }
+
             // Reset form after successful deployment
             setFormData(prev => ({ ...prev, name: '', symbol: '', maxSupply: '10000', baseURI: '', mintPrice: '0' }));
             setGeneratedCode('');

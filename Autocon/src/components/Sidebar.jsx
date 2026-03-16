@@ -45,10 +45,12 @@ export default function Sidebar({ activeTab, setActiveTab }) {
 
   return (
     <aside style={{
-      width: '240px',
-      minWidth: '240px',
+      width: '250px',
+      minWidth: '250px',
       height: '100vh',
       background: 'var(--bg-sidebar)',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
       display: 'flex',
       flexDirection: 'column',
       borderRight: '1px solid var(--sidebar-border)',
@@ -56,7 +58,8 @@ export default function Sidebar({ activeTab, setActiveTab }) {
       position: 'sticky',
       top: 0,
       overflowY: 'auto',
-      overflowX: 'hidden'
+      overflowX: 'hidden',
+      zIndex: 50
     }}>
       {/* Brand */}
       <div style={{
@@ -108,13 +111,28 @@ export default function Sidebar({ activeTab, setActiveTab }) {
                     fontSize: '0.82rem',
                     fontWeight: isActive ? 700 : 500,
                     fontFamily: 'Inter, sans-serif',
-                    transition: 'all 0.2s ease',
+                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                     background: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
                     color: isActive ? 'var(--sidebar-text-active)' : 'var(--sidebar-text)',
-                    borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent'
+                    borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
+                    boxShadow: isActive ? 'inset 2px 0 10px var(--accent-glow)' : 'none',
+                    position: 'relative',
+                    overflow: 'hidden'
                   }}
-                  onMouseOver={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--sidebar-hover)'; }}
-                  onMouseOut={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'var(--sidebar-hover)';
+                      e.currentTarget.style.color = 'var(--sidebar-brand)';
+                      e.currentTarget.style.transform = 'translateX(4px)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = 'var(--sidebar-text)';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                    }
+                  }}
                 >
                   <span style={{ fontSize: '1rem', width: '24px', textAlign: 'center' }}>{item.icon}</span>
                   {item.label}

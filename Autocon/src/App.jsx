@@ -15,10 +15,12 @@ import ChatbotPage from './pages/ChatbotPage';
 import ProfilePage from './pages/ProfilePage';
 import ContractInteraction from './pages/ContractInteraction';
 import OnboardingTour from './components/OnboardingTour';
+import LandingPage from './pages/LandingPage';
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showLogin, setShowLogin] = useState(false);
 
   // Loading state while checking session
   if (isLoading) {
@@ -44,9 +46,12 @@ function AppContent() {
     );
   }
 
-  // Show Login page if not authenticated
+  // Show Landing Page or Login page if not authenticated
   if (!isAuthenticated) {
-    return <LoginPage />;
+    if (showLogin) {
+      return <LoginPage />;
+    }
+    return <LandingPage onLoginClick={() => setShowLogin(true)} />;
   }
 
   // Main App Layout

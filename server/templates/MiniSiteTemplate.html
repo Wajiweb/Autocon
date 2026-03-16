@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>%%PROJECT_NAME%% | AutoCon Powered</title>
+    <!-- Modern Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <!-- Ethers.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f111a;
+            --glass-bg: rgba(16, 20, 35, 0.6);
+            --neon-primary: #00f0ff;
+            --neon-secondary: #b026ff;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.15), transparent 25%),
+                              radial-gradient(circle at 85% 30%, rgba(176, 38, 255, 0.15), transparent 25%);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                        inset 0 0 10px rgba(0, 240, 255, 0.05);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: 900;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--neon-primary), var(--neon-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        /* Network & Contract Badges */
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .badge {
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: monospace;
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--neon-primary);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+        }
+
+        /* Neon Button */
+        .btn-neon {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--neon-primary);
+            padding: 16px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-neon:hover {
+            background: rgba(0, 240, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4),
+                        inset 0 0 15px rgba(0, 240, 255, 0.2);
+        }
+
+        .btn-neon:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: var(--text-muted);
+            box-shadow: none;
+        }
+
+        /* Status Text */
+        #status {
+            margin-top: 24px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            min-height: 20px;
+        }
+
+        .footer {
+            margin-top: 32px;
+            font-size: 0.75rem;
+            color: rgba(148, 163, 184, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card">
+        <h1>%%PROJECT_NAME%%</h1>
+        <p class="subtitle">Welcome to the official interface for %%PROJECT_NAME%%. Connect your wallet to interact directly with the smart contract.</p>
+        
+        <div class="badges">
+            <span class="badge" title="Network">🌐 %%NETWORK_NAME%%</span>
+            <span class="badge" title="Contract">📄 %%CONTRACT_ADDRESS_SHORT%%</span>
+        </div>
+
+        <button id="actionBtn" class="btn-neon">Connect Wallet</button>
+        <p id="status"></p>
+
+        <div class="footer">
+            Powered by AutoCon • Decentralized Web3 Infrastructure
+        </div>
+    </div>
+
+    <script>
+        // --- INJECTED DATA ---
+        const CONTRACT_ADDRESS = "%%CONTRACT_ADDRESS%%";
+        const EXPECTED_NETWORK = "%%NETWORK_NAME%%";
+        const RAW_ABI = `%%SMART_CONTRACT_ABI%%`;
+        let contractABI = [];
+        try { contractABI = JSON.parse(RAW_ABI); } catch(e) { console.error("ABI parse error"); }
+
+        // --- STATE ---
+        let signer = null;
+        let contract = null;
+        let isConnected = false;
+
+        const actionBtn = document.getElementById('actionBtn');
+        const statusEl = document.getElementById('status');
+
+        function setStatus(msg, error = false) {
+            statusEl.style.color = error ? '#ef4444' : 'var(--text-muted)';
+            statusEl.innerText = msg;
+        }
+
+        actionBtn.addEventListener('click', async () => {
+            if (!isConnected) {
+                await connectWallet();
+            } else {
+                await executeAction();
+            }
+        });
+
+        async function connectWallet() {
+            if (window.location.protocol === 'file:') {
+                setStatus("MetaMask cannot connect to local files. Please host this file on a web server (e.g., 'npx serve', Vercel, or GitHub Pages).", true);
+                return;
+            }
+            if (!window.ethereum) {
+                setStatus("MetaMask is not installed. Please install it to continue.", true);
+                return;
+            }
+
+            try {
+                setStatus("Connecting to wallet...");
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                const accounts = await provider.send("eth_requestAccounts", []);
+                signer = await provider.getSigner();
+                
+                contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+                isConnected = true;
+                
+                // Change UI state
+                actionBtn.innerText = "Interact with Contract ✨";
+                actionBtn.style.border = "1px solid var(--neon-secondary)";
+                actionBtn.style.boxShadow = "0 0 10px rgba(176, 38, 255, 0.3)";
+                
+                setStatus(`Connected: ${accounts[0].substring(0,6)}...${accounts[0].substring(38)}`);
+            } catch (err) {
+                console.error(err);
+                setStatus("Failed to connect wallet.", true);
+            }
+        }
+
+        async function executeAction() {
+            if (!contract) return;
+            
+            setStatus("Please select a function to call from a block explorer (like Etherscan) for complex interactions. Basic implementation loaded.");
+            // Note: Since we don't know if this is a Token, NFT, or Auction dynamically in this single button, 
+            // a true general-purpose UI would parse the ABI and build inputs for every writable function.
+            // For now, we alert the user that connection is successful and the contract object is primed in console.
+            console.log("Contract Object:", contract);
+            alert("Contract is loaded into ethers.js! Open console to interact, or connect this UI to specific Mint/Transfer ABI functions.");
+        }
+    </script>
+</body>
+</html>
