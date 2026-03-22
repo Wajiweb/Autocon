@@ -121,7 +121,7 @@ export default function ContractInteraction() {
                     }}>
                         {isWrite ? (func.stateMutability === 'payable' ? '💰 payable' : '✏️ write') : '👁️ read'}
                     </span>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--on-surface)', fontFamily: 'monospace' }}>
                         {func.name}
                     </span>
                     {func.inputs?.length === 0 && (
@@ -143,7 +143,7 @@ export default function ContractInteraction() {
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                         {func.inputs.map((input, idx) => (
                             <div key={idx} style={{ flex: 1, minWidth: '120px' }}>
-                                <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 600 }}>
+                                <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--outline)', marginBottom: '4px', fontWeight: 600 }}>
                                     {input.name || `arg${idx}`} <span style={{ opacity: 0.6 }}>({input.type})</span>
                                 </label>
                                 <input
@@ -202,28 +202,27 @@ export default function ContractInteraction() {
                     }}>🔗</div>
                     <h1 style={{
                         fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-                        color: 'var(--text-primary)'
+                        color: 'var(--on-surface)', marginBottom: '0'
                     }}>
-                        Contract <span style={{
-                            background: 'linear-gradient(135deg, #10b981, #06b6d4)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text'
-                        }}>Interaction</span>
+                        Contract <span className="gradient-text">Explorer</span>
                     </h1>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                    Read data and call functions on any deployed smart contract — like a mini Etherscan.
+                <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
+                    Connect to any deployed Ethereum smart contract to read its state and execute transactions.
                 </p>
             </div>
 
-            {/* Connection Card */}
+            {/* Input Card */}
             {!connected ? (
-                <div className="card animate-fade-in-up delay-100" style={{ padding: '32px' }}>
+                <div className="card glass-strong animate-fade-in-up delay-100" style={{
+                    padding: '28px', maxWidth: '600px',
+                    borderTop: '2px solid rgba(6,182,212,0.4)',
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.4), 0 0 20px rgba(6,182,212,0.1)'
+                }}>
                     <div style={{ marginBottom: '20px' }}>
                         <label style={{
                             display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--text-secondary)', textTransform: 'uppercase',
+                            color: 'var(--on-surface-variant)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>Contract Address</label>
                         <input
@@ -238,7 +237,7 @@ export default function ContractInteraction() {
                     <div style={{ marginBottom: '24px' }}>
                         <label style={{
                             display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--text-secondary)', textTransform: 'uppercase',
+                            color: 'var(--on-surface-variant)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>Contract ABI (JSON)</label>
                         <textarea
@@ -271,14 +270,14 @@ export default function ContractInteraction() {
                     }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }} />
                         <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--success)' }}>Connected</span>
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--outline)', fontFamily: 'monospace' }}>
                             {contractAddress.substring(0, 10)}...{contractAddress.substring(36)}
                         </span>
                         <button onClick={() => { setConnected(false); setContract(null); setAbi(null); setResults({}); }}
                             style={{
                                 marginLeft: 'auto', padding: '4px 12px', borderRadius: '8px',
-                                border: '1px solid var(--border-color)', background: 'transparent',
-                                color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600,
+                                border: '1px solid var(--outline-variant)', background: 'transparent',
+                                color: 'var(--outline)', fontSize: '0.72rem', fontWeight: 600,
                                 cursor: 'pointer', fontFamily: 'Inter, sans-serif'
                             }}>Disconnect</button>
                     </div>
@@ -286,7 +285,7 @@ export default function ContractInteraction() {
                     {/* Read Functions */}
                     {readFunctions.length > 0 && (
                         <div className="animate-fade-in-up delay-100" style={{ marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '12px' }}>
+                            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '12px' }}>
                                 👁️ Read Functions ({readFunctions.length})
                             </h3>
                             {readFunctions.map(f => renderFunctionCard(f, false))}
@@ -296,7 +295,7 @@ export default function ContractInteraction() {
                     {/* Write Functions */}
                     {writeFunctions.length > 0 && (
                         <div className="animate-fade-in-up delay-200">
-                            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '12px' }}>
+                            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '12px' }}>
                                 ✏️ Write Functions ({writeFunctions.length})
                             </h3>
                             {writeFunctions.map(f => renderFunctionCard(f, true))}

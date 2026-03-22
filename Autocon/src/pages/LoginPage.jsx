@@ -22,7 +22,7 @@ export default function LoginPage() {
     return (
         <div style={{
             minHeight: '100vh',
-            background: 'linear-gradient(135deg, #0a0e1a 0%, #111827 40%, #0d1b2a 100%)',
+            background: 'var(--bg)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -35,13 +35,13 @@ export default function LoginPage() {
             <div style={{
                 position: 'absolute', top: '-200px', right: '-200px',
                 width: '600px', height: '600px',
-                background: 'radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)',
                 borderRadius: '50%', pointerEvents: 'none'
             }} />
             <div style={{
                 position: 'absolute', bottom: '-150px', left: '-150px',
                 width: '500px', height: '500px',
-                background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)',
                 borderRadius: '50%', pointerEvents: 'none'
             }} />
 
@@ -63,13 +63,16 @@ export default function LoginPage() {
                 }}>
                     {/* Logo */}
                     <div className="animate-float" style={{
-                        width: '80px', height: '80px',
-                        background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+                        width: '90px', height: '90px',
                         borderRadius: '22px', margin: '0 auto 28px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '36px', boxShadow: '0 8px 40px rgba(6,182,212,0.3)'
+                        overflow: 'hidden',
+                        boxShadow: '0 8px 40px rgba(6,182,212,0.3)'
                     }}>
-                        ⚡
+                        <img
+                            src="/autocon-logo.png"
+                            alt="AutoCon"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
                     </div>
 
                     <h1 style={{
@@ -132,7 +135,7 @@ export default function LoginPage() {
                     {/* Divider */}
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: 16,
-                        margin: '28px 0 20px', color: '#475569', fontSize: '0.75rem'
+                        margin: '28px 0 20px', color: 'var(--outline)', fontSize: '0.75rem'
                     }}>
                         <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
                         <span>SECURED BY BLOCKCHAIN</span>
@@ -151,7 +154,7 @@ export default function LoginPage() {
                 <p style={{
                     textAlign: 'center',
                     marginTop: '24px',
-                    color: '#475569',
+                    color: 'var(--outline)',
                     fontSize: '0.75rem'
                 }}>
                     No-code smart contract platform • Sepolia Testnet

@@ -15,30 +15,37 @@ export default function TokenGenerator() {
   };
 
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+    <div className="container" style={{ paddingTop: '12px' }}>
       <Toaster position="bottom-right" reverseOrder={false} />
 
       {/* Header */}
       <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
         <h1 style={{
           fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-          color: 'var(--text-primary)', marginBottom: '8px'
+          color: 'var(--on-surface)', marginBottom: '8px'
         }}>
           ERC-20 <span className="gradient-text">Generator</span>
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+        <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
           Design and deploy custom tokens in minutes — no Solidity required.
         </p>
       </div>
 
-      {/* Form Card */}
-      <div className="card glass animate-fade-in-up delay-100" style={{ padding: '36px' }}>
+      {/* Content Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: '32px',
+        alignItems: 'start'
+      }}>
+        {/* Left Column: Form */}
+        <div className="card glass animate-fade-in-up delay-100" style={{ padding: '36px' }}>
         <form onSubmit={generateContract}>
           {/* Token Name */}
           <div style={{ marginBottom: '24px' }}>
             <label style={{
               display: 'block', fontSize: '0.8rem', fontWeight: 700,
-              color: 'var(--text-secondary)', textTransform: 'uppercase',
+              color: 'var(--outline)', textTransform: 'uppercase',
               letterSpacing: '1px', marginBottom: '10px'
             }}>
               Token Name
@@ -57,7 +64,7 @@ export default function TokenGenerator() {
             <div style={{ flex: 1 }}>
               <label style={{
                 display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                color: 'var(--text-secondary)', textTransform: 'uppercase',
+                color: 'var(--outline)', textTransform: 'uppercase',
                 letterSpacing: '1px', marginBottom: '10px'
               }}>
                 Symbol
@@ -73,7 +80,7 @@ export default function TokenGenerator() {
             <div style={{ flex: 1 }}>
               <label style={{
                 display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                color: 'var(--text-secondary)', textTransform: 'uppercase',
+                color: 'var(--outline)', textTransform: 'uppercase',
                 letterSpacing: '1px', marginBottom: '10px'
               }}>
                 Initial Supply
@@ -94,7 +101,7 @@ export default function TokenGenerator() {
           <div style={{ marginBottom: '32px' }}>
             <label style={{
               display: 'block', fontSize: '0.8rem', fontWeight: 700,
-              color: 'var(--text-secondary)', textTransform: 'uppercase',
+              color: 'var(--outline)', textTransform: 'uppercase',
               letterSpacing: '1px', marginBottom: '10px'
             }}>
               Owner Address
@@ -137,15 +144,18 @@ export default function TokenGenerator() {
         </form>
       </div>
 
-      {/* Gas Estimation Panel */}
+      {/* Right Column: Gas and Code */}
       {generatedCode && (
-        <div className="card glass animate-fade-in-up diff-bg" style={{ padding: '28px', marginTop: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: gasEstimate ? '20px' : '0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Gas Estimation Panel */}
+          <div className="card glass animate-fade-in-up diff-bg" style={{ padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: gasEstimate ? '20px' : '0' }}>
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '4px' }}>
                 ⛽ Gas Estimation
               </h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--outline)' }}>
                 Estimate deployment cost before you spend real ETH
               </p>
             </div>
@@ -176,8 +186,8 @@ export default function TokenGenerator() {
                 background: 'var(--accent-glow)',
                 border: '1px solid rgba(6,182,212,0.15)'
               }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Units</p>
-                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent)' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Units</p>
+                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--tertiary)' }}>
                   {parseInt(gasEstimate.gasUnits).toLocaleString()}
                 </p>
               </div>
@@ -186,7 +196,7 @@ export default function TokenGenerator() {
                 background: 'rgba(139,92,246,0.08)',
                 border: '1px solid rgba(139,92,246,0.15)'
               }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Price</p>
+                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Price</p>
                 <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#a78bfa' }}>
                   {gasEstimate.gasPriceGwei} Gwei
                 </p>
@@ -196,7 +206,7 @@ export default function TokenGenerator() {
                 background: 'rgba(16,185,129,0.08)',
                 border: '1px solid rgba(16,185,129,0.15)'
               }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Est. Cost</p>
+                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>Est. Cost</p>
                 <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--success)' }}>
                   {gasEstimate.estimatedCostETH} ETH
                 </p>
@@ -204,11 +214,9 @@ export default function TokenGenerator() {
             </div>
           )}
         </div>
-      )}
 
       {/* Deploy Button */}
-      {generatedCode && (
-        <div className="animate-fade-in-up" style={{ marginTop: '20px' }}>
+      <div className="animate-fade-in-up">
           <button
             onClick={deployContract}
             disabled={!generatedCode || isDeploying}
@@ -235,12 +243,10 @@ export default function TokenGenerator() {
             ) : '🚀 Deploy to Sepolia'}
           </button>
         </div>
-      )}
 
       {/* Generated Code Preview */}
-      {generatedCode && (
-        <div className="animate-fade-in-up" style={{ marginTop: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+      <div className="animate-fade-in-up">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               📄 Generated Solidity Code
             </h3>
@@ -255,7 +261,11 @@ export default function TokenGenerator() {
             </pre>
           </div>
         </div>
+        
+        </div>
       )}
+      </div>
+
     </div>
   );
 }

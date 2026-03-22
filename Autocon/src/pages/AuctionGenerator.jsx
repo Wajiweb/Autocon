@@ -31,7 +31,7 @@ export default function AuctionGenerator() {
     ];
 
     return (
-        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+        <div className="container" style={{ paddingTop: '12px' }}>
             <Toaster position="bottom-right" reverseOrder={false} />
 
             {/* Header */}
@@ -42,11 +42,11 @@ export default function AuctionGenerator() {
                         background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
                         borderRadius: '14px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '22px', boxShadow: '0 4px 20px rgba(245,158,11,0.3)'
+                        fontSize: '22px', boxShadow: 'var(--shadow-ambient)'
                     }}>🔨</div>
                     <h1 style={{
                         fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-                        color: 'var(--text-primary)'
+                        color: 'var(--on-surface)'
                     }}>
                         Auction <span style={{
                             background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
@@ -56,7 +56,7 @@ export default function AuctionGenerator() {
                         }}>Generator</span>
                     </h1>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
                     Create and deploy decentralized English Auctions — no Solidity required.
                 </p>
 
@@ -73,14 +73,19 @@ export default function AuctionGenerator() {
                 </div>
             </div>
 
-            {/* Form */}
-            <div className="card glass animate-fade-in-up delay-100" style={{ padding: '36px' }}>
-                <form onSubmit={generateAuction}>
+            {/* Content Grid */}
+            <div style={{
+                display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                gap: '32px', alignItems: 'start'
+            }}>
+                {/* Left Column: Form */}
+                <div className="card glass animate-fade-in-up delay-100" style={{ padding: '36px' }}>
+                    <form onSubmit={generateAuction}>
                     {/* Auction Name */}
                     <div style={{ marginBottom: '24px' }}>
                         <label style={{
                             display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--text-secondary)', textTransform: 'uppercase',
+                            color: 'var(--outline)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>Auction Contract Name</label>
                         <input name="name" placeholder="e.g. MyAuction" className="input" onChange={handleChange} required />
@@ -91,7 +96,7 @@ export default function AuctionGenerator() {
                         <div style={{ flex: 1 }}>
                             <label style={{
                                 display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                                color: 'var(--text-secondary)', textTransform: 'uppercase',
+                                color: 'var(--outline)', textTransform: 'uppercase',
                                 letterSpacing: '1px', marginBottom: '10px'
                             }}>Item Name</label>
                             <input name="itemName" placeholder="e.g. Rare Digital Art #001" className="input" onChange={handleChange} required />
@@ -99,7 +104,7 @@ export default function AuctionGenerator() {
                         <div style={{ flex: 1 }}>
                             <label style={{
                                 display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                                color: 'var(--text-secondary)', textTransform: 'uppercase',
+                                color: 'var(--outline)', textTransform: 'uppercase',
                                 letterSpacing: '1px', marginBottom: '10px'
                             }}>Item Description</label>
                             <input name="itemDescription" placeholder="A brief description of the item..." className="input" onChange={handleChange} />
@@ -110,11 +115,11 @@ export default function AuctionGenerator() {
                     <div style={{ marginBottom: '24px' }}>
                         <label style={{
                             display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--text-secondary)', textTransform: 'uppercase',
+                            color: 'var(--outline)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>
                             Auction Duration
-                            <span style={{ fontWeight: 400, textTransform: 'none', color: 'var(--text-muted)', marginLeft: '6px' }}>
+                            <span style={{ fontWeight: 400, textTransform: 'none', color: 'var(--outline)', marginLeft: '6px' }}>
                                 ({durationLabel(formData.duration)})
                             </span>
                         </label>
@@ -126,11 +131,11 @@ export default function AuctionGenerator() {
                                         padding: '8px 16px', borderRadius: '10px',
                                         border: formData.duration === p.value
                                             ? '2px solid #f59e0b'
-                                            : '1px solid var(--border-color)',
+                                            : '1px solid var(--outline-variant)',
                                         background: formData.duration === p.value
                                             ? 'rgba(245,158,11,0.1)'
-                                            : 'var(--bg-input)',
-                                        color: formData.duration === p.value ? '#f59e0b' : 'var(--text-secondary)',
+                                            : 'var(--surface-highest)',
+                                        color: formData.duration === p.value ? '#f59e0b' : 'var(--outline)',
                                         fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer',
                                         fontFamily: 'Inter, sans-serif',
                                         transition: 'all 0.2s ease'
@@ -149,7 +154,7 @@ export default function AuctionGenerator() {
                     <div style={{ marginBottom: '24px' }}>
                         <label style={{
                             display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--text-secondary)', textTransform: 'uppercase',
+                            color: 'var(--outline)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>Minimum Bid (ETH)</label>
                         <input
@@ -157,7 +162,7 @@ export default function AuctionGenerator() {
                             placeholder="0.01" className="input"
                             onChange={handleChange} value={formData.minimumBid}
                         />
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '6px' }}>
+                        <p style={{ fontSize: '0.7rem', color: 'var(--outline)', marginTop: '6px' }}>
                             The smallest bid that will be accepted by the contract.
                         </p>
                     </div>
@@ -166,7 +171,7 @@ export default function AuctionGenerator() {
                     <div style={{ marginBottom: '32px' }}>
                         <label style={{
                             display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--text-secondary)', textTransform: 'uppercase',
+                            color: 'var(--outline)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>Owner / Beneficiary</label>
                         <div style={{ display: 'flex', gap: '10px' }}>
@@ -192,13 +197,45 @@ export default function AuctionGenerator() {
                 </form>
             </div>
 
-            {/* Gas Estimation */}
-            {generatedCode && (
-                <div className="card animate-fade-in-up" style={{ padding: '28px', marginTop: '20px' }}>
+            {/* Right Column: Info, Gas, Deploy, Code */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                
+                {/* Info Card - Always visible */}
+                <div className="card animate-fade-in-up delay-200" style={{ padding: '24px' }}>
+                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '14px' }}>
+                        📘 How English Auctions Work
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                        {[
+                            { icon: '⏳', title: 'Timed Bidding', desc: 'Auction runs for a set duration, highest bid wins' },
+                            { icon: '💰', title: 'Minimum Bid', desc: 'Enforces a floor price — no lowball bids accepted' },
+                            { icon: '🔄', title: 'Auto-Refund', desc: 'Previous bidders can withdraw outbid funds safely' },
+                            { icon: '🏆', title: 'Winner Takes All', desc: 'Highest bid sent to beneficiary when auction ends' },
+                            { icon: '⏰', title: 'Time Extension', desc: 'Owner can extend the auction if needed' },
+                            { icon: '📊', title: 'Live Info', desc: 'Get auction status, bids, and time left on-chain' },
+                        ].map(item => (
+                            <div key={item.title} style={{
+                                padding: '14px', borderRadius: '12px',
+                                background: 'var(--surface-highest)', border: '1px solid var(--outline-variant)',
+                                display: 'flex', gap: '10px', alignItems: 'flex-start'
+                            }}>
+                                <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
+                                <div>
+                                    <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '2px' }}>{item.title}</p>
+                                    <p style={{ fontSize: '0.72rem', color: 'var(--outline)', lineHeight: 1.4 }}>{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Gas Estimation */}
+                {generatedCode && (
+                    <div className="card animate-fade-in-up" style={{ padding: '28px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: gasEstimate ? '20px' : 0 }}>
                         <div>
-                            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>⛽ Gas Estimation</h3>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Estimate deployment cost before spending ETH</p>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '4px' }}>⛽ Gas Estimation</h3>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--outline)' }}>Estimate deployment cost before spending ETH</p>
                         </div>
                         <button onClick={estimateGas} disabled={isEstimating} className="btn-secondary"
                             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -218,7 +255,7 @@ export default function AuctionGenerator() {
                                 { label: 'Est. Cost', val: `${gasEstimate.estimatedCostETH} ETH`, color: 'var(--success)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.15)' },
                             ].map(g => (
                                 <div key={g.label} style={{ padding: '16px', borderRadius: '14px', background: g.bg, border: `1px solid ${g.border}` }}>
-                                    <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>{g.label}</p>
+                                    <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>{g.label}</p>
                                     <p style={{ fontSize: '1.1rem', fontWeight: 800, color: g.color }}>{g.val}</p>
                                 </div>
                             ))}
@@ -229,14 +266,14 @@ export default function AuctionGenerator() {
 
             {/* Deploy Button */}
             {generatedCode && (
-                <div className="animate-fade-in-up" style={{ marginTop: '20px' }}>
+                <div className="animate-fade-in-up">
                     <button onClick={deployAuction} disabled={!generatedCode || isDeploying}
                         className="btn-primary"
                         style={{
                             width: '100%', padding: '18px', fontSize: '1.05rem',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                            background: isDeploying ? 'var(--bg-input)' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                            color: isDeploying ? 'var(--text-muted)' : 'white',
+                            background: isDeploying ? 'var(--surface-highest)' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                            color: isDeploying ? 'var(--outline)' : 'white',
                             cursor: isDeploying ? 'not-allowed' : 'pointer'
                         }}>
                         {isDeploying ? (
@@ -251,9 +288,9 @@ export default function AuctionGenerator() {
 
             {/* Generated Code */}
             {generatedCode && (
-                <div className="animate-fade-in-up" style={{ marginTop: '24px' }}>
+                <div className="animate-fade-in-up">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                        <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>📄 Generated Auction Contract</h3>
+                        <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--on-surface)' }}>📄 Generated Auction Contract</h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <CodeExportTools code={generatedCode} contractName={formData.name || 'Auction'} />
                             <span style={{
@@ -268,34 +305,8 @@ export default function AuctionGenerator() {
                 </div>
             )}
 
-            {/* Info Card */}
-            <div className="card animate-fade-in-up delay-200" style={{ padding: '24px', marginTop: '24px' }}>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '14px' }}>
-                    📘 How English Auctions Work
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-                    {[
-                        { icon: '⏳', title: 'Timed Bidding', desc: 'Auction runs for a set duration, highest bid wins' },
-                        { icon: '💰', title: 'Minimum Bid', desc: 'Enforces a floor price — no lowball bids accepted' },
-                        { icon: '🔄', title: 'Auto-Refund', desc: 'Previous bidders can withdraw outbid funds safely' },
-                        { icon: '🏆', title: 'Winner Takes All', desc: 'Highest bid sent to beneficiary when auction ends' },
-                        { icon: '⏰', title: 'Time Extension', desc: 'Owner can extend the auction if needed' },
-                        { icon: '📊', title: 'Live Info', desc: 'Get auction status, bids, and time left on-chain' },
-                    ].map(item => (
-                        <div key={item.title} style={{
-                            padding: '14px', borderRadius: '12px',
-                            background: 'var(--bg-input)', border: '1px solid var(--border-color)',
-                            display: 'flex', gap: '10px', alignItems: 'flex-start'
-                        }}>
-                            <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
-                            <div>
-                                <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>{item.title}</p>
-                                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{item.desc}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
             </div>
+          </div>
         </div>
     );
 }

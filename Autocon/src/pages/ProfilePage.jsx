@@ -75,8 +75,10 @@ export default function ProfilePage() {
             <Toaster position="bottom-right" reverseOrder={false} />
 
             {/* Profile Header Card */}
-            <div className="card animate-fade-in-up" style={{
-                padding: '0', overflow: 'hidden', marginBottom: '24px'
+            <div className="card glass-strong animate-fade-in-up" style={{
+                padding: '0', overflow: 'hidden', marginBottom: '24px',
+                borderTop: '2px solid rgba(139,92,246,0.5)',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.4), 0 0 20px rgba(139,92,246,0.1)'
             }}>
                 {/* Gradient Banner */}
                 <div style={{
@@ -87,11 +89,11 @@ export default function ProfilePage() {
                     <div style={{
                         position: 'absolute', bottom: '-32px', left: '32px',
                         width: '72px', height: '72px',
-                        background: 'var(--bg-card)',
+                        background: 'var(--surface)',
                         borderRadius: '20px',
-                        border: '4px solid var(--bg-card)',
+                        border: '4px solid var(--surface)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '32px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                        fontSize: '32px', boxShadow: 'var(--shadow-ambient)'
                     }}>
                         🦊
                     </div>
@@ -100,21 +102,21 @@ export default function ProfilePage() {
                 <div style={{ padding: '44px 32px 28px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
-                            <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                            <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--on-surface)', marginBottom: '4px' }}>
                                 Web3 Builder
                             </h1>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span style={{
-                                    fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--accent)',
-                                    background: 'var(--accent-glow)', padding: '4px 12px', borderRadius: '8px',
+                                    fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--tertiary)',
+                                    background: 'rgba(6,182,212,0.1)', padding: '4px 12px', borderRadius: '8px',
                                     border: '1px solid rgba(6,182,212,0.2)'
                                 }}>
                                     {user?.walletAddress || ''}
                                 </span>
                                 <button onClick={() => { navigator.clipboard.writeText(user?.walletAddress || ''); toast.success('Address copied!'); }}
                                     style={{
-                                        padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--border-color)',
-                                        background: 'transparent', color: 'var(--text-muted)', fontSize: '0.7rem',
+                                        padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--outline-variant)',
+                                        background: 'transparent', color: 'var(--outline)', fontSize: '0.7rem',
                                         fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif'
                                     }}>📋 Copy</button>
                             </div>
@@ -124,8 +126,8 @@ export default function ProfilePage() {
                             target="_blank" rel="noreferrer"
                             style={{
                                 padding: '8px 16px', borderRadius: '10px',
-                                background: 'var(--bg-input)', border: '1px solid var(--border-color)',
-                                color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600,
+                                background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
+                                color: 'var(--on-surface-variant)', fontSize: '0.8rem', fontWeight: 600,
                                 textDecoration: 'none', transition: 'all 0.2s ease'
                             }}
                         >View on Etherscan ↗</a>
@@ -146,7 +148,7 @@ export default function ProfilePage() {
                     <div key={s.label} className="card" style={{ padding: '20px', textAlign: 'center' }}>
                         <span style={{ fontSize: '1.8rem', display: 'block', marginBottom: '8px' }}>{s.icon}</span>
                         <p style={{ fontSize: '1.8rem', fontWeight: 900, color: s.color, marginBottom: '4px' }}>{s.value}</p>
-                        <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</p>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</p>
                     </div>
                 ))}
             </div>
@@ -155,11 +157,11 @@ export default function ProfilePage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
                 {/* Badges */}
                 <div className="card animate-fade-in-up delay-200" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '16px' }}>
                         🏆 Earned Badges
                     </h3>
                     {badges.length === 0 ? (
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Deploy your first contract to earn badges!</p>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--outline)' }}>Deploy your first contract to earn badges!</p>
                     ) : (
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                             {badges.map(b => (
@@ -179,25 +181,25 @@ export default function ProfilePage() {
 
                 {/* Account Info */}
                 <div className="card animate-fade-in-up delay-300" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '16px' }}>
                         📋 Account Details
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>First Deploy</span>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>{firstDeploy}</span>
+                            <span style={{ fontSize: '0.82rem', color: 'var(--outline)' }}>First Deploy</span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)' }}>{firstDeploy}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Networks Used</span>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>{uniqueNetworks.join(', ') || 'None'}</span>
+                            <span style={{ fontSize: '0.82rem', color: 'var(--outline)' }}>Networks Used</span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)' }}>{uniqueNetworks.join(', ') || 'None'}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Badges Earned</span>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>{badges.length} / 6</span>
+                            <span style={{ fontSize: '0.82rem', color: 'var(--outline)' }}>Badges Earned</span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)' }}>{badges.length} / 6</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Member Since</span>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            <span style={{ fontSize: '0.82rem', color: 'var(--outline)' }}>Member Since</span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)' }}>
                                 {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'}
                             </span>
                         </div>
@@ -207,13 +209,13 @@ export default function ProfilePage() {
 
             {/* Recent Activity Timeline */}
             <div className="card animate-fade-in-up delay-400" style={{ padding: '24px' }}>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '16px' }}>
                     📜 Recent Activity
                 </h3>
                 {isLoading ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading...</p>
+                    <p style={{ color: 'var(--outline)', fontSize: '0.85rem' }}>Loading...</p>
                 ) : recentActivity.length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No deployments yet. Create your first contract!</p>
+                    <p style={{ color: 'var(--outline)', fontSize: '0.85rem' }}>No deployments yet. Create your first contract!</p>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                         {recentActivity.map((item, idx) => {
@@ -226,7 +228,7 @@ export default function ProfilePage() {
                                 <div key={item._id} style={{
                                     display: 'flex', alignItems: 'flex-start', gap: '14px',
                                     padding: '14px 0',
-                                    borderBottom: idx < recentActivity.length - 1 ? '1px solid var(--border-color)' : 'none'
+                                    borderBottom: idx < recentActivity.length - 1 ? '1px solid var(--outline-variant)' : 'none'
                                 }}>
                                     {/* Timeline dot */}
                                     <div style={{
@@ -238,18 +240,18 @@ export default function ProfilePage() {
                                     }}>{typeInfo.icon}</div>
 
                                     <div style={{ flex: 1 }}>
-                                        <p style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                                        <p style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '2px' }}>
                                             Deployed {typeInfo.label}: <span style={{ color: typeInfo.color }}>{item.name}</span>
                                         </p>
                                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                            <span style={{ fontSize: '0.72rem', color: 'var(--outline)' }}>
                                                 {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                             {item.contractAddress && (
                                                 <a
                                                     href={`https://sepolia.etherscan.io/address/${item.contractAddress}`}
                                                     target="_blank" rel="noreferrer"
-                                                    style={{ fontSize: '0.72rem', color: 'var(--accent)', textDecoration: 'none' }}
+                                                    style={{ fontSize: '0.72rem', color: 'var(--tertiary)', textDecoration: 'none' }}
                                                 >
                                                     {item.contractAddress.substring(0, 10)}...{item.contractAddress.substring(36)} ↗
                                                 </a>

@@ -54,11 +54,11 @@ export default function TemplateLibrary({ setActiveTab }) {
             <div className="animate-fade-in-up" style={{ marginBottom: '36px' }}>
                 <h1 style={{
                     fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-                    color: 'var(--text-primary)', marginBottom: '8px'
+                    color: 'var(--on-surface)', marginBottom: '8px'
                 }}>
                     Template <span className="gradient-text">Library</span>
                 </h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
                     Choose a smart contract template and deploy in minutes — no Solidity required.
                 </p>
             </div>
@@ -67,22 +67,19 @@ export default function TemplateLibrary({ setActiveTab }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {templates.map((t, i) => (
                     <div key={t.id}
-                        className={`card animate-fade-in-up delay-${(i + 1) * 100}`}
+                        className={`card glass-strong animate-fade-in-up delay-${(i + 1) * 100}`}
                         style={{
                             padding: '0',
                             overflow: 'hidden',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
-                            border: `1px solid ${t.borderColor}`
+                            borderTop: `2px solid ${t.color}`,
+                            boxShadow: `0 12px 40px rgba(0,0,0,0.3), 0 0 20px ${t.color}15`
                         }}
                         onClick={() => setActiveTab(t.id)}
                     >
                         <div style={{ display: 'flex', alignItems: 'stretch' }}>
-                            {/* Left Color Bar */}
-                            <div style={{
-                                width: '6px', minHeight: '100%',
-                                background: t.gradient, flexShrink: 0
-                            }} />
+                            {/* Left Color Indicator removed in favor of top border */}
 
                             {/* Content */}
                             <div style={{ flex: 1, padding: '28px 32px' }}>
@@ -97,7 +94,7 @@ export default function TemplateLibrary({ setActiveTab }) {
                                             boxShadow: `0 4px 20px ${t.color}30`
                                         }}>{t.icon}</div>
                                         <div>
-                                            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '2px' }}>
+                                            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '2px' }}>
                                                 {t.name}
                                             </h3>
                                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -110,11 +107,11 @@ export default function TemplateLibrary({ setActiveTab }) {
                                                 <span style={{
                                                     padding: '2px 8px', borderRadius: '50px',
                                                     fontSize: '0.6rem', fontWeight: 700,
-                                                    background: 'var(--bg-input)', color: 'var(--text-muted)',
-                                                    border: '1px solid var(--border-color)'
+                                                    background: 'var(--surface-highest)', color: 'var(--outline)',
+                                                    border: '1px solid var(--outline-variant)'
                                                 }}>{t.complexity}</span>
                                                 <span style={{
-                                                    fontSize: '0.7rem', color: 'var(--text-muted)'
+                                                    fontSize: '0.7rem', color: 'var(--outline)'
                                                 }}>⛽ {t.gasEstimate}</span>
                                             </div>
                                         </div>
@@ -138,7 +135,7 @@ export default function TemplateLibrary({ setActiveTab }) {
                                 </div>
 
                                 <p style={{
-                                    fontSize: '0.88rem', color: 'var(--text-secondary)',
+                                    fontSize: '0.88rem', color: 'var(--on-surface-variant)',
                                     lineHeight: 1.6, marginBottom: '16px'
                                 }}>{t.description}</p>
 
@@ -164,9 +161,9 @@ export default function TemplateLibrary({ setActiveTab }) {
             <div className="card animate-fade-in-up delay-400" style={{
                 padding: '24px', marginTop: '24px', textAlign: 'center'
             }}>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    All templates use <strong style={{ color: 'var(--text-primary)' }}>OpenZeppelin</strong> audited contracts
-                    and deploy to the <strong style={{ color: 'var(--text-primary)' }}>Sepolia Testnet</strong>.
+                <p style={{ fontSize: '0.85rem', color: 'var(--outline)' }}>
+                    All templates use <strong style={{ color: 'var(--on-surface)' }}>OpenZeppelin</strong> audited contracts
+                    and deploy to the <strong style={{ color: 'var(--on-surface)' }}>Sepolia Testnet</strong>.
                 </p>
             </div>
         </div>

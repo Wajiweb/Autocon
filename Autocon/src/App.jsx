@@ -60,20 +60,24 @@ function AppContent() {
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main style={{
         flex: 1,
-        padding: '20px 32px 32px',
         overflowY: 'auto',
-        maxHeight: '100vh'
+        maxHeight: '100vh',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         <Navbar activeTab={activeTab} />
-        {activeTab === 'dashboard' && <Dashboard />}
-        {activeTab === 'templates' && <TemplateLibrary setActiveTab={setActiveTab} />}
-        {activeTab === 'token' && <TokenGenerator />}
-        {activeTab === 'nft' && <NFTGenerator />}
-        {activeTab === 'auction' && <AuctionGenerator />}
-        {activeTab === 'interact' && <ContractInteraction />}
-        {activeTab === 'audit' && <AuditPage />}
-        {activeTab === 'chatbot' && <ChatbotPage />}
-        {activeTab === 'profile' && <ProfilePage />}
+        <div className="container" style={{ padding: '0 32px 32px', flex: 1 }}>
+          {activeTab === 'dashboard' && <Dashboard />}
+          {activeTab === 'templates' && <TemplateLibrary setActiveTab={setActiveTab} />}
+          {activeTab === 'token' && <TokenGenerator />}
+          {activeTab === 'nft' && <NFTGenerator />}
+          {activeTab === 'auction' && <AuctionGenerator />}
+          {activeTab === 'interact' && <ContractInteraction />}
+          {activeTab === 'audit' && <AuditPage />}
+          {activeTab === 'chatbot' && <ChatbotPage />}
+          {activeTab === 'profile' && <ProfilePage />}
+        </div>
       </main>
     </div>
   );

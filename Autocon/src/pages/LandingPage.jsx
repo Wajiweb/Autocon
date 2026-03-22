@@ -1,360 +1,431 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-// --- Sub-Components ---
-
+// ─── NAV BAR ───
 const NavBar = ({ onConnect }) => (
   <nav style={{
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '80px',
-    backgroundColor: 'rgba(15, 23, 42, 0.9)', // Deep slate blue with transparency
-    backdropFilter: 'blur(10px)',
-    borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '0 5%',
-    zIndex: 1000
+    position: 'fixed', top: 0, left: 0, right: 0, height: '64px',
+    background: 'rgba(8, 12, 20, 0.75)',
+    backdropFilter: 'blur(24px) saturate(200%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+    borderBottom: '1px solid rgba(255,255,255,0.05)',
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '0 5%', zIndex: 1000,
+    boxShadow: '0 1px 0 rgba(255,255,255,0.03)'
   }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <div style={{
-        width: '32px', height: '32px',
-        background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)',
-        borderRadius: '8px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontWeight: 'bold', color: 'white'
-      }}>A</div>
-      <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.5px' }}>
-        Autocon
+    {/* Logo */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <img src="/autocon-logo.png" alt="AutoCon" style={{
+        width: '36px', height: '36px', borderRadius: '10px',
+        objectFit: 'cover'
+      }} />
+      <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.04em' }}>
+        AutoCon
       </span>
     </div>
 
-    {/* Desktop Links */}
-    <div className="nav-links" style={{ display: 'none', gap: '32px' }}>
-      {['Home', 'Features', 'About', 'Contact'].map(link => (
+    {/* Links */}
+    <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
+      {['Features', 'About', 'Contact'].map(link => (
         <a key={link} href={`#${link.toLowerCase()}`} style={{
-          color: '#94a3b8',
-          textDecoration: 'none',
-          fontSize: '0.95rem',
-          fontWeight: 500,
-          transition: 'color 0.2s ease'
+          color: '#94a3b8', textDecoration: 'none',
+          fontSize: '0.88rem', fontWeight: 500, transition: 'color 0.15s ease'
         }}
-        onMouseOver={(e) => e.currentTarget.style.color = '#f8fafc'}
-        onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-        >
+          onMouseOver={e => e.currentTarget.style.color = '#f1f5f9'}
+          onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}>
           {link}
         </a>
       ))}
-    </div>
 
-    <button
-      onClick={onConnect}
-      style={{
-        backgroundColor: '#3b82f6', // Professional blue
-        color: '#ffffff',
-        border: 'none',
-        borderRadius: '99px',
-        padding: '10px 24px',
-        fontSize: '0.95rem',
-        fontWeight: 600,
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        boxShadow: '0 4px 14px 0 rgba(59, 130, 246, 0.39)',
+      <button onClick={onConnect} style={{
+        padding: '8px 20px', borderRadius: '10px', border: 'none',
+        background: 'linear-gradient(135deg, #7C3AED, #2563EB)',
+        color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 2px 12px rgba(124,58,237,0.35)'
       }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.5)';
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 4px 14px 0 rgba(59, 130, 246, 0.39)';
-      }}
-    >
-      Connect Wallet
-    </button>
+        onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)'; }}
+        onMouseOut={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.35)'; }}>
+        Connect Wallet
+      </button>
+    </div>
   </nav>
 );
 
+// ─── HERO ───
 const HeroSection = ({ onGetStarted }) => (
   <section id="home" style={{
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-    padding: '120px 5% 60px',
-    background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
-    position: 'relative',
-    overflow: 'hidden'
+    minHeight: '100vh', display: 'flex', flexDirection: 'column',
+    justifyContent: 'center', alignItems: 'center',
+    textAlign: 'center', padding: '100px 5% 60px',
+    position: 'relative', overflow: 'hidden'
   }}>
-    {/* Abstract background elements */}
+    {/* Background glows */}
     <div style={{
-      position: 'absolute', top: '20%', left: '10%', width: '300px', height: '300px',
-      background: 'rgba(59, 130, 246, 0.1)', borderRadius: '50%', filter: 'blur(80px)'
+      position: 'absolute', top: '15%', left: '15%', width: '500px', height: '500px',
+      background: 'radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 65%)',
+      filter: 'blur(60px)', pointerEvents: 'none'
     }} />
     <div style={{
-      position: 'absolute', bottom: '10%', right: '10%', width: '250px', height: '250px',
-      background: 'rgba(14, 165, 233, 0.1)', borderRadius: '50%', filter: 'blur(80px)'
+      position: 'absolute', top: '25%', right: '10%', width: '400px', height: '400px',
+      background: 'radial-gradient(circle, rgba(6,182,212,0.14) 0%, transparent 65%)',
+      filter: 'blur(60px)', pointerEvents: 'none'
     }} />
 
-    <h1 style={{
-      fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-      fontWeight: 900,
-      color: '#f8fafc',
-      marginBottom: '24px',
-      lineHeight: 1.1,
-      maxWidth: '800px',
-      zIndex: 1
+    {/* Animated grid */}
+    <div style={{
+      position: 'absolute', inset: 0, opacity: 0.025,
+      backgroundImage: 'linear-gradient(rgba(255,255,255,0.15) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.15) 1px,transparent 1px)',
+      backgroundSize: '80px 80px', pointerEvents: 'none'
+    }} />
+
+    {/* Badge */}
+    <div className="animate-fade-in-up" style={{
+      display: 'inline-flex', alignItems: 'center', gap: '8px',
+      padding: '6px 16px 6px 10px', borderRadius: '99px', marginBottom: '32px',
+      background: 'rgba(124,58,237,0.1)',
+      border: '1px solid rgba(124,58,237,0.25)',
+      fontSize: '0.72rem', fontWeight: 700, color: '#a78bfa',
+      letterSpacing: '0.05em', textTransform: 'uppercase', zIndex: 1
     }}>
-      The Automated <br />
-      <span style={{ 
-        background: 'linear-gradient(135deg, #60a5fa, #38bdf8)', 
-        WebkitBackgroundClip: 'text', 
-        WebkitTextFillColor: 'transparent' 
+      <span style={{
+        display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%',
+        background: '#a78bfa', boxShadow: '0 0 8px #a78bfa', animation: 'pulse-glow 2.5s infinite'
+      }} />
+      Web3 Smart Contract Platform
+    </div>
+
+    {/* Heading */}
+    <h1 className="animate-fade-in-up delay-100" style={{
+      fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 900, letterSpacing: '-0.04em',
+      lineHeight: 1.05, maxWidth: '820px', marginBottom: '24px', zIndex: 1,
+      color: '#f1f5f9'
+    }}>
+      The Automated{' '}
+      <span style={{
+        background: 'linear-gradient(135deg,#a78bfa 0%,#60a5fa 50%,#67e8f9 100%)',
+        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
       }}>
-        Construction Management
-      </span><br />
-      System
+        Smart Contract
+      </span>{' '}
+      Generator
     </h1>
-    
-    <p style={{
-      fontSize: 'clamp(1rem, 1.5vw, 1.25rem)',
-      color: '#94a3b8',
-      marginBottom: '40px',
-      maxWidth: '600px',
-      lineHeight: 1.6,
-      zIndex: 1
+
+    {/* Sub */}
+    <p className="animate-fade-in-up delay-200" style={{
+      fontSize: 'clamp(1rem, 1.5vw, 1.2rem)', color: '#94a3b8',
+      maxWidth: '580px', lineHeight: 1.65, marginBottom: '44px', zIndex: 1
     }}>
-      Streamline your projects from blueprint to reality. Autocon leverages on-chain automation, real-time analytics, and immutable reporting to keep your builds on time and under budget.
+      Deploy ERC-20 tokens, NFT collections, and auction contracts in minutes — no Solidity expertise required.
     </p>
 
-    <button
-      onClick={onGetStarted}
-      style={{
-        backgroundColor: '#ffffff',
-        color: '#0f172a',
-        border: 'none',
-        borderRadius: '99px',
-        padding: '16px 40px',
-        fontSize: '1.1rem',
-        fontWeight: 700,
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        zIndex: 1
+    {/* CTAs */}
+    <div className="animate-fade-in-up delay-300" style={{
+      display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'center', zIndex: 1
+    }}>
+      <button onClick={onGetStarted} style={{
+        padding: '15px 36px', borderRadius: '12px', border: 'none',
+        background: 'linear-gradient(135deg,#7C3AED,#2563EB,#06B6D4)',
+        color: '#fff', fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
+        transition: 'all 0.25s ease',
+        boxShadow: '0 4px 20px rgba(124,58,237,0.4), 0 8px 40px rgba(6,182,212,0.2)'
       }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 10px 25px rgba(255, 255, 255, 0.2)';
+        onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(124,58,237,0.55),0 12px 48px rgba(6,182,212,0.25)'; }}
+        onMouseOut={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 20px rgba(124,58,237,0.4),0 8px 40px rgba(6,182,212,0.2)'; }}>
+        🚀 Get Started Free
+      </button>
+      <a href="#features" style={{
+        padding: '15px 32px', borderRadius: '12px', textDecoration: 'none',
+        border: '1px solid rgba(255,255,255,0.1)',
+        color: '#94a3b8', fontSize: '1rem', fontWeight: 600, cursor: 'pointer',
+        transition: 'all 0.2s ease', display: 'inline-block',
+        background: 'rgba(255,255,255,0.03)'
       }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
-    >
-      Get Started
-    </button>
+        onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
+        onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}>
+        See Features
+      </a>
+    </div>
+
+    {/* Trust bar */}
+    <div className="animate-fade-in-up delay-400" style={{
+      display: 'flex', gap: '40px', marginTop: '72px', flexWrap: 'wrap',
+      justifyContent: 'center', zIndex: 1
+    }}>
+      {[
+        { label: '100+ Contracts Deployed', icon: '⚡' },
+        { label: 'Sepolia Testnet', icon: '🔗' },
+        { label: 'MetaMask Native', icon: '🦊' },
+        { label: 'Gas Optimized', icon: '⛽' },
+      ].map(stat => (
+        <div key={stat.label} style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          color: '#4b5563', fontSize: '0.82rem', fontWeight: 500
+        }}>
+          <span>{stat.icon}</span>
+          <span>{stat.label}</span>
+        </div>
+      ))}
+    </div>
   </section>
 );
 
-const FeatureCard = ({ icon, title, description }) => (
-  <div style={{
-    background: 'rgba(30, 41, 59, 0.5)',
-    border: '1px solid rgba(148, 163, 184, 0.1)',
-    borderRadius: '16px',
-    padding: '32px',
-    textAlign: 'left',
-    transition: 'all 0.3s ease',
-    cursor: 'default'
-  }}
-  onMouseOver={(e) => {
-    e.currentTarget.style.transform = 'translateY(-8px)';
-    e.currentTarget.style.border = '1px solid rgba(59, 130, 246, 0.4)';
-    e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.2)';
-  }}
-  onMouseOut={(e) => {
-    e.currentTarget.style.transform = 'translateY(0)';
-    e.currentTarget.style.border = '1px solid rgba(148, 163, 184, 0.1)';
-    e.currentTarget.style.boxShadow = 'none';
-  }}
-  >
-    <div style={{ 
-      fontSize: '2rem', 
-      marginBottom: '20px',
-      width: '56px', height: '56px',
-      background: 'rgba(59, 130, 246, 0.1)',
-      borderRadius: '12px',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#60a5fa'
-    }}>
-      {icon}
+// ─── FEATURE CARD ───
+const FeatureCard = ({ icon, gradient, title, description, index }) => (
+  <div className="animate-fade-in-up" style={{ animationDelay: `${index * 0.08}s`, opacity: 0 }}>
+    <div style={{
+      background: 'rgba(22,29,43,0.8)',
+      backdropFilter: 'blur(16px)',
+      border: '1px solid rgba(255,255,255,0.06)',
+      borderRadius: '20px', padding: '32px',
+      textAlign: 'left', height: '100%',
+      transition: 'all 0.25s cubic-bezier(0.23,1,0.32,1)',
+      cursor: 'default', position: 'relative', overflow: 'hidden'
+    }}
+      onMouseOver={e => {
+        e.currentTarget.style.transform = 'translateY(-6px)';
+        e.currentTarget.style.borderColor = 'rgba(103,232,249,0.2)';
+        e.currentTarget.style.boxShadow = '0 20px 48px rgba(0,0,0,0.4), 0 0 30px rgba(6,182,212,0.08)';
+      }}
+      onMouseOut={e => {
+        e.currentTarget.style.transform = '';
+        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+        e.currentTarget.style.boxShadow = '';
+      }}>
+      {/* Top gradient line */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: '2px',
+        background: gradient, opacity: 0.6
+      }} />
+
+      <div style={{
+        width: '52px', height: '52px', borderRadius: '14px',
+        background: gradient, opacity: 0.15,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: '20px', fontSize: '24px',
+        position: 'relative'
+      }}>
+        <div style={{ position: 'absolute', inset: 0, borderRadius: '14px', background: gradient, opacity: 1 }} />
+        <span style={{ position: 'relative', zIndex: 1, fontSize: '22px' }}>{icon}</span>
+      </div>
+
+      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f1f5f9', marginBottom: '10px' }}>{title}</h3>
+      <p style={{ color: '#64748b', lineHeight: 1.65, fontSize: '0.88rem' }}>{description}</p>
     </div>
-    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f8fafc', marginBottom: '12px' }}>{title}</h3>
-    <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.95rem' }}>{description}</p>
   </div>
 );
 
+// ─── FEATURES SECTION ───
 const FeaturesSection = () => (
-  <section id="features" style={{
-    padding: '100px 5%',
-    background: '#0f172a'
-  }}>
-    <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-      <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f8fafc', marginBottom: '16px' }}>
-        Built for the Modern Site
+  <section id="features" style={{ padding: '120px 5%', background: 'rgba(13,17,23,0.95)', position: 'relative' }}>
+    {/* glow */}
+    <div style={{
+      position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)',
+      width: '800px', height: '400px',
+      background: 'radial-gradient(ellipse, rgba(37,99,235,0.06) 0%, transparent 70%)',
+      filter: 'blur(40px)', pointerEvents: 'none'
+    }} />
+
+    <div style={{ textAlign: 'center', marginBottom: '72px', position: 'relative', zIndex: 1 }}>
+      <div style={{
+        display: 'inline-block', padding: '5px 14px', borderRadius: '99px', marginBottom: '20px',
+        background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)',
+        fontSize: '0.68rem', fontWeight: 700, color: '#60a5fa',
+        textTransform: 'uppercase', letterSpacing: '0.1em'
+      }}>Platform Features</div>
+      <h2 style={{
+        fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', fontWeight: 900, color: '#f1f5f9',
+        marginBottom: '16px', letterSpacing: '-0.03em'
+      }}>
+        Built for Modern{' '}
+        <span style={{
+          background: 'linear-gradient(135deg,#60a5fa,#67e8f9)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
+        }}>Web3</span>
       </h2>
-      <p style={{ color: '#94a3b8', maxWidth: '600px', margin: '0 auto' }}>
-        Powerful tools designed to eliminate bottlenecks, enforce compliance, and bring total transparency to construction management.
+      <p style={{ color: '#64748b', maxWidth: '540px', margin: '0 auto', fontSize: '1rem', lineHeight: 1.65 }}>
+        Professional tools to launch, manage, and interact with smart contracts — without writing a single line of Solidity.
       </p>
     </div>
 
     <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-      gap: '24px',
-      maxWidth: '1200px',
-      margin: '0 auto'
+      display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))',
+      gap: '24px', maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1
     }}>
-      <FeatureCard 
-        icon="⚙️" title="Smart Automation" 
-        description="Automate milestone payouts and supply chain logistics directly on the blockchain, eliminating manual paperwork." 
-      />
-      <FeatureCard 
-        icon="📡" title="Real-Time Monitoring" 
-        description="IoT integration provides a live feed of structural integrity, worker safety, and equipment location." 
-      />
-      <FeatureCard 
-        icon="📊" title="Predictive Analytics" 
-        description="Machine learning algorithms analyze weather and supply data to forecast and prevent project delays before they happen." 
-      />
-      <FeatureCard 
-        icon="📑" title="Immutable Reporting" 
-        description="Every inspection, audit, and structural change is permanently recorded on-chain for total legal transparency." 
-      />
+      <FeatureCard index={0} icon="⚙️"
+        gradient="linear-gradient(135deg,#7C3AED,#4F46E5)"
+        title="Token Generator"
+        description="Create fully-featured ERC-20 tokens with custom supply, decimal precision, and owner controls. Deploy to mainnet or testnets in one click." />
+      <FeatureCard index={1} icon="🎨"
+        gradient="linear-gradient(135deg,#8B5CF6,#EC4899)"
+        title="NFT Collections"
+        description="Launch ERC-721 NFT collections with IPFS metadata, mint pricing, max supply caps, and automatic royalty structures." />
+      <FeatureCard index={2} icon="🔨"
+        gradient="linear-gradient(135deg,#F59E0B,#EF4444)"
+        title="Auction Contracts"
+        description="Deploy decentralized English auctions with timed bidding, automatic refunds, and beneficiary payouts — fully on-chain." />
+      <FeatureCard index={3} icon="🛡️"
+        gradient="linear-gradient(135deg,#2563EB,#06B6D4)"
+        title="Security Audits"
+        description="Automated Solidity vulnerability scanning powered by AI. Detect reentrancy, overflow, access control issues before deployment." />
     </div>
   </section>
 );
 
+// ─── ABOUT SECTION ───
 const AboutSection = () => (
   <section id="about" style={{
-    padding: '100px 5%',
-    background: 'linear-gradient(to bottom, #0f172a, #162032)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '64px',
-    justifyContent: 'center',
-    flexWrap: 'wrap'
+    padding: '120px 5%', background: 'var(--bg)',
+    display: 'flex', alignItems: 'center', gap: '80px',
+    justifyContent: 'center', flexWrap: 'wrap', position: 'relative', overflow: 'hidden'
   }}>
-    <div style={{ flex: '1 1 500px', maxWidth: '600px' }}>
-      <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f8fafc', marginBottom: '24px' }}>
-        Engineering the Future of Construction
-      </h2>
-      <p style={{ color: '#94a3b8', lineHeight: 1.7, marginBottom: '24px', fontSize: '1.05rem' }}>
-        The construction industry loses billions annually to inefficiencies, miscommunication, and delayed payments. Autocon was built to solve this by creating a single source of truth.
-      </p>
-      <p style={{ color: '#94a3b8', lineHeight: 1.7, fontSize: '1.05rem' }}>
-        By combining distributed ledger technology with automated execution environments, we provide project managers, contractors, and stakeholders with unparalleled oversight and security.
-      </p>
-    </div>
-    
-    {/* Image Placeholder */}
     <div style={{
-      flex: '1 1 400px',
-      maxWidth: '500px',
-      height: '350px',
-      background: 'rgba(30, 41, 59, 0.6)',
-      borderRadius: '24px',
-      border: '1px solid rgba(148, 163, 184, 0.1)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
+      position: 'absolute', bottom: '-100px', left: '-100px', width: '600px', height: '600px',
+      background: 'radial-gradient(circle, rgba(124,58,237,0.07) 0%, transparent 65%)',
+      filter: 'blur(60px)', pointerEvents: 'none'
+    }} />
+
+    <div style={{ flex: '1 1 480px', maxWidth: '580px', position: 'relative', zIndex: 1 }}>
       <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(14,165,233,0.1))'
-      }} />
-      <span style={{ color: '#64748b', fontSize: '1.2rem', fontWeight: 600, zIndex: 1 }}>
-        [Dashboard Preview Image]
-      </span>
+        display: 'inline-block', padding: '5px 14px', borderRadius: '99px', marginBottom: '20px',
+        background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)',
+        fontSize: '0.68rem', fontWeight: 700, color: '#a78bfa',
+        textTransform: 'uppercase', letterSpacing: '0.1em'
+      }}>About AutoCon</div>
+      <h2 style={{
+        fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 900, color: '#f1f5f9',
+        marginBottom: '24px', letterSpacing: '-0.02em', lineHeight: 1.1
+      }}>
+        No-Code Web3<br />
+        <span style={{
+          background: 'linear-gradient(135deg,#a78bfa,#67e8f9)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
+        }}>Development</span>
+      </h2>
+      <p style={{ color: '#64748b', lineHeight: 1.75, marginBottom: '20px', fontSize: '0.97rem' }}>
+        AutoCon bridges the gap between traditional developers and blockchain. Generate production-ready smart contracts that have been security-tested and gas-optimized.
+      </p>
+      <p style={{ color: '#64748b', lineHeight: 1.75, fontSize: '0.97rem' }}>
+        Connect MetaMask, fill a form, and deploy. Your contract goes live on the blockchain in under 30 seconds.
+      </p>
+
+      <div style={{ display: 'flex', gap: '40px', marginTop: '40px', flexWrap: 'wrap' }}>
+        {[
+          { value: '30s', label: 'Time to Deploy' },
+          { value: '3+', label: 'Contract Types' },
+          { value: '100%', label: 'On-Chain' },
+        ].map(stat => (
+          <div key={stat.label}>
+            <div style={{
+              fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.03em',
+              background: 'linear-gradient(135deg,#a78bfa,#67e8f9)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
+            }}>{stat.value}</div>
+            <div style={{ fontSize: '0.82rem', color: '#4b5563', fontWeight: 500, marginTop: '4px' }}>{stat.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Visual card */}
+    <div style={{ flex: '1 1 360px', maxWidth: '460px', position: 'relative', zIndex: 1 }}>
+      <div style={{
+        background: 'rgba(22,29,43,0.9)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '24px', padding: '32px',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.5)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
+          <img src="/autocon-logo.png" alt="AutoCon" style={{
+            width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover',
+            boxShadow: '0 4px 16px rgba(6,182,212,0.25)'
+          }} />
+          <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: '0.9rem' }}>AutoCon</span>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
+            {['', '', ''].map((_, i) => (
+              <div key={i} style={{ width: '12px', height: '12px', borderRadius: '50%', background: ['#ef4444', '#f59e0b', '#10b981'][i] }} />
+            ))}
+          </div>
+        </div>
+
+        {/* Mock code block */}
+        <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '12px', padding: '20px', fontFamily: 'monospace', fontSize: '0.75rem', lineHeight: 1.8 }}>
+          {[
+            { color: '#67e8f9', text: '// ERC-20 Token Contract' },
+            { color: '#a78bfa', text: 'contract MyToken is ERC20 {' },
+            { color: '#94a3b8', text: '  string public name = "MyToken";' },
+            { color: '#94a3b8', text: '  uint256 public supply = 1000000;' },
+            { color: '#10b981', text: '  // ✅ Gas optimized' },
+            { color: '#a78bfa', text: '}' },
+          ].map((line, i) => (
+            <div key={i} style={{ color: line.color }}>{line.text}</div>
+          ))}
+        </div>
+
+        <div style={{
+          display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end'
+        }}>
+          <div style={{
+            padding: '8px 18px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700,
+            background: 'linear-gradient(135deg,#7C3AED,#06B6D4)', color: '#fff',
+            boxShadow: '0 4px 12px rgba(124,58,237,0.4)'
+          }}>🚀 Deploy to Sepolia</div>
+        </div>
+      </div>
     </div>
   </section>
 );
 
+// ─── FOOTER ───
 const Footer = () => (
   <footer id="contact" style={{
-    background: '#0b1120',
+    background: 'rgba(13,17,23,0.98)',
     padding: '60px 5% 40px',
-    borderTop: '1px solid rgba(148, 163, 184, 0.1)'
+    borderTop: '1px solid rgba(255,255,255,0.05)'
   }}>
     <div style={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      gap: '40px',
-      maxWidth: '1200px',
-      margin: '0 auto',
-      marginBottom: '40px'
+      display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '40px',
+      maxWidth: '1200px', margin: '0 auto', marginBottom: '40px'
     }}>
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <div style={{
-            width: '24px', height: '24px', background: '#3b82f6', borderRadius: '6px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '0.8rem'
-          }}>A</div>
-          <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f8fafc' }}>Autocon</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <img src="/autocon-logo.png" alt="AutoCon" style={{
+            width: '30px', height: '30px', borderRadius: '8px', objectFit: 'cover'
+          }} />
+          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f1f5f9' }}>AutoCon</span>
         </div>
-        <p style={{ color: '#64748b', maxWidth: '300px', fontSize: '0.9rem', lineHeight: 1.6 }}>
-          The premier platform for transparent, automated, and secure construction management on the blockchain.
+        <p style={{ color: '#374151', maxWidth: '280px', fontSize: '0.85rem', lineHeight: 1.6 }}>
+          No-code Web3 smart contract platform. Deploy on any EVM chain.
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
         {['Twitter', 'LinkedIn', 'GitHub', 'Discord'].map(social => (
           <a key={social} href="#" style={{
-            color: '#64748b', textDecoration: 'none', fontSize: '0.9rem',
-            transition: 'color 0.2s ease'
-          }} onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'} onMouseOut={(e) => e.currentTarget.style.color = '#64748b'}>
+            color: '#374151', textDecoration: 'none', fontSize: '0.85rem',
+            transition: 'color 0.15s ease', fontWeight: 500
+          }}
+            onMouseOver={e => e.currentTarget.style.color = '#67e8f9'}
+            onMouseOut={e => e.currentTarget.style.color = '#374151'}>
             {social}
           </a>
         ))}
       </div>
     </div>
-    
+
     <div style={{
-      textAlign: 'center',
-      color: '#475569',
-      fontSize: '0.85rem',
-      paddingTop: '32px',
-      borderTop: '1px solid rgba(148, 163, 184, 0.05)'
+      textAlign: 'center', color: '#1f2937', fontSize: '0.8rem',
+      paddingTop: '28px', borderTop: '1px solid rgba(255,255,255,0.03)'
     }}>
-      © {new Date().getFullYear()} Autocon Systems. All rights reserved.
+      © {new Date().getFullYear()} AutoCon Systems. All rights reserved.
     </div>
   </footer>
 );
 
-// --- Main Page Component ---
-
+// ─── MAIN ───
 export default function LandingPage({ onLoginClick }) {
-  // Setup CSS required for the desktop navigation media query (basic responsive handling without external CSS file)
-  React.useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @media (min-width: 768px) {
-        .nav-links { display: flex !important; }
-      }
-      html { scroll-behavior: smooth; }
-      body { margin: 0; font-family: 'Inter', system-ui, sans-serif; }
-    `;
-    document.head.appendChild(style);
-    return () => document.head.removeChild(style);
-  }, []);
-
   return (
-    <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: '#f8fafc' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--on-surface)' }}>
       <NavBar onConnect={onLoginClick} />
       <HeroSection onGetStarted={onLoginClick} />
       <FeaturesSection />

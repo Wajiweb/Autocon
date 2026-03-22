@@ -88,10 +88,10 @@ export default function Dashboard() {
   const handleDelete = (item) => {
     toast((t) => (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <p style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+        <p style={{ fontWeight: 700, color: 'var(--on-surface)', margin: 0 }}>
           Remove this {item._type === 'ERC-721' ? 'NFT collection' : 'token'}?
         </p>
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>This action cannot be undone.</p>
+        <p style={{ fontSize: '0.75rem', color: 'var(--outline)', margin: 0 }}>This action cannot be undone.</p>
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
           <button
             onClick={() => toast.dismiss(t.id)}
@@ -170,16 +170,23 @@ export default function Dashboard() {
 
       {/* Header */}
       <div className="animate-fade-in-up" style={{
-        marginBottom: '36px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'
+        marginBottom: 'var(--space-5)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'
       }}>
         <div>
-          <h1 style={{
-            fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-            color: 'var(--text-primary)', marginBottom: '8px'
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            padding: '4px 12px', borderRadius: '99px', marginBottom: '12px',
+            background: 'rgba(103,232,249,0.07)', border: '1px solid rgba(103,232,249,0.15)',
+            fontSize: '0.67rem', fontWeight: 700, color: 'var(--tertiary)',
+            textTransform: 'uppercase', letterSpacing: '0.08em'
           }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', display: 'inline-block', boxShadow: '0 0 6px var(--success)' }} />
+            Live Dashboard
+          </div>
+          <h1 style={{ color: 'var(--on-surface)', marginBottom: 'var(--space-1)' }}>
             Executive <span className="gradient-text">Overview</span>
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+          <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
             Real-time monitoring of your blockchain assets.
           </p>
         </div>
@@ -187,16 +194,16 @@ export default function Dashboard() {
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={exportCSV} style={{
             padding: '8px 16px', borderRadius: '10px',
-            border: '1px solid var(--border-color)',
-            background: 'var(--bg-input)', color: 'var(--text-secondary)',
+            border: '1px solid var(--outline-variant)',
+            background: 'rgba(255,255,255,0.03)', color: 'var(--on-surface-variant)',
             fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
             fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', gap: '6px',
             transition: 'all 0.2s ease'
           }}>📄 CSV</button>
           <button onClick={exportPDF} style={{
             padding: '8px 16px', borderRadius: '10px',
-            border: '1px solid var(--border-color)',
-            background: 'var(--bg-input)', color: 'var(--text-secondary)',
+            border: '1px solid var(--outline-variant)',
+            background: 'rgba(255,255,255,0.03)', color: 'var(--on-surface-variant)',
             fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
             fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', gap: '6px',
             transition: 'all 0.2s ease'
@@ -205,41 +212,84 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
-        <div className="card animate-fade-in-up delay-100" style={{ padding: '24px' }}>
-          <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px' }}>
-            Total Assets
-          </p>
-          <p style={{ fontSize: '2.2rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>
-            {deployments.length}
-          </p>
-        </div>
-        <div className="card animate-fade-in-up delay-200" style={{ padding: '24px' }}>
-          <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px' }}>
-            ERC-20 Tokens
-          </p>
-          <p className="gradient-text" style={{ fontSize: '2.2rem', fontWeight: 900, lineHeight: 1 }}>
-            {tokenCount}
-          </p>
-        </div>
-        <div className="card animate-fade-in-up delay-300" style={{ padding: '24px' }}>
-          <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px' }}>
-            NFT Collections
-          </p>
-          <p style={{ fontSize: '2.2rem', fontWeight: 900, lineHeight: 1, background: 'linear-gradient(135deg, #8b5cf6, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            {nftCount}
-          </p>
-        </div>
-        <div className="card animate-fade-in-up delay-400" style={{ padding: '24px' }}>
-          <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px' }}>
-            Status
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }} />
-            <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--success)', lineHeight: 1 }}>
-              Systems Online
-            </p>
+      <div className="grid-cards" style={{ marginBottom: 'var(--space-4)' }}>
+        {/* Total Assets */}
+        <div className="animate-fade-in-up delay-100" style={{
+          background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
+          borderRadius: 'var(--radius-xl)', padding: 'var(--space-3)',
+          position: 'relative', overflow: 'hidden',
+          transition: 'all 0.25s ease'
+        }}
+          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(124,58,237,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--outline-variant)'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = ''; }}
+        >
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#7C3AED,#06B6D4)' }} />
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Total Assets</p>
+            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(124,58,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🗂️</div>
           </div>
+          <p style={{ fontSize: '2.4rem', fontWeight: 900, color: 'var(--on-surface)', lineHeight: 1 }}>{deployments.length}</p>
+          <p style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '6px' }}>All contract types</p>
+        </div>
+
+        {/* ERC-20 Tokens */}
+        <div className="animate-fade-in-up delay-200" style={{
+          background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
+          borderRadius: 'var(--radius-xl)', padding: 'var(--space-3)',
+          position: 'relative', overflow: 'hidden',
+          transition: 'all 0.25s ease'
+        }}
+          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(6,182,212,0.3)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(6,182,212,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--outline-variant)'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = ''; }}
+        >
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#2563EB,#06B6D4)' }} />
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>ERC-20 Tokens</p>
+            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(6,182,212,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>⚡</div>
+          </div>
+          <p className="gradient-text" style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1 }}>{tokenCount}</p>
+          <p style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '6px' }}>Fungible tokens deployed</p>
+        </div>
+
+        {/* NFT Collections */}
+        <div className="animate-fade-in-up delay-300" style={{
+          background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
+          borderRadius: 'var(--radius-xl)', padding: 'var(--space-3)',
+          position: 'relative', overflow: 'hidden',
+          transition: 'all 0.25s ease'
+        }}
+          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(139,92,246,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--outline-variant)'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = ''; }}
+        >
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#8b5cf6,#ec4899)' }} />
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>NFT Collections</p>
+            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🎨</div>
+          </div>
+          <p style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1, background: 'linear-gradient(135deg,#8b5cf6,#ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{nftCount}</p>
+          <p style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '6px' }}>ERC-721 collections</p>
+        </div>
+
+        {/* Status */}
+        <div className="animate-fade-in-up delay-400" style={{
+          background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
+          borderRadius: 'var(--radius-xl)', padding: 'var(--space-3)',
+          position: 'relative', overflow: 'hidden',
+          transition: 'all 0.25s ease'
+        }}
+          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(16,185,129,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--outline-variant)'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = ''; }}
+        >
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#10b981,#06b6d4)' }} />
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Status</p>
+            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>✅</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)', animation: 'pulse-glow 2.5s infinite' }} />
+            <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--success)', lineHeight: 1 }}>Systems Online</p>
+          </div>
+          <p style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '6px' }}>All services operational</p>
         </div>
       </div>
 
@@ -249,8 +299,8 @@ export default function Dashboard() {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           marginBottom: '20px', padding: '18px 24px',
           borderRadius: '16px',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)'
+          background: 'var(--surface-high)',
+          border: '1px solid var(--outline-variant)'
         }}>
           {/* Badges */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -329,21 +379,21 @@ export default function Dashboard() {
       )}
 
       {/* Deployment Table */}
-      <div className="card animate-fade-in-up delay-400" style={{ overflow: 'hidden', marginBottom: '24px' }}>
+      <div className="card animate-fade-in-up delay-400" style={{ overflow: 'hidden', marginBottom: 'var(--space-3)' }}>
         {/* Table Header with Filter Tabs */}
         <div style={{
           padding: '20px 28px',
-          borderBottom: '1px solid var(--border-color)',
+          borderBottom: '1px solid var(--outline-variant)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--on-surface)' }}>
               Deployment Registry
             </h2>
             {/* Filter tabs */}
-            <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-input)', borderRadius: '10px', padding: '3px' }}>
+            <div style={{ display: 'flex', gap: '4px', background: 'var(--surface-highest)', borderRadius: 'var(--radius-sm)', padding: '3px' }}>
               {[
                 { id: 'all', label: 'All' },
                 { id: 'ERC-20', label: 'Tokens' },
@@ -354,14 +404,14 @@ export default function Dashboard() {
                   key={tab.id}
                   onClick={() => setActiveFilter(tab.id)}
                   style={{
-                    padding: '6px 14px', borderRadius: '8px', border: 'none',
+                    padding: '6px 14px', borderRadius: '6px', border: 'none',
                     fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
                     fontFamily: 'Inter, sans-serif',
                     transition: 'all 0.2s ease',
                     background: activeFilter === tab.id
-                      ? 'linear-gradient(135deg, var(--gradient-start), var(--gradient-end))'
+                      ? 'var(--primary-gradient)'
                       : 'transparent',
-                    color: activeFilter === tab.id ? 'white' : 'var(--text-muted)'
+                    color: activeFilter === tab.id ? 'white' : 'var(--outline)'
                   }}
                 >{tab.label}</button>
               ))}
@@ -376,13 +426,13 @@ export default function Dashboard() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <tr style={{ borderBottom: '1px solid var(--outline-variant)' }}>
                 {['Asset', 'Type', 'Contract Address', 'Timestamp', 'Actions'].map(header => (
                   <th key={header} style={{
                     padding: '14px 28px',
                     fontSize: '0.65rem',
                     fontWeight: 700,
-                    color: 'var(--text-muted)',
+                    color: 'var(--outline)',
                     textTransform: 'uppercase',
                     letterSpacing: '1.5px',
                     textAlign: header === 'Actions' ? 'right' : 'left'
@@ -408,11 +458,11 @@ export default function Dashboard() {
                     ? { bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.2)', text: '#a78bfa', icon: '🎨', label: 'ERC-721' }
                     : { bg: 'var(--accent-glow)', border: 'rgba(6,182,212,0.2)', text: 'var(--accent)', icon: '🪙', label: 'ERC-20' };
                 return (
-                  <tr key={item._id} className="table-row" style={{
+                    <tr key={item._id} className="table-row" style={{
                     transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                     cursor: 'pointer'
                   }} onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-card-hover)';
+                    e.currentTarget.style.background = 'var(--surface-highest)';
                     e.currentTarget.style.transform = 'translateY(-2px)';
                     e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,240,255,0.05)';
                   }} onMouseLeave={(e) => {
@@ -435,8 +485,8 @@ export default function Dashboard() {
                           {(item.symbol || item.name || '').substring(0, 3)}
                         </div>
                         <div>
-                          <p style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{item.name}</p>
-                          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                          <p style={{ fontWeight: 700, color: 'var(--on-surface)', fontSize: '0.9rem' }}>{item.name}</p>
+                          <p style={{ fontSize: '0.7rem', color: 'var(--outline)' }}>
                             {item.network} Network
                             {isNFT && item.maxSupply ? ` · ${item.maxSupply} max` : ''}
                             {isAuction && item.itemName ? ` · ${item.itemName}` : ''}
@@ -455,10 +505,10 @@ export default function Dashboard() {
                         {typeColors.icon} {typeColors.label}
                       </span>
                     </td>
-                    <td style={{ padding: '18px 28px', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    <td style={{ padding: '18px 28px', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--on-surface-variant)' }}>
                       {item.contractAddress.substring(0, 10)}...{item.contractAddress.substring(36)}
                     </td>
-                    <td style={{ padding: '18px 28px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    <td style={{ padding: '18px 28px', fontSize: '0.8rem', color: 'var(--outline)' }}>
                       {new Date(item.createdAt).toLocaleDateString('en-US', {
                         month: 'short', day: 'numeric', year: 'numeric'
                       })}

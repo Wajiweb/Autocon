@@ -67,9 +67,9 @@ export default function ChatbotPage() {
     // Simple markdown-like rendering
     const renderContent = (text) => {
         return text
-            .replace(/### (.*)/g, '<h3 style="font-size:1rem;font-weight:800;color:var(--text-primary);margin:14px 0 8px;">$1</h3>')
-            .replace(/\*\*([^*]+)\*\*/g, '<strong style="color:var(--text-primary)">$1</strong>')
-            .replace(/`([^`]+)`/g, '<code style="background:rgba(6,182,212,0.1);padding:2px 6px;border-radius:6px;font-size:0.8rem;color:var(--accent)">$1</code>')
+            .replace(/### (.*)/g, '<h3 style="font-size:1rem;font-weight:800;color:var(--on-surface);margin:14px 0 8px;">$1</h3>')
+            .replace(/\*\*([^*]+)\*\*/g, '<strong style="color:var(--on-surface)">$1</strong>')
+            .replace(/`([^`]+)`/g, '<code style="background:rgba(6,182,212,0.1);padding:2px 6px;border-radius:6px;font-size:0.8rem;color:var(--tertiary)">$1</code>')
             .replace(/^- (.*)/gm, '<div style="padding:2px 0 2px 12px">• $1</div>')
             .replace(/\n/g, '<br/>');
     };
@@ -86,11 +86,11 @@ export default function ChatbotPage() {
                         background: 'linear-gradient(135deg, #10b981, #06b6d4)',
                         borderRadius: '14px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '22px', boxShadow: '0 4px 20px rgba(16,185,129,0.3)'
+                        fontSize: '22px', boxShadow: 'var(--shadow-ambient)'
                     }}>🤖</div>
                     <h1 style={{
                         fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-                        color: 'var(--text-primary)'
+                        color: 'var(--on-surface)'
                     }}>
                         AI <span style={{
                             background: 'linear-gradient(135deg, #10b981, #06b6d4)',
@@ -100,7 +100,7 @@ export default function ChatbotPage() {
                         }}>Assistant</span>
                     </h1>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
                     Talk to your smart contracts. Ask what functions do, check security, and learn.
                 </p>
             </div>
@@ -110,7 +110,7 @@ export default function ChatbotPage() {
                 <div className="card animate-fade-in-up delay-100" style={{ padding: '28px', flexShrink: 0 }}>
                     <label style={{
                         display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                        color: 'var(--text-secondary)', textTransform: 'uppercase',
+                        color: 'var(--outline)', textTransform: 'uppercase',
                         letterSpacing: '1px', marginBottom: '12px'
                     }}>
                         Paste Your Solidity Contract
@@ -140,31 +140,45 @@ export default function ChatbotPage() {
 
             {/* Chat Area */}
             {codeLoaded && (
-                <>
-                    {/* Code loaded badge */}
+                <div className="card glass-strong animate-fade-in-up delay-100" style={{
+                    flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                    borderTop: '2px solid rgba(6,182,212,0.4)',
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.4), 0 0 30px rgba(6,182,212,0.05)'
+                }}>
+                    {/* Code Input (Collapsible or just a small header) */}
                     <div style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        padding: '10px 16px', marginBottom: '12px',
-                        borderRadius: '12px', background: 'rgba(16,185,129,0.08)',
-                        border: '1px solid rgba(16,185,129,0.15)', flexShrink: 0
+                        padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        background: 'rgba(0,0,0,0.2)'
                     }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--success)' }}>
-                            ✅ Contract loaded
-                        </span>
-                        <button onClick={() => { setCodeLoaded(false); setMessages([]); }} style={{
-                            marginLeft: 'auto', padding: '4px 12px',
-                            borderRadius: '8px', border: '1px solid var(--border-color)',
-                            background: 'transparent', color: 'var(--text-muted)',
-                            fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer',
-                            fontFamily: 'Inter, sans-serif'
-                        }}>
-                            Change Contract
-                        </button>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <textarea
+                                value={contractCode}
+                                onChange={e => setContractCode(e.target.value)}
+                                disabled={codeLoaded}
+                                placeholder="Paste your Solidity code here..."
+                                className="input"
+                                style={{
+                                    flex: 1, minHeight: '80px', maxHeight: '150px',
+                                    fontFamily: 'monospace', fontSize: '0.8rem',
+                                    opacity: codeLoaded ? 0.6 : 1,
+                                    background: codeLoaded ? 'transparent' : 'rgba(0,0,0,0.2)'
+                                }}
+                            />
+                            <button onClick={() => { setCodeLoaded(false); setMessages([]); }} style={{
+                                padding: '10px 16px', borderRadius: '10px', border: '1px solid var(--outline-variant)',
+                                background: 'transparent', color: 'var(--outline)',
+                                fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer',
+                                fontFamily: 'Inter, sans-serif', alignSelf: 'flex-start',
+                                whiteSpace: 'nowrap'
+                            }}>
+                                Change Contract
+                            </button>
+                        </div>
                     </div>
 
                     {/* Messages */}
                     <div style={{
-                        flex: 1, overflowY: 'auto', padding: '4px', marginBottom: '12px',
+                        flex: 1, overflowY: 'auto', padding: '4px 20px', marginBottom: '12px',
                         display: 'flex', flexDirection: 'column', gap: '12px'
                     }}>
                         {messages.map((msg, i) => (
@@ -178,9 +192,9 @@ export default function ChatbotPage() {
                                     borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                                     background: msg.role === 'user'
                                         ? 'linear-gradient(135deg, var(--gradient-start), var(--gradient-end))'
-                                        : 'var(--bg-card)',
-                                    border: msg.role === 'user' ? 'none' : '1px solid var(--border-color)',
-                                    color: msg.role === 'user' ? 'white' : 'var(--text-secondary)',
+                                        : 'var(--surface)',
+                                    border: msg.role === 'user' ? 'none' : '1px solid var(--outline-variant)',
+                                    color: msg.role === 'user' ? 'white' : 'var(--on-surface-variant)',
                                     fontSize: '0.88rem',
                                     lineHeight: 1.7
                                 }}>
@@ -195,16 +209,16 @@ export default function ChatbotPage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px' }}>
                                 <div style={{
                                     width: '8px', height: '8px', borderRadius: '50%',
-                                    background: 'var(--accent)', animation: 'pulse 1.5s ease-in-out infinite'
+                                    background: 'var(--tertiary)', animation: 'pulse 1.5s ease-in-out infinite'
                                 }} />
                                 <div style={{
                                     width: '8px', height: '8px', borderRadius: '50%',
-                                    background: 'var(--accent)', animation: 'pulse 1.5s ease-in-out infinite',
+                                    background: 'var(--tertiary)', animation: 'pulse 1.5s ease-in-out infinite',
                                     animationDelay: '0.2s'
                                 }} />
                                 <div style={{
                                     width: '8px', height: '8px', borderRadius: '50%',
-                                    background: 'var(--accent)', animation: 'pulse 1.5s ease-in-out infinite',
+                                    background: 'var(--tertiary)', animation: 'pulse 1.5s ease-in-out infinite',
                                     animationDelay: '0.4s'
                                 }} />
                             </div>
@@ -212,44 +226,45 @@ export default function ChatbotPage() {
                         <div ref={chatEndRef} />
                     </div>
 
-                    {/* Input */}
+                    {/* Input Area */}
                     <div style={{
-                        display: 'flex', gap: '10px', flexShrink: 0, marginBottom: '8px'
+                        padding: '20px', borderTop: '1px solid rgba(255,255,255,0.05)',
+                        background: 'rgba(0,0,0,0.2)', display: 'flex', gap: '12px'
                     }}>
                         <input
+                            type="text"
                             value={input}
-                            onChange={(e) => setInput(e.target.value)}
+                            onChange={e => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder='Ask about your contract... (e.g. "What does the mint function do?")'
+                            placeholder={codeLoaded ? "Ask a question about the contract..." : "Paste code above first..."}
+                            disabled={!codeLoaded || isLoading}
                             className="input"
-                            style={{ flex: 1, fontSize: '0.9rem' }}
+                            style={{ flex: 1, borderRadius: '99px', paddingLeft: '20px', background: 'rgba(255,255,255,0.03)' }}
                         />
                         <button
                             onClick={sendMessage}
-                            disabled={isLoading || !input.trim()}
+                            disabled={!input.trim() || !codeLoaded || isLoading}
+                            className="btn-primary"
                             style={{
-                                padding: '14px 24px', borderRadius: '14px', border: 'none',
-                                background: isLoading || !input.trim()
-                                    ? 'var(--bg-input)'
-                                    : 'linear-gradient(135deg, #10b981, #06b6d4)',
-                                color: isLoading || !input.trim() ? 'var(--text-muted)' : 'white',
-                                fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer',
-                                fontFamily: 'Inter, sans-serif',
-                                transition: 'all 0.2s ease'
+                                width: '48px', height: '48px', borderRadius: '50%',
+                                padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }}
                         >
-                            Send
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
                         </button>
                     </div>
 
                     {/* Quick suggestions */}
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', flexShrink: 0 }}>
+                    <div style={{ padding: '0 20px 20px', background: 'rgba(0,0,0,0.2)', display: 'flex', gap: '6px', flexWrap: 'wrap', flexShrink: 0 }}>
                         {['What does this contract do?', 'Is it secure?', 'List all functions', 'Who has permissions?', 'Gas costs?'].map(s => (
                             <button key={s} onClick={() => { setInput(s); }}
                                 style={{
                                     padding: '6px 12px', borderRadius: '50px',
-                                    border: '1px solid var(--border-color)',
-                                    background: 'transparent', color: 'var(--text-muted)',
+                                    border: '1px solid var(--outline-variant)',
+                                    background: 'transparent', color: 'var(--outline)',
                                     fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer',
                                     fontFamily: 'Inter, sans-serif',
                                     transition: 'all 0.2s ease'
@@ -257,7 +272,7 @@ export default function ChatbotPage() {
                             >{s}</button>
                         ))}
                     </div>
-                </>
+                </div>
             )}
         </div>
     );

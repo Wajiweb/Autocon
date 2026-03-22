@@ -66,23 +66,27 @@ export default function AuditPage() {
             <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
                 <h1 style={{
                     fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-                    color: 'var(--text-primary)', marginBottom: '8px'
+                    color: 'var(--on-surface)', marginBottom: '8px'
                 }}>
                     Security <span className="gradient-text">Audit</span>
                 </h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
                     Scan your smart contracts for common vulnerabilities before deployment.
                 </p>
             </div>
 
             {/* Input Card */}
-            <div className="card animate-fade-in-up delay-100" style={{ padding: '28px', marginBottom: '20px' }}>
+            <div className="card glass-strong animate-fade-in-up delay-100" style={{
+                padding: '28px', marginBottom: '24px',
+                borderTop: '2px solid rgba(139,92,246,0.4)',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.4), 0 0 20px rgba(139,92,246,0.1)'
+            }}>
                 <label style={{
-                    display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                    color: 'var(--text-secondary)', textTransform: 'uppercase',
-                    letterSpacing: '1px', marginBottom: '12px'
+                    display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 700,
+                    color: 'var(--on-surface)', textTransform: 'uppercase',
+                    letterSpacing: '1px', marginBottom: '14px'
                 }}>
-                    Paste Solidity Code
+                    <span style={{ color: '#a78bfa' }}>📝</span> Paste Solidity Code
                 </label>
                 <textarea
                     value={contractCode}
@@ -90,12 +94,15 @@ export default function AuditPage() {
                     placeholder={`// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\nimport "@openzeppelin/contracts/token/ERC20/ERC20.sol";\n...\n\nPaste your full contract source code here`}
                     className="input"
                     style={{
-                        minHeight: '200px',
+                        minHeight: '220px',
                         fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-                        fontSize: '0.8rem',
+                        fontSize: '0.85rem',
                         lineHeight: 1.7,
                         resize: 'vertical',
-                        borderRadius: '14px'
+                        borderRadius: '16px',
+                        background: 'rgba(0,0,0,0.2)',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.2)'
                     }}
                 />
 
@@ -124,12 +131,13 @@ export default function AuditPage() {
             {auditResult && (
                 <div className="animate-fade-in-up">
                     {/* Score + Summary Row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '20px', marginBottom: '20px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', marginBottom: '24px' }}>
                         {/* Score Circle */}
-                        <div className="card" style={{
-                            padding: '28px',
+                        <div className="card glass-strong" style={{
+                            padding: '32px 24px',
                             display: 'flex', flexDirection: 'column',
-                            alignItems: 'center', justifyContent: 'center'
+                            alignItems: 'center', justifyContent: 'center',
+                            borderTop: '2px solid rgba(6,182,212,0.4)'
                         }}>
                             <div style={{
                                 width: '110px', height: '110px',
@@ -142,7 +150,7 @@ export default function AuditPage() {
                                 <div style={{
                                     width: '90px', height: '90px',
                                     borderRadius: '50%',
-                                    background: 'var(--bg-card)',
+                                    background: 'var(--surface)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     flexDirection: 'column'
                                 }}>
@@ -153,7 +161,7 @@ export default function AuditPage() {
                                     }}>
                                         {auditResult.score}
                                     </span>
-                                    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                    <span style={{ fontSize: '0.6rem', color: 'var(--outline)', fontWeight: 600 }}>
                                         / 100
                                     </span>
                                 </div>
@@ -189,7 +197,7 @@ export default function AuditPage() {
                                         }}>{item.count}</p>
                                         <p style={{
                                             fontSize: '0.7rem', fontWeight: 600,
-                                            color: 'var(--text-muted)', textTransform: 'uppercase',
+                                            color: 'var(--outline)', textTransform: 'uppercase',
                                             letterSpacing: '0.5px'
                                         }}>{item.label}</p>
                                     </div>
@@ -203,7 +211,7 @@ export default function AuditPage() {
                         <div>
                             <h3 style={{
                                 fontSize: '1rem', fontWeight: 800,
-                                color: 'var(--text-primary)', marginBottom: '16px'
+                                color: 'var(--on-surface)', marginBottom: '16px'
                             }}>
                                 📋 Detailed Findings
                             </h3>
@@ -229,14 +237,14 @@ export default function AuditPage() {
                                                 </span>
                                                 <h4 style={{
                                                     fontSize: '0.95rem', fontWeight: 700,
-                                                    color: 'var(--text-primary)', margin: 0
+                                                    color: 'var(--on-surface)', margin: 0
                                                 }}>
                                                     {finding.title}
                                                 </h4>
                                                 <span style={{
                                                     marginLeft: 'auto',
                                                     fontSize: '0.7rem',
-                                                    color: 'var(--text-muted)',
+                                                    color: 'var(--outline)',
                                                     fontFamily: 'monospace'
                                                 }}>
                                                     Line {finding.line}
@@ -245,7 +253,7 @@ export default function AuditPage() {
                                             </div>
 
                                             <p style={{
-                                                fontSize: '0.85rem', color: 'var(--text-secondary)',
+                                                fontSize: '0.85rem', color: 'var(--on-surface-variant)',
                                                 lineHeight: 1.7, marginBottom: '12px'
                                             }}>
                                                 {finding.description}
@@ -272,7 +280,7 @@ export default function AuditPage() {
                                                 background: 'rgba(6,182,212,0.05)',
                                                 border: '1px solid rgba(6,182,212,0.1)',
                                                 fontSize: '0.82rem',
-                                                color: 'var(--accent)',
+                                                color: 'var(--tertiary)',
                                                 lineHeight: 1.6
                                             }}>
                                                 💡 <strong>Recommendation:</strong> {finding.advice}
@@ -292,7 +300,7 @@ export default function AuditPage() {
                             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--success)', marginBottom: '8px' }}>
                                 No Vulnerabilities Found!
                             </h3>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            <p style={{ color: 'var(--outline)', fontSize: '0.9rem' }}>
                                 Your contract passed all security checks.
                             </p>
                         </div>
@@ -301,7 +309,7 @@ export default function AuditPage() {
                     {/* Scanned timestamp */}
                     <div style={{
                         textAlign: 'center', marginTop: '20px',
-                        fontSize: '0.7rem', color: 'var(--text-muted)'
+                        fontSize: '0.7rem', color: 'var(--outline)'
                     }}>
                         Scanned at {new Date(auditResult.scannedAt).toLocaleString()} • {auditResult.totalFindings} findings
                     </div>

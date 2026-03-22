@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNetwork } from '../context/NetworkContext';
 
 export default function Sidebar({ activeTab, setActiveTab }) {
+  const [isExpanded, setIsExpanded] = useState(true);
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { selectedNetwork, setSelectedNetwork, networks, allNetworkKeys } = useNetwork();
@@ -45,16 +47,16 @@ export default function Sidebar({ activeTab, setActiveTab }) {
 
   return (
     <aside style={{
-      width: '250px',
-      minWidth: '250px',
+      width: isExpanded ? '252px' : '72px',
+      minWidth: isExpanded ? '252px' : '72px',
       height: '100vh',
-      background: 'var(--bg-sidebar)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
+      background: 'rgba(8,12,20,0.95)',
+      backdropFilter: 'blur(24px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(24px) saturate(180%)',
       display: 'flex',
       flexDirection: 'column',
-      borderRight: '1px solid var(--sidebar-border)',
-      transition: 'background 0.3s ease, border-color 0.3s ease',
+      borderRight: '1px solid rgba(255,255,255,0.05)',
+      transition: 'width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
       position: 'sticky',
       top: 0,
       overflowY: 'auto',
@@ -63,172 +65,184 @@ export default function Sidebar({ activeTab, setActiveTab }) {
     }}>
       {/* Brand */}
       <div style={{
-        padding: '20px 18px',
-        borderBottom: '1px solid var(--sidebar-border)',
-        display: 'flex', alignItems: 'center', gap: '10px'
+        padding: isExpanded ? '20px 16px' : '20px 0',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        display: 'flex', alignItems: 'center', justifyContent: isExpanded ? 'space-between' : 'center',
+        gap: '12px', transition: 'padding 0.3s ease'
       }}>
-        <img src="/autocon-logo.png" alt="AutoCon" style={{
-          width: '34px', height: '34px', borderRadius: '10px',
-          objectFit: 'cover'
-        }} />
-        <div>
-          <div style={{
-            fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.3px',
-            color: 'var(--sidebar-brand)',
-            transition: 'color 0.3s ease'
-          }}>AutoCon</div>
-          <div style={{
-            fontSize: '0.6rem', fontWeight: 500,
-            color: 'var(--sidebar-muted)',
-            transition: 'color 0.3s ease'
-          }}>Web3 Contract Platform</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center' }}>
+          <img src="/autocon-logo.png" alt="AutoCon" style={{
+            width: '36px', height: '36px', borderRadius: '10px', objectFit: 'cover',
+            flexShrink: 0, cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(6,182,212,0.3)'
+          }} onClick={() => setIsExpanded(!isExpanded)} title="Toggle Sidebar" />
+
+          {isExpanded && (
+            <div style={{ animation: 'fadeIn 0.3s ease' }}>
+              <div style={{ fontSize: '1.05rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#f1f5f9' }}>AutoCon</div>
+              <div style={{ fontSize: '0.6rem', fontWeight: 600, color: '#374151', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Web3 Platform</div>
+            </div>
+          )}
         </div>
+
+        {isExpanded && (
+          <button onClick={() => setIsExpanded(false)} style={{
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+            color: '#374151', cursor: 'pointer', padding: '5px 7px', borderRadius: '6px',
+            fontSize: '0.7rem', transition: 'all 0.2s ease'
+          }}
+            onMouseOver={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
+            onMouseOut={e => { e.currentTarget.style.color = '#374151'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          >
+            ◀
+          </button>
+        )}
       </div>
 
       {/* Nav Sections */}
-      <nav style={{ flex: 1, padding: '8px 10px', overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: '10px 8px', overflowY: 'auto', overflowX: 'hidden' }}>
         {navSections.map(section => (
-          <div key={section.label} style={{ marginBottom: '6px' }}>
-            <div style={{
-              fontSize: '0.58rem', fontWeight: 700,
-              color: 'var(--sidebar-section)',
-              textTransform: 'uppercase', letterSpacing: '1.5px',
-              padding: '8px 10px 4px',
-              transition: 'color 0.3s ease'
-            }}>{section.label}</div>
+          <div key={section.label} style={{ marginBottom: isExpanded ? '6px' : '16px' }}>
+            {isExpanded ? (
+              <div style={{
+                fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)',
+                textTransform: 'uppercase', letterSpacing: '1.5px',
+                padding: '12px 14px 6px', transition: 'color 0.3s ease'
+              }}>{section.label}</div>
+            ) : (
+              <div style={{
+                height: '1px', background: 'var(--outline-variant)',
+                margin: '12px 14px 6px'
+              }} />
+            )}
             {section.items.map(item => {
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
+                  title={item.label}
                   onClick={() => setActiveTab(item.id)}
                   style={{
                     width: '100%', textAlign: 'left',
-                    padding: '9px 10px', borderRadius: '10px',
-                    border: 'none', marginBottom: '2px',
-                    cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: '9px',
-                    fontSize: '0.82rem',
-                    fontWeight: isActive ? 700 : 500,
+                    padding: isExpanded ? '9px 12px' : '11px 0',
+                    borderRadius: '10px', border: 'none', marginBottom: '2px',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center',
+                    justifyContent: isExpanded ? 'flex-start' : 'center',
+                    gap: isExpanded ? '10px' : '0',
+                    fontSize: '0.84rem', fontWeight: isActive ? 700 : 500,
                     fontFamily: 'Inter, sans-serif',
-                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    background: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
-                    color: isActive ? 'var(--sidebar-text-active)' : 'var(--sidebar-text)',
-                    borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
-                    boxShadow: isActive ? 'inset 2px 0 10px var(--accent-glow)' : 'none',
-                    position: 'relative',
-                    overflow: 'hidden'
+                    transition: 'all 0.2s ease',
+                    background: isActive ? 'rgba(103,232,249,0.07)' : 'transparent',
+                    color: isActive ? '#67e8f9' : '#64748b',
+                    borderLeft: isActive ? '2px solid #67e8f9' : '2px solid transparent',
+                    boxShadow: isActive ? 'inset 8px 0 20px rgba(103,232,249,0.04)' : 'none',
+                    position: 'relative', overflow: 'hidden'
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.background = 'var(--sidebar-hover)';
-                      e.currentTarget.style.color = 'var(--sidebar-brand)';
-                      e.currentTarget.style.transform = 'translateX(4px)';
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                      e.currentTarget.style.color = '#94a3b8';
+                      if (isExpanded) e.currentTarget.style.transform = 'translateX(3px)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
                       e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = 'var(--sidebar-text)';
-                      e.currentTarget.style.transform = 'translateX(0)';
+                      e.currentTarget.style.color = '#64748b';
+                      if (isExpanded) e.currentTarget.style.transform = 'translateX(0)';
                     }
                   }}
                 >
-                  <span style={{ fontSize: '1rem', width: '24px', textAlign: 'center' }}>{item.icon}</span>
-                  {item.label}
+                  <span style={{ fontSize: '1.1rem', width: '24px', textAlign: 'center' }}>{item.icon}</span>
+                  {isExpanded && <span style={{ animation: 'fadeIn 0.3s ease', whiteSpace: 'nowrap' }}>{item.label}</span>}
                 </button>
               );
             })}
           </div>
         ))}
 
-        {/* Network Selector - Compact Dropdown Style */}
-        <div style={{ marginTop: '4px', padding: '0 4px' }}>
-          <div style={{
-            fontSize: '0.58rem', fontWeight: 700,
-            color: 'var(--sidebar-section)',
-            textTransform: 'uppercase', letterSpacing: '1.5px',
-            padding: '8px 10px 6px',
-            transition: 'color 0.3s ease'
-          }}>Network</div>
-          <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', padding: '0 4px'
-          }}>
-            {allNetworkKeys.map(key => {
-              const net = networks[key];
-              const isActive = key === selectedNetwork;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelectedNetwork(key)}
-                  style={{
-                    padding: '6px 8px', borderRadius: '8px',
-                    border: isActive ? `1.5px solid ${net.color}` : '1px solid var(--sidebar-border)',
-                    cursor: 'pointer',
-                    fontSize: '0.62rem', fontWeight: isActive ? 700 : 500,
-                    fontFamily: 'Inter, sans-serif',
-                    background: isActive ? `${net.color}15` : 'transparent',
-                    color: isActive ? net.color : 'var(--sidebar-muted)',
-                    transition: 'all 0.2s ease',
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                    whiteSpace: 'nowrap', overflow: 'hidden'
-                  }}
-                >
-                  <span style={{ fontSize: '0.7rem' }}>{net.icon}</span>
-                  {net.name.replace('Polygon ', '')}
-                </button>
-              );
-            })}
+        {/* Network Selector */}
+        {isExpanded && (
+          <div style={{ marginTop: '12px', padding: '0 4px', animation: 'fadeIn 0.3s ease' }}>
+            <div style={{
+              fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)',
+              textTransform: 'uppercase', letterSpacing: '1.5px',
+              padding: '12px 10px 6px', transition: 'color 0.3s ease'
+            }}>Network</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', padding: '0 8px' }}>
+              {allNetworkKeys.map(key => {
+                const net = networks[key];
+                const isActive = key === selectedNetwork;
+                return (
+                  <button
+                    key={key} title={net.name}
+                    onClick={() => setSelectedNetwork(key)}
+                    style={{
+                      padding: '8px', borderRadius: '8px',
+                      border: isActive ? `1.5px solid ${net.color}` : '1px solid var(--outline-variant)',
+                      cursor: 'pointer', fontSize: '0.65rem', fontWeight: isActive ? 700 : 500,
+                      fontFamily: 'Inter, sans-serif', background: isActive ? `${net.color}15` : 'transparent',
+                      color: isActive ? net.color : 'var(--on-surface-variant)', transition: 'all 0.2s ease',
+                      display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center',
+                      whiteSpace: 'nowrap', overflow: 'hidden'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.75rem' }}>{net.icon}</span>
+                    {net.name.replace('Polygon ', '')}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* Bottom section */}
       <div style={{
-        padding: '10px',
-        borderTop: '1px solid var(--sidebar-border)',
+        padding: '14px 10px',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
         display: 'flex', flexDirection: 'column', gap: '6px'
       }}>
         {/* Theme toggle */}
-        <button onClick={toggleTheme} style={{
-          width: '100%', textAlign: 'left',
-          padding: '8px 10px', borderRadius: '8px',
-          border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: '8px',
-          fontSize: '0.78rem', fontWeight: 500, fontFamily: 'Inter, sans-serif',
-          background: 'var(--sidebar-hover)',
-          color: 'var(--sidebar-text)', transition: 'all 0.2s ease'
+        <button onClick={toggleTheme} title="Toggle Theme" style={{
+          width: '100%', textAlign: isExpanded ? 'left' : 'center',
+          padding: isExpanded ? '10px 12px' : '10px 0', borderRadius: '10px',
+          border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+          justifyContent: isExpanded ? 'flex-start' : 'center', gap: isExpanded ? '10px' : '0',
+          fontSize: '0.8rem', fontWeight: 500, fontFamily: 'Inter, sans-serif',
+          background: 'var(--surface)', color: 'var(--on-surface-variant)', transition: 'all 0.2s ease'
         }}>
           <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
-          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          {isExpanded && <span style={{ animation: 'fadeIn 0.3s ease', whiteSpace: 'nowrap' }}>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
 
         {/* Wallet */}
-        <div style={{
-          padding: '8px 10px', borderRadius: '8px',
-          background: 'var(--accent-glow)',
-          border: '1px solid rgba(6,182,212,0.15)'
-        }}>
-          <div style={{ fontSize: '0.55rem', fontWeight: 600, color: 'var(--sidebar-muted)', marginBottom: '2px' }}>
-            WALLET
+        {isExpanded && (
+          <div style={{
+            padding: '10px 12px', borderRadius: '10px', background: 'var(--surface-highest)',
+            border: '1px solid var(--outline-variant)', animation: 'fadeIn 0.3s ease'
+          }}>
+            <div style={{ fontSize: '0.6rem', fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }} />
+              WALLET DIRECT
+            </div>
+            <div style={{ fontSize: '0.8rem', fontFamily: 'monospace', fontWeight: 600, color: 'var(--tertiary)' }}>
+              {shortAddr}
+            </div>
           </div>
-          <div style={{ fontSize: '0.75rem', fontFamily: 'monospace', fontWeight: 600, color: 'var(--accent)' }}>
-            {shortAddr}
-          </div>
-        </div>
+        )}
 
         {/* Logout */}
-        <button onClick={logout} style={{
-          width: '100%', textAlign: 'left',
-          padding: '8px 10px', borderRadius: '8px',
-          border: '1px solid rgba(239,68,68,0.15)',
-          cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: '8px',
-          fontSize: '0.75rem', fontWeight: 600, fontFamily: 'Inter, sans-serif',
-          background: 'rgba(239,68,68,0.05)',
-          color: '#ef4444', transition: 'all 0.2s ease'
+        <button onClick={logout} title="Sign Out" style={{
+          width: '100%', textAlign: isExpanded ? 'left' : 'center',
+          padding: isExpanded ? '10px 12px' : '10px 0', borderRadius: '10px',
+          border: '1px solid rgba(239,68,68,0.2)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: isExpanded ? 'flex-start' : 'center',
+          gap: isExpanded ? '10px' : '0', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'Inter, sans-serif',
+          background: 'rgba(239,68,68,0.05)', color: 'var(--error)', transition: 'all 0.2s ease'
         }}>
-          <span>🚪</span> Sign Out
+          <span>🚪</span>
+          {isExpanded && <span style={{ animation: 'fadeIn 0.3s ease', whiteSpace: 'nowrap' }}>Sign Out</span>}
         </button>
       </div>
     </aside>
