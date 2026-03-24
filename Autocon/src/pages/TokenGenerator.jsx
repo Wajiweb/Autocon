@@ -1,14 +1,18 @@
 import { useWeb3 } from '../hooks/useWeb3';
-import { Toaster } from 'react-hot-toast';
 import CodeExportTools from '../components/CodeExportTools';
+import DeploymentTimeline from '../components/deploy/DeploymentTimeline';
+import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
+import { useNetwork } from '../context/NetworkContext';
 
 export default function TokenGenerator() {
   const {
     formData, setFormData, generatedCode,
     connectWallet, generateContract, deployContract,
     estimateGas, gasEstimate, isEstimating,
-    isDeploying
+    isDeploying, deployStep,
+    deployedAddress, showSuccessModal, setShowSuccessModal
   } = useWeb3();
+  const { network } = useNetwork();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -16,7 +20,7 @@ export default function TokenGenerator() {
 
   return (
     <div className="container" style={{ paddingTop: '12px' }}>
-      <Toaster position="bottom-right" reverseOrder={false} />
+
 
       {/* Header */}
       <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
@@ -217,31 +221,29 @@ export default function TokenGenerator() {
 
       {/* Deploy Button */}
       <div className="animate-fade-in-up">
-          <button
-            onClick={deployContract}
-            disabled={!generatedCode || isDeploying}
-            className="btn-primary"
-            style={{
-              width: '100%', padding: '18px',
-              fontSize: '1.05rem',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-              background: (!generatedCode || isDeploying)
-                ? 'var(--bg-input)'
-                : 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
-              color: (!generatedCode || isDeploying) ? 'var(--text-muted)' : 'white',
-              cursor: (!generatedCode || isDeploying) ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {isDeploying ? (
-              <>
-                <svg style={{ animation: 'spin-slow 1s linear infinite', width: 20, height: 20 }} viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                  <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                </svg>
-                DEPLOYING TO BLOCKCHAIN...
-              </>
-            ) : '🚀 Deploy to Sepolia'}
-          </button>
+          {isDeploying && deployStep >= 0 ? (
+            <div className="card glass" style={{ padding: '28px', marginBottom: '16px' }}>
+              <DeploymentTimeline currentStep={deployStep} />
+            </div>
+          ) : (
+            <button
+              onClick={deployContract}
+              disabled={!generatedCode || isDeploying}
+              className="btn-primary"
+              style={{
+                width: '100%', padding: '18px',
+                fontSize: '1.05rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                background: (!generatedCode || isDeploying)
+                  ? 'var(--bg-input)'
+                  : 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+                color: (!generatedCode || isDeploying) ? 'var(--text-muted)' : 'white',
+                cursor: (!generatedCode || isDeploying) ? 'not-allowed' : 'pointer'
+              }}
+            >
+              🚀 Deploy to {network.name}
+            </button>
+          )}
         </div>
 
       {/* Generated Code Preview */}
@@ -266,6 +268,15 @@ export default function TokenGenerator() {
       )}
       </div>
 
+      {/* Deploy Success Modal */}
+      <DeploySuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        address={deployedAddress || ''}
+        network={network.name}
+        contractType="Token"
+        explorerUrl={network.explorerUrl || 'https://sepolia.etherscan.io'}
+      />
     </div>
   );
-}
+}

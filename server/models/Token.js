@@ -6,6 +6,7 @@ const tokenSchema = new mongoose.Schema({
     contractAddress: { type: String, required: true, trim: true },
     ownerAddress: { type: String, required: true, lowercase: true, trim: true },
     network: { type: String, default: 'Sepolia' },
+    abi: { type: mongoose.Schema.Types.Mixed, default: null },
     createdAt: { type: Date, default: Date.now }
 });
 

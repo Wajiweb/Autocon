@@ -16,6 +16,9 @@ export const useNFT = () => {
     const [generatedCode, setGeneratedCode] = useState('');
     const [contractData, setContractData] = useState({ abi: null, bytecode: null });
     const [isDeploying, setIsDeploying] = useState(false);
+    const [deployStep, setDeployStep] = useState(-1);
+    const [deployedAddress, setDeployedAddress] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [gasEstimate, setGasEstimate] = useState(null);
     const [isEstimating, setIsEstimating] = useState(false);
 
@@ -98,25 +101,26 @@ export const useNFT = () => {
         if (!contractData.abi || !contractData.bytecode) return toast.error("Generate NFT code first!");
 
         setIsDeploying(true);
-        let deployedAddress;
+        setDeployStep(0); // Compiling
+        let deployed;
 
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const currentNetwork = await provider.getNetwork();
 
-            // Multi-chain: check against selected network
             if (Number(currentNetwork.chainId) !== network.chainIdDecimal) {
                 toast.error(`Please switch MetaMask to ${network.name}!`);
                 setIsDeploying(false);
+                setDeployStep(-1);
                 return;
             }
 
             const signer = await provider.getSigner();
             const factory = new ethers.ContractFactory(contractData.abi, contractData.bytecode, signer);
 
+            setDeployStep(1); // Awaiting wallet signature
             toast('Confirm transaction in MetaMask 🦊', { icon: '👆' });
 
-            // Deploy with constructor args: (initialOwner, maxSupply, baseURI, mintPrice)
             const mintPriceWei = ethers.parseEther(String(formData.mintPrice || '0'));
             const contract = await factory.deploy(
                 formData.ownerAddress,
@@ -125,13 +129,17 @@ export const useNFT = () => {
                 mintPriceWei
             );
 
+            setDeployStep(2); // Broadcasting
             const deployToast = toast.loading(`Deploying NFT to ${network.name}...`);
 
+            setDeployStep(3); // Waiting for confirmation
             await contract.waitForDeployment();
-            deployedAddress = await contract.getAddress();
+            deployed = await contract.getAddress();
 
+            setDeployStep(4); // Success!
             toast.success(`NFT Collection deployed on ${network.name}! 🎉`, { id: deployToast });
             fireConfetti();
+            setDeployedAddress(deployed);
 
             // Save to database
             try {
@@ -140,12 +148,13 @@ export const useNFT = () => {
                     body: JSON.stringify({
                         name: formData.name,
                         symbol: formData.symbol,
-                        contractAddress: deployedAddress,
+                        contractAddress: deployed,
                         ownerAddress: formData.ownerAddress,
                         network: network.name,
                         maxSupply: parseInt(formData.maxSupply),
                         mintPrice: formData.mintPrice,
-                        baseURI: formData.baseURI
+                        baseURI: formData.baseURI,
+                        abi: contractData.abi
                     })
                 });
                 const saveData = await saveRes.json();
@@ -171,7 +180,7 @@ export const useNFT = () => {
                 const verifyRes = await authFetch('/api/verify', {
                     method: 'POST',
                     body: JSON.stringify({
-                        contractAddress: deployedAddress,
+                        contractAddress: deployed,
                         sourceCode: generatedCode,
                         contractName: formData.name.replace(/\s+/g, ''),
                         compilerVersion: 'v0.8.20+commit.a1b79de6',
@@ -197,13 +206,15 @@ export const useNFT = () => {
             setContractData({ abi: null, bytecode: null });
             setGasEstimate(null);
 
-            return deployedAddress;
+            setShowSuccessModal(true);
+            return deployed;
 
         } catch (err) {
             console.error(err);
             toast.error("Deployment failed. Do you have enough testnet ETH?");
         } finally {
             setIsDeploying(false);
+            setTimeout(() => setDeployStep(-1), 2000);
         }
     };
 
@@ -211,6 +222,7 @@ export const useNFT = () => {
         formData, setFormData, generatedCode, contractData,
         connectWallet, generateNFT, deployNFT,
         estimateGas, gasEstimate, isEstimating,
-        isDeploying
+        isDeploying, deployStep,
+        deployedAddress, showSuccessModal, setShowSuccessModal
     };
 };

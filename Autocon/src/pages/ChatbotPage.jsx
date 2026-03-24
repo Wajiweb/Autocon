@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 export default function ChatbotPage() {
@@ -76,7 +76,7 @@ export default function ChatbotPage() {
 
     return (
         <div style={{ maxWidth: '860px', margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
-            <Toaster position="bottom-right" reverseOrder={false} />
+
 
             {/* Header */}
             <div className="animate-fade-in-up" style={{ marginBottom: '20px', flexShrink: 0 }}>

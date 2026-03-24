@@ -1,4 +1,4 @@
-import { Toaster } from 'react-hot-toast';
+
 
 export default function TemplateLibrary({ setActiveTab }) {
     const templates = [
@@ -48,7 +48,7 @@ export default function TemplateLibrary({ setActiveTab }) {
 
     return (
         <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <Toaster position="bottom-right" reverseOrder={false} />
+
 
             {/* Header */}
             <div className="animate-fade-in-up" style={{ marginBottom: '36px' }}>

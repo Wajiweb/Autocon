@@ -30,11 +30,11 @@ export default function Navbar({ activeTab }) {
     <header style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 var(--space-4)', height: '64px',
-      background: 'rgba(8,12,20,0.8)',
+      background: 'var(--surface-high)',
       backdropFilter: 'blur(24px) saturate(200%)',
       WebkitBackdropFilter: 'blur(24px) saturate(200%)',
-      borderBottom: '1px solid rgba(255,255,255,0.05)',
-      boxShadow: '0 1px 0 rgba(255,255,255,0.02), 0 4px 24px rgba(0,0,0,0.3)',
+      borderBottom: '1px solid var(--outline-variant)',
+      boxShadow: 'var(--shadow-xs)',
       position: 'sticky', top: 0, zIndex: 50,
       marginBottom: '24px',
     }}>

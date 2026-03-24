@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import { useNFT } from '../hooks/useNFT';
-import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useNetwork } from '../context/NetworkContext';
 import CodeExportTools from '../components/CodeExportTools';
+import DeploymentTimeline from '../components/deploy/DeploymentTimeline';
+import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
 
 export default function NFTGenerator() {
     const {
         formData, setFormData, generatedCode,
         connectWallet, generateNFT, deployNFT,
         estimateGas, gasEstimate, isEstimating,
-        isDeploying
+        isDeploying, deployStep,
+        deployedAddress, showSuccessModal, setShowSuccessModal
     } = useNFT();
     const { authFetch } = useAuth();
+    const { network } = useNetwork();
     const [isUploading, setIsUploading] = useState(false);
     const [uploadedFile, setUploadedFile] = useState(null);
 
@@ -57,7 +61,7 @@ export default function NFTGenerator() {
 
     return (
         <div className="container" style={{ paddingTop: '12px' }}>
-            <Toaster position="bottom-right" reverseOrder={false} />
+
 
             {/* Header */}
             <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
@@ -408,30 +412,28 @@ export default function NFTGenerator() {
             {/* Deploy Button */}
             {generatedCode && (
                 <div className="animate-fade-in-up">
-                    <button
-                        onClick={deployNFT}
-                        disabled={!generatedCode || isDeploying}
-                        className="btn-primary"
-                        style={{
-                            width: '100%', padding: '18px', fontSize: '1.05rem',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                            background: (!generatedCode || isDeploying)
-                                ? 'var(--surface-highest)'
-                                : 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-                            color: (!generatedCode || isDeploying) ? 'var(--outline)' : 'white',
-                            cursor: (!generatedCode || isDeploying) ? 'not-allowed' : 'pointer'
-                        }}
-                    >
-                        {isDeploying ? (
-                            <>
-                                <svg style={{ animation: 'spin-slow 1s linear infinite', width: 20, height: 20 }} viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                                </svg>
-                                DEPLOYING NFT TO BLOCKCHAIN...
-                            </>
-                        ) : '🚀 Deploy NFT to Sepolia'}
-                    </button>
+                    {isDeploying && deployStep >= 0 ? (
+                        <div className="card glass" style={{ padding: '28px', marginBottom: '16px' }}>
+                            <DeploymentTimeline currentStep={deployStep} />
+                        </div>
+                    ) : (
+                        <button
+                            onClick={deployNFT}
+                            disabled={!generatedCode || isDeploying}
+                            className="btn-primary"
+                            style={{
+                                width: '100%', padding: '18px', fontSize: '1.05rem',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                                background: (!generatedCode || isDeploying)
+                                    ? 'var(--surface-highest)'
+                                    : 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                                color: (!generatedCode || isDeploying) ? 'var(--outline)' : 'white',
+                                cursor: (!generatedCode || isDeploying) ? 'not-allowed' : 'pointer'
+                            }}
+                        >
+                            🚀 Deploy NFT to {network.name}
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -463,6 +465,16 @@ export default function NFTGenerator() {
             
             </div>
           </div>
+
+        {/* Deploy Success Modal */}
+        <DeploySuccessModal
+            isOpen={showSuccessModal}
+            onClose={() => setShowSuccessModal(false)}
+            address={deployedAddress || ''}
+            network={network.name}
+            contractType="NFT"
+            explorerUrl={network.explorerUrl || 'https://sepolia.etherscan.io'}
+        />
         </div>
     );
 }

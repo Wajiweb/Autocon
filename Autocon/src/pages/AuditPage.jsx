@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { Download, FileText } from 'lucide-react';
+import { usePDFExport } from '../hooks/usePDFExport';
+import AuditReportTemplate from '../components/audit/AuditReportTemplate';
 
 export default function AuditPage() {
     const { authFetch } = useAuth();
     const [contractCode, setContractCode] = useState('');
     const [auditResult, setAuditResult] = useState(null);
     const [isAuditing, setIsAuditing] = useState(false);
+    const { generatePDF, isGenerating: isExportingPDF } = usePDFExport();
 
     const runAudit = async () => {
         if (!contractCode.trim()) {
@@ -60,7 +64,7 @@ export default function AuditPage() {
 
     return (
         <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <Toaster position="bottom-right" reverseOrder={false} />
+
 
             {/* Header */}
             <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
@@ -129,7 +133,51 @@ export default function AuditPage() {
 
             {/* Audit Results */}
             {auditResult && (
-                <div className="animate-fade-in-up">
+                <div className="animate-fade-in-up" style={{ position: 'relative' }}>
+                    
+                    {/* Header with Export Button */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FileText size={24} color="#a78bfa" />
+                            Audit Analysis
+                        </h2>
+                        
+                        {/* Hidden Template rendered outside normal document flow */}
+                        <AuditReportTemplate 
+                            auditResult={auditResult} 
+                            dateStr={new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 
+                        />
+                        
+                        <button
+                            onClick={() => generatePDF('AutoCon_Audit_Report.pdf')}
+                            disabled={isExportingPDF}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                padding: '10px 16px', borderRadius: '12px',
+                                background: 'rgba(139, 92, 246, 0.1)',
+                                border: '1px solid rgba(139, 92, 246, 0.3)',
+                                color: '#a78bfa', fontSize: '0.85rem', fontWeight: 600,
+                                cursor: isExportingPDF ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s ease',
+                                opacity: isExportingPDF ? 0.7 : 1
+                            }}
+                            onMouseOver={(e) => {
+                                if(!isExportingPDF) e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
+                            }}
+                            onMouseOut={(e) => {
+                                if(!isExportingPDF) e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                            }}
+                        >
+                            {isExportingPDF ? (
+                                <svg style={{ animation: 'spin-slow 1s linear infinite', width: 16, height: 16 }} viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
+                                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                                </svg>
+                            ) : <Download size={16} />}
+                            {isExportingPDF ? 'Generating...' : 'Export PDF'}
+                        </button>
+                    </div>
+
                     {/* Score + Summary Row */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', marginBottom: '24px' }}>
                         {/* Score Circle */}

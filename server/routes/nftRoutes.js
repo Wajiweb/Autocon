@@ -111,7 +111,7 @@ router.post('/generate', strictLimiter, authMiddleware, (req, res) => {
  */
 router.post('/save', authMiddleware, async (req, res) => {
     try {
-        const { name, symbol, contractAddress, ownerAddress, network, maxSupply, mintPrice, baseURI } = req.body;
+        const { name, symbol, contractAddress, ownerAddress, network, maxSupply, mintPrice, baseURI, abi } = req.body;
 
         // Validate required fields
         if (!name || !symbol || !contractAddress || !ownerAddress) {
@@ -133,7 +133,7 @@ router.post('/save', authMiddleware, async (req, res) => {
 
         const newNFT = new NFT({
             name, symbol, contractAddress, ownerAddress: ownerAddress.toLowerCase(),
-            network: network || 'Sepolia', maxSupply, mintPrice, baseURI
+            network: network || 'Sepolia', maxSupply, mintPrice, baseURI, abi: abi || null
         });
         await newNFT.save();
 

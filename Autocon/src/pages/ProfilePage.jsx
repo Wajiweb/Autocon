@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProfilePage() {
@@ -72,7 +72,7 @@ export default function ProfilePage() {
 
     return (
         <div style={{ maxWidth: '860px', margin: '0 auto' }}>
-            <Toaster position="bottom-right" reverseOrder={false} />
+
 
             {/* Profile Header Card */}
             <div className="card glass-strong animate-fade-in-up" style={{

@@ -1,4 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import TiltCard from '../animations/TiltCard';
+import ParallaxScroll from '../animations/ParallaxScroll';
+
+// Code-split the heavy Three.js bundle — won't block the main thread
+const HeroCanvas = lazy(() => import('../components/3d/HeroCanvas'));
+
+// Glowing CSS fallback while the WebGL assets load
+const HeroCanvasFallback = () => (
+  <div className="absolute inset-0 z-0 pointer-events-none">
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-30 blur-[120px]"
+      style={{ background: 'linear-gradient(135deg, #7C3AED, #2563EB, #06B6D4)' }}
+    />
+  </div>
+);
 
 // ─── NAV BAR ───
 const NavBar = ({ onConnect }) => (
@@ -59,17 +73,9 @@ const HeroSection = ({ onGetStarted }) => (
     textAlign: 'center', padding: '100px 5% 60px',
     position: 'relative', overflow: 'hidden'
   }}>
-    {/* Background glows */}
-    <div style={{
-      position: 'absolute', top: '15%', left: '15%', width: '500px', height: '500px',
-      background: 'radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 65%)',
-      filter: 'blur(60px)', pointerEvents: 'none'
-    }} />
-    <div style={{
-      position: 'absolute', top: '25%', right: '10%', width: '400px', height: '400px',
-      background: 'radial-gradient(circle, rgba(6,182,212,0.14) 0%, transparent 65%)',
-      filter: 'blur(60px)', pointerEvents: 'none'
-    }} />
+    <Suspense fallback={<HeroCanvasFallback />}>
+      <HeroCanvas />
+    </Suspense>
 
     {/* Animated grid */}
     <div style={{
@@ -172,6 +178,7 @@ const HeroSection = ({ onGetStarted }) => (
 // ─── FEATURE CARD ───
 const FeatureCard = ({ icon, gradient, title, description, index }) => (
   <div className="animate-fade-in-up" style={{ animationDelay: `${index * 0.08}s`, opacity: 0 }}>
+    <TiltCard className="h-full">
     <div style={{
       background: 'rgba(22,29,43,0.8)',
       backdropFilter: 'blur(16px)',
@@ -211,6 +218,7 @@ const FeatureCard = ({ icon, gradient, title, description, index }) => (
       <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f1f5f9', marginBottom: '10px' }}>{title}</h3>
       <p style={{ color: '#64748b', lineHeight: 1.65, fontSize: '0.88rem' }}>{description}</p>
     </div>
+    </TiltCard>
   </div>
 );
 
@@ -247,6 +255,7 @@ const FeaturesSection = () => (
       </p>
     </div>
 
+    <ParallaxScroll offset={[-60, 60]}>
     <div style={{
       display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))',
       gap: '24px', maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1
@@ -268,6 +277,7 @@ const FeaturesSection = () => (
         title="Security Audits"
         description="Automated Solidity vulnerability scanning powered by AI. Detect reentrancy, overflow, access control issues before deployment." />
     </div>
+    </ParallaxScroll>
   </section>
 );
 

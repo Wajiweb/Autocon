@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -29,7 +29,7 @@ export default function LoginPage() {
             position: 'relative',
             overflow: 'hidden'
         }}>
-            <Toaster position="bottom-right" />
+
 
             {/* Background decorative elements */}
             <div style={{

@@ -1,308 +1,356 @@
 import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
+import { Loader2 } from 'lucide-react';
+import GlassCard from '../components/GlassCard';
+import Input from '../components/ui/Input';
+import GradientButton from '../components/GradientButton';
 
 export default function ContractInteraction() {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const { authFetch } = useAuth();
+    
     const [contractAddress, setContractAddress] = useState('');
     const [abiInput, setAbiInput] = useState('');
     const [abi, setAbi] = useState(null);
-    const [connected, setConnected] = useState(false);
-    const [provider, setProvider] = useState(null);
-    const [signer, setSigner] = useState(null);
-    const [contract, setContract] = useState(null);
-    const [results, setResults] = useState({});
+    const [readFunctions, setReadFunctions] = useState([]);
+    const [writeFunctions, setWriteFunctions] = useState([]);
     const [inputValues, setInputValues] = useState({});
+    const [results, setResults] = useState({});
     const [isLoading, setIsLoading] = useState({});
-
-    const connectToContract = async () => {
-        try {
-            if (!contractAddress || !abiInput) {
-                return toast.error('Enter both contract address and ABI.');
-            }
-
-            let parsedAbi;
+    const [isPageLoading, setIsPageLoading] = useState(false);
+    
+    // Auto-fetch ABI on mount if ID is present
+    useEffect(() => {
+        if (!id) return;
+        
+        let isMounted = true;
+        const fetchDetails = async () => {
+            setIsPageLoading(true);
             try {
-                parsedAbi = JSON.parse(abiInput);
-            } catch {
-                return toast.error('Invalid ABI JSON.');
-            }
-
-            if (!window.ethereum) {
-                return toast.error('Please install MetaMask!');
-            }
-
-            const browserProvider = new ethers.BrowserProvider(window.ethereum);
-            await browserProvider.send("eth_requestAccounts", []);
-            const browserSigner = await browserProvider.getSigner();
-            const contractInstance = new ethers.Contract(contractAddress, parsedAbi, browserSigner);
-
-            setProvider(browserProvider);
-            setSigner(browserSigner);
-            setContract(contractInstance);
-            setAbi(parsedAbi);
-            setConnected(true);
-            setResults({});
-            setInputValues({});
-            toast.success('Connected to contract!');
-        } catch (err) {
-            console.error(err);
-            toast.error('Failed to connect to contract.');
-        }
-    };
-
-    // Get functions from ABI
-    const readFunctions = abi?.filter(item =>
-        item.type === 'function' && (item.stateMutability === 'view' || item.stateMutability === 'pure')
-    ) || [];
-
-    const writeFunctions = abi?.filter(item =>
-        item.type === 'function' && item.stateMutability !== 'view' && item.stateMutability !== 'pure'
-    ) || [];
-
-    const callFunction = async (func) => {
-        const funcKey = func.name;
-        setIsLoading(prev => ({ ...prev, [funcKey]: true }));
-
-        try {
-            const args = (func.inputs || []).map((input, idx) => {
-                const val = inputValues[`${funcKey}_${idx}`] || '';
-                if (input.type.includes('uint') || input.type.includes('int')) {
-                    return val;
+                // Fetch from deploying backend db
+                const res = await authFetch(`/api/deployments/${id}`);
+                const data = await res.json();
+                
+                if (data.success && isMounted) {
+                    const parsedAbi = typeof data.deployment.abi === 'string' 
+                        ? JSON.parse(data.deployment.abi) 
+                        : data.deployment.abi;
+                    
+                    setContractAddress(data.deployment.contractAddress);
+                    setAbi(parsedAbi);
+                    
+                    // Filter and Categorize ABI
+                    const reads = parsedAbi.filter(item =>
+                        item.type === 'function' && (item.stateMutability === 'view' || item.stateMutability === 'pure')
+                    );
+                    const writes = parsedAbi.filter(item =>
+                        item.type === 'function' && item.stateMutability !== 'view' && item.stateMutability !== 'pure'
+                    );
+                    
+                    setReadFunctions(reads);
+                    setWriteFunctions(writes);
+                } else if (!data.success) {
+                    toast.error('Failed to load contract details');
                 }
-                if (input.type === 'bool') return val === 'true';
-                return val;
-            });
-
-            const result = await contract[func.name](...args);
-
-            let displayResult;
-            if (typeof result === 'bigint') {
-                displayResult = result.toString();
-            } else if (Array.isArray(result)) {
-                displayResult = result.map(r => typeof r === 'bigint' ? r.toString() : String(r)).join(', ');
-            } else {
-                displayResult = String(result);
+            } catch (err) {
+                console.error("X-Ray Fetch Error:", err);
+                toast.error('Error fetching contract ABI.');
+            } finally {
+                if (isMounted) setIsPageLoading(false);
             }
-
-            setResults(prev => ({ ...prev, [funcKey]: { success: true, value: displayResult } }));
-            toast.success(`${func.name}() executed!`);
-        } catch (err) {
-            console.error(err);
-            setResults(prev => ({ ...prev, [funcKey]: { success: false, value: err.reason || err.message || 'Transaction failed' } }));
-            toast.error(`${func.name}() failed`);
-        } finally {
-            setIsLoading(prev => ({ ...prev, [funcKey]: false }));
-        }
-    };
+        };
+        fetchDetails();
+        
+        return () => { isMounted = false; };
+    }, [id, authFetch]);
 
     const handleInputChange = (funcName, idx, value) => {
         setInputValues(prev => ({ ...prev, [`${funcName}_${idx}`]: value }));
     };
 
-    const renderFunctionCard = (func, isWrite) => {
-        const funcKey = func.name;
-        const bgColor = isWrite ? 'rgba(245,158,11,0.06)' : 'rgba(16,185,129,0.06)';
-        const borderColor = isWrite ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)';
-        const accentColor = isWrite ? '#f59e0b' : '#10b981';
+    const executeFunction = async (func, isWrite) => {
+        const funcName = func.name;
+        setIsLoading(prev => ({ ...prev, [funcName]: true }));
 
-        return (
-            <div key={funcKey} style={{
-                padding: '18px', borderRadius: '14px',
-                background: bgColor,
-                border: `1px solid ${borderColor}`,
-                marginBottom: '10px'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: func.inputs?.length ? '12px' : '0' }}>
-                    <span style={{
-                        padding: '3px 8px', borderRadius: '6px',
-                        fontSize: '0.6rem', fontWeight: 700,
-                        background: `${accentColor}20`, color: accentColor,
-                        textTransform: 'uppercase'
-                    }}>
-                        {isWrite ? (func.stateMutability === 'payable' ? '💰 payable' : '✏️ write') : '👁️ read'}
-                    </span>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--on-surface)', fontFamily: 'monospace' }}>
-                        {func.name}
-                    </span>
-                    {func.inputs?.length === 0 && (
-                        <button
-                            onClick={() => callFunction(func)}
-                            disabled={isLoading[funcKey]}
-                            style={{
-                                marginLeft: 'auto', padding: '6px 14px', borderRadius: '8px',
-                                border: 'none', background: accentColor, color: 'white',
-                                fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
-                                fontFamily: 'Inter, sans-serif', opacity: isLoading[funcKey] ? 0.6 : 1
-                            }}
-                        >{isLoading[funcKey] ? '...' : 'Call'}</button>
-                    )}
-                </div>
+        try {
+            if (!window.ethereum) throw new Error('MetaMask is not installed!');
 
-                {/* Inputs */}
-                {func.inputs?.length > 0 && (
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                        {func.inputs.map((input, idx) => (
-                            <div key={idx} style={{ flex: 1, minWidth: '120px' }}>
-                                <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--outline)', marginBottom: '4px', fontWeight: 600 }}>
-                                    {input.name || `arg${idx}`} <span style={{ opacity: 0.6 }}>({input.type})</span>
-                                </label>
-                                <input
-                                    value={inputValues[`${funcKey}_${idx}`] || ''}
-                                    onChange={(e) => handleInputChange(funcKey, idx, e.target.value)}
-                                    placeholder={input.type}
-                                    className="input"
-                                    style={{ padding: '8px 12px', fontSize: '0.8rem' }}
-                                />
-                            </div>
-                        ))}
-                        <button
-                            onClick={() => callFunction(func)}
-                            disabled={isLoading[funcKey]}
-                            style={{
-                                padding: '8px 18px', borderRadius: '8px',
-                                border: 'none', background: accentColor, color: 'white',
-                                fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
-                                fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap',
-                                height: 'fit-content', opacity: isLoading[funcKey] ? 0.6 : 1
-                            }}
-                        >{isLoading[funcKey] ? '...' : isWrite ? 'Send TX' : 'Query'}</button>
-                    </div>
-                )}
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            let targetContract;
+            
+            if (isWrite) {
+                await browserProvider.send("eth_requestAccounts", []);
+                const browserSigner = await browserProvider.getSigner();
+                targetContract = new ethers.Contract(contractAddress, abi, browserSigner);
+            } else {
+                targetContract = new ethers.Contract(contractAddress, abi, browserProvider);
+            }
 
-                {/* Result */}
-                {results[funcKey] && (
-                    <div style={{
-                        marginTop: '10px', padding: '10px 14px', borderRadius: '8px',
-                        background: results[funcKey].success ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
-                        border: `1px solid ${results[funcKey].success ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}`,
-                        fontSize: '0.8rem', fontFamily: 'monospace',
-                        color: results[funcKey].success ? 'var(--success)' : 'var(--danger)',
-                        wordBreak: 'break-all'
-                    }}>
-                        {results[funcKey].success ? '✅ ' : '❌ '}{results[funcKey].value}
-                    </div>
-                )}
-            </div>
-        );
+            // Map user input values to exact arguments formatting
+            const args = (func.inputs || []).map((input, idx) => {
+                const val = inputValues[`${funcName}_${idx}`] || '';
+                if (input.type.includes('uint') || input.type.includes('int')) return val; // Passed as string to ethers for bigints
+                if (input.type === 'bool') return val === 'true';
+                if (input.type.includes('[]')) {
+                    try {
+                        return JSON.parse(val); // parse array "[1,2,3]"
+                    } catch {
+                        return val.split(',').map(s => s.trim());
+                    }
+                }
+                return val;
+            });
+
+            // If payable, we could check for an ETH value input (hardcoded 0 here for non-payable specifics)
+            // But we will stick to basic execution for all args first
+            const txResponse = await targetContract[funcName](...args);
+
+            // Wait for tx confirmation if it's a write
+            let finalResult;
+            if (isWrite) {
+                toast.success(`Transaction sent! Waiting for confirmation...`);
+                const receipt = await txResponse.wait();
+                finalResult = `Tx Hash: ${receipt.hash}`;
+            } else {
+                // Formatting read responses
+                if (typeof txResponse === 'bigint') {
+                    finalResult = txResponse.toString();
+                } else if (Array.isArray(txResponse)) {
+                    finalResult = txResponse.map(r => typeof r === 'bigint' ? r.toString() : String(r)).join(', ');
+                } else {
+                    finalResult = String(txResponse);
+                }
+            }
+
+            setResults(prev => ({ ...prev, [funcName]: { success: true, value: finalResult } }));
+            toast.success(`${funcName} executed successfully!`);
+            
+        } catch (err) {
+            console.error("Execution Error:", err);
+            const errReason = err.reason || err.shortMessage || err.message || 'Transaction failed';
+            setResults(prev => ({ ...prev, [funcName]: { success: false, value: errReason } }));
+            toast.error(errReason);
+        } finally {
+            setIsLoading(prev => ({ ...prev, [funcName]: false }));
+        }
     };
 
-    return (
-        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
-            <Toaster position="bottom-right" reverseOrder={false} />
+    const handleManualConnect = () => {
+        if (!contractAddress || !abiInput) {
+            return toast.error('Enter both contract address and ABI.');
+        }
+        try {
+            const parsedAbi = typeof abiInput === 'string' ? JSON.parse(abiInput) : abiInput;
+            setAbi(parsedAbi);
+            
+            const reads = parsedAbi.filter(item =>
+                item.type === 'function' && (item.stateMutability === 'view' || item.stateMutability === 'pure')
+            );
+            const writes = parsedAbi.filter(item =>
+                item.type === 'function' && item.stateMutability !== 'view' && item.stateMutability !== 'pure'
+            );
+            
+            setReadFunctions(reads);
+            setWriteFunctions(writes);
+            toast.success('Connected automatically via Input!');
+        } catch (err) {
+            toast.error('Invalid ABI JSON format.');
+        }
+    };
 
-            {/* Header */}
-            <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
-                    <div style={{
-                        width: '44px', height: '44px',
-                        background: 'linear-gradient(135deg, #10b981, #06b6d4)',
-                        borderRadius: '14px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '22px', boxShadow: '0 4px 20px rgba(16,185,129,0.3)'
-                    }}>🔗</div>
-                    <h1 style={{
-                        fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-                        color: 'var(--on-surface)', marginBottom: '0'
-                    }}>
-                        Contract <span className="gradient-text">Explorer</span>
-                    </h1>
+    if (!id && !abi) {
+        return (
+            <div className="max-w-[860px] mx-auto pb-20">
+
+                
+                {/* Header */}
+                <div className="mb-10 pt-4 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-black text-white tracking-tight mb-2">
+                            Contract <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#a78bfa] to-[#06B6D4]">Explorer</span>
+                        </h1>
+                        <p className="text-gray-400 max-w-lg">
+                            If you deploy via AutoCon, launch this page from your Dashboard to instantly auto-fetch your ABI. Otherwise, manually paste your deployed contract details below.
+                        </p>
+                    </div>
                 </div>
-                <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
-                    Connect to any deployed Ethereum smart contract to read its state and execute transactions.
-                </p>
-            </div>
 
-            {/* Input Card */}
-            {!connected ? (
-                <div className="card glass-strong animate-fade-in-up delay-100" style={{
-                    padding: '28px', maxWidth: '600px',
-                    borderTop: '2px solid rgba(6,182,212,0.4)',
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.4), 0 0 20px rgba(6,182,212,0.1)'
-                }}>
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{
-                            display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--on-surface-variant)', textTransform: 'uppercase',
-                            letterSpacing: '1px', marginBottom: '10px'
-                        }}>Contract Address</label>
-                        <input
+                <GlassCard className="max-w-[600px]">
+                    <div className="mb-4">
+                        <label className="block text-xs text-gray-400 font-semibold mb-1 pl-1 uppercase tracking-wider">
+                            Contract Address
+                        </label>
+                        <Input
+                            placeholder="0x..."
                             value={contractAddress}
                             onChange={(e) => setContractAddress(e.target.value)}
-                            placeholder="0x..."
-                            className="input"
-                            style={{ fontFamily: 'monospace' }}
+                            className="font-mono"
                         />
                     </div>
-
-                    <div style={{ marginBottom: '24px' }}>
-                        <label style={{
-                            display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--on-surface-variant)', textTransform: 'uppercase',
-                            letterSpacing: '1px', marginBottom: '10px'
-                        }}>Contract ABI (JSON)</label>
+                    <div className="mb-6">
+                        <label className="block text-xs text-gray-400 font-semibold mb-1 pl-1 uppercase tracking-wider">
+                            Contract ABI (JSON)
+                        </label>
                         <textarea
                             value={abiInput}
                             onChange={(e) => setAbiInput(e.target.value)}
                             placeholder='[{"type":"function","name":"balanceOf",...}]'
-                            className="input"
-                            style={{
-                                minHeight: '120px', fontFamily: '"JetBrains Mono", monospace',
-                                fontSize: '0.78rem', lineHeight: 1.6, resize: 'vertical'
-                            }}
+                            className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm font-mono text-white placeholder-gray-500 min-h-[140px] focus:outline-none focus:border-[#a78bfa]/50 transition-colors"
                         />
                     </div>
-
-                    <button onClick={connectToContract} className="btn-primary" style={{
-                        width: '100%', padding: '16px',
-                        background: 'linear-gradient(135deg, #10b981, #06b6d4)'
-                    }}>
+                    <GradientButton onClick={handleManualConnect} className="w-full py-3 text-base">
                         🔗 Connect to Contract
-                    </button>
-                </div>
-            ) : (
-                <>
-                    {/* Connected badge */}
-                    <div className="animate-fade-in-up" style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        padding: '12px 18px', marginBottom: '20px', borderRadius: '14px',
-                        background: 'rgba(16,185,129,0.06)',
-                        border: '1px solid rgba(16,185,129,0.15)'
-                    }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }} />
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--success)' }}>Connected</span>
-                        <span style={{ fontSize: '0.78rem', color: 'var(--outline)', fontFamily: 'monospace' }}>
-                            {contractAddress.substring(0, 10)}...{contractAddress.substring(36)}
+                    </GradientButton>
+                </GlassCard>
+            </div>
+        );
+    }
+
+    if (isPageLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+                <Loader2 className="animate-spin text-[#a78bfa]" size={40} />
+                <p className="text-[#a78bfa] font-medium tracking-wide animate-pulse">Running ABI X-Ray...</p>
+            </div>
+        );
+    }
+
+    const renderFunctionCard = (func, isWrite) => {
+        const funcKey = func.name;
+        
+        return (
+            <GlassCard key={funcKey} className="mb-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                        <span className={`px-2 py-1 rounded-md text-[0.65rem] font-bold uppercase tracking-wider border ${isWrite ? 'text-[#f59e0b] border-[#f59e0b]/30 bg-[#f59e0b]/10' : 'text-[#67e8f9] border-[#67e8f9]/30 bg-[#67e8f9]/10'}`}>
+                            {isWrite ? (func.stateMutability === 'payable' ? 'payable' : 'write') : 'read'}
                         </span>
-                        <button onClick={() => { setConnected(false); setContract(null); setAbi(null); setResults({}); }}
-                            style={{
-                                marginLeft: 'auto', padding: '4px 12px', borderRadius: '8px',
-                                border: '1px solid var(--outline-variant)', background: 'transparent',
-                                color: 'var(--outline)', fontSize: '0.72rem', fontWeight: 600,
-                                cursor: 'pointer', fontFamily: 'Inter, sans-serif'
-                            }}>Disconnect</button>
+                        <h4 className="font-mono text-[1rem] font-bold text-white">{func.name}</h4>
                     </div>
-
-                    {/* Read Functions */}
-                    {readFunctions.length > 0 && (
-                        <div className="animate-fade-in-up delay-100" style={{ marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '12px' }}>
-                                👁️ Read Functions ({readFunctions.length})
-                            </h3>
-                            {readFunctions.map(f => renderFunctionCard(f, false))}
+                    {/* Render button inline if no inputs */}
+                    {func.inputs?.length === 0 && (
+                        <div>
+                            {isWrite ? (
+                                <GradientButton onClick={() => executeFunction(func, true)} disabled={isLoading[funcKey]} className="py-1.5 px-6 text-sm">
+                                    {isLoading[funcKey] ? <Loader2 className="animate-spin" size={16}/> : 'Execute'}
+                                </GradientButton>
+                            ) : (
+                                <button
+                                    onClick={() => executeFunction(func, false)}
+                                    disabled={isLoading[funcKey]}
+                                    className="px-6 py-1.5 rounded-lg border border-[#67e8f9]/50 text-[#67e8f9] font-bold text-sm bg-transparent hover:bg-[#67e8f9]/10 transition-colors flex items-center justify-center min-w-[100px]"
+                                >
+                                    {isLoading[funcKey] ? <Loader2 className="animate-spin" size={16}/> : 'Query'}
+                                </button>
+                            )}
                         </div>
                     )}
+                </div>
 
-                    {/* Write Functions */}
-                    {writeFunctions.length > 0 && (
-                        <div className="animate-fade-in-up delay-200">
-                            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '12px' }}>
-                                ✏️ Write Functions ({writeFunctions.length})
-                            </h3>
-                            {writeFunctions.map(f => renderFunctionCard(f, true))}
+                {/* Inputs List */}
+                {func.inputs?.length > 0 && (
+                    <div className="flex flex-col gap-3 mb-4">
+                        {func.inputs.map((input, idx) => (
+                            <div key={idx}>
+                                <label className="block text-xs text-gray-400 font-semibold mb-1 pl-1">
+                                    {input.name || `arg${idx}`} <span className="opacity-60 text-[0.65rem]">({input.type})</span>
+                                </label>
+                                <Input
+                                    placeholder={`${input.name || `arg${idx}`} (${input.type})`}
+                                    value={inputValues[`${funcKey}_${idx}`] || ''}
+                                    onChange={(e) => handleInputChange(funcKey, idx, e.target.value)}
+                                    className="w-full text-sm font-mono"
+                                />
+                            </div>
+                        ))}
+                        
+                        <div className="flex justify-end mt-2">
+                            {isWrite ? (
+                                <GradientButton onClick={() => executeFunction(func, true)} disabled={isLoading[funcKey]} className="py-2 px-8">
+                                    {isLoading[funcKey] ? <Loader2 className="animate-spin" size={18}/> : 'Execute Transaction'}
+                                </GradientButton>
+                            ) : (
+                                <button
+                                    onClick={() => executeFunction(func, false)}
+                                    disabled={isLoading[funcKey]}
+                                    className="px-8 py-2 rounded-xl border-2 border-[#67e8f9]/50 text-[#67e8f9] font-bold bg-black/20 hover:bg-[#67e8f9]/10 transition-colors flex items-center justify-center min-w-[120px]"
+                                >
+                                    {isLoading[funcKey] ? <Loader2 className="animate-spin" size={18}/> : 'Query Info'}
+                                </button>
+                            )}
                         </div>
-                    )}
-                </>
-            )}
+                    </div>
+                )}
+
+                {/* Results block */}
+                {results[funcKey] && (
+                    <div className={`mt-2 p-3 rounded-lg border font-mono text-sm break-all ${results[funcKey].success ? 'bg-[#10b981]/10 border-[#10b981]/30 text-[#10b981]' : 'bg-[#ef4444]/10 border-[#ef4444]/30 text-[#ef4444]'}`}>
+                        <span className="font-bold mr-2">{results[funcKey].success ? 'RESULT:' : 'ERROR:'}</span> 
+                        {results[funcKey].value}
+                    </div>
+                )}
+            </GlassCard>
+        );
+    };
+
+    return (
+        <div className="max-w-[1000px] mx-auto pb-20">
+
+            
+            <div className="mb-10 pt-4 flex flex-col gap-4 md:flex-row md:items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-black text-white tracking-tight mb-2">
+                        Contract <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#a78bfa] to-[#06B6D4]">X-Ray</span>
+                    </h1>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <div className="font-mono text-xs px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300">
+                            {contractAddress}
+                        </div>
+                        <div className="flex items-center gap-1 text-[0.65rem] font-bold text-green-400 bg-green-400/10 px-2 py-1 rounded-md">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+                            Connected via ABI
+                        </div>
+                    </div>
+                </div>
+                {!id && (
+                    <button 
+                        onClick={() => { setAbi(null); setContractAddress(''); setAbiInput(''); setResults({}); }} 
+                        className="px-4 py-2 text-xs font-bold border border-white/10 text-gray-400 rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                        Disconnect
+                    </button>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Read Column */}
+                <div>
+                    <h3 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">
+                        Read Contract <span className="text-gray-500 text-sm font-medium ml-2">({readFunctions.length})</span>
+                    </h3>
+                    <div className="flex flex-col gap-2">
+                        {readFunctions.length === 0 ? (
+                            <p className="text-gray-500 text-sm">No read functions found.</p>
+                        ) : readFunctions.map(f => renderFunctionCard(f, false))}
+                    </div>
+                </div>
+
+                {/* Write Column */}
+                <div>
+                    <h3 className="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">
+                        Write Contract <span className="text-gray-500 text-sm font-medium ml-2">({writeFunctions.length})</span>
+                    </h3>
+                    <div className="flex flex-col gap-2">
+                        {writeFunctions.length === 0 ? (
+                            <p className="text-gray-500 text-sm">No write functions found.</p>
+                        ) : writeFunctions.map(f => renderFunctionCard(f, true))}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

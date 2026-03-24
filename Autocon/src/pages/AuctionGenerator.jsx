@@ -1,5 +1,5 @@
 import { useAuction } from '../hooks/useAuction';
-import { Toaster } from 'react-hot-toast';
+
 import CodeExportTools from '../components/CodeExportTools';
 
 export default function AuctionGenerator() {
@@ -32,7 +32,7 @@ export default function AuctionGenerator() {
 
     return (
         <div className="container" style={{ paddingTop: '12px' }}>
-            <Toaster position="bottom-right" reverseOrder={false} />
+
 
             {/* Header */}
             <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>

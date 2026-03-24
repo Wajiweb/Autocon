@@ -15,6 +15,9 @@ export const useWeb3 = () => {
   const [generatedCode, setGeneratedCode] = useState("");
   const [contractData, setContractData] = useState({ abi: null, bytecode: null });
   const [isDeploying, setIsDeploying] = useState(false);
+  const [deployStep, setDeployStep] = useState(-1);
+  const [deployedAddress, setDeployedAddress] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [gasEstimate, setGasEstimate] = useState(null);
   const [isEstimating, setIsEstimating] = useState(false);
 
@@ -90,33 +93,39 @@ export const useWeb3 = () => {
     if (!contractData.abi || !contractData.bytecode) return toast.error("Generate code first!");
 
     setIsDeploying(true);
-    let deployedAddress;
+    setDeployStep(0); // Step 0: Compiling
+    let deployed;
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const currentNetwork = await provider.getNetwork();
 
-      // Multi-chain: check against selected network
       if (Number(currentNetwork.chainId) !== network.chainIdDecimal) {
         toast.error(`Please switch MetaMask to ${network.name}!`);
         setIsDeploying(false);
+        setDeployStep(-1);
         return;
       }
 
       const signer = await provider.getSigner();
       const factory = new ethers.ContractFactory(contractData.abi, contractData.bytecode, signer);
 
+      setDeployStep(1); // Step 1: Awaiting wallet signature
       toast('Confirm transaction in MetaMask 🦊', { icon: '👆' });
 
       const contract = await factory.deploy(formData.ownerAddress, formData.supply);
 
+      setDeployStep(2); // Step 2: Broadcasting transaction
       const deployToast = toast.loading(`Deploying to ${network.name}...`);
 
+      setDeployStep(3); // Step 3: Waiting for block confirmation
       await contract.waitForDeployment();
-      deployedAddress = await contract.getAddress();
+      deployed = await contract.getAddress();
 
+      setDeployStep(4); // Step 4: Deployment successful!
       toast.success(`Token deployed on ${network.name}!`, { id: deployToast });
       fireConfetti();
+      setDeployedAddress(deployed);
 
       // Save to database via authenticated endpoint
       try {
@@ -124,8 +133,9 @@ export const useWeb3 = () => {
           method: 'POST',
           body: JSON.stringify({
             name: formData.name, symbol: formData.symbol,
-            contractAddress: deployedAddress, ownerAddress: formData.ownerAddress,
-            network: network.name
+            contractAddress: deployed, ownerAddress: formData.ownerAddress,
+            network: network.name,
+            abi: contractData.abi
           })
         });
 
@@ -150,7 +160,7 @@ export const useWeb3 = () => {
         const verifyRes = await authFetch('/api/verify', {
           method: 'POST',
           body: JSON.stringify({
-            contractAddress: deployedAddress,
+            contractAddress: deployed,
             sourceCode: generatedCode,
             contractName: formData.name.replace(/\s+/g, ''),
             compilerVersion: 'v0.8.20+commit.a1b79de6', // Default compiler version used in AutoCon templates
@@ -176,13 +186,18 @@ export const useWeb3 = () => {
       setContractData({ abi: null, bytecode: null });
       setGasEstimate(null);
 
-      return deployedAddress;
+      // Show success modal
+      setShowSuccessModal(true);
+
+      return deployed;
 
     } catch (err) {
       console.error(err);
       toast.error("Deployment failed. Do you have enough testnet ETH?");
     } finally {
       setIsDeploying(false);
+      // Reset deploy step after a delay so user sees "complete" state
+      setTimeout(() => setDeployStep(-1), 2000);
     }
   };
 
@@ -190,6 +205,7 @@ export const useWeb3 = () => {
     formData, setFormData, generatedCode, contractData,
     connectWallet, generateContract, deployContract,
     estimateGas, gasEstimate, isEstimating,
-    isDeploying
+    isDeploying, deployStep,
+    deployedAddress, showSuccessModal, setShowSuccessModal
   };
 };

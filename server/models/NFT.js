@@ -10,6 +10,7 @@ const nftSchema = new mongoose.Schema({
     mintPrice: { type: String, default: '0' },
     baseURI: { type: String, default: '' },
     type: { type: String, default: 'ERC-721' },
+    abi: { type: mongoose.Schema.Types.Mixed, default: null },
     createdAt: { type: Date, default: Date.now }
 });
 

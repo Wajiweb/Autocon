@@ -144,7 +144,7 @@ app.post('/api/generate-token', strictLimiter, authMiddleware, (req, res) => {
 // ─── SAVE TOKEN (auth required) ───
 app.post('/api/save-token', authMiddleware, async (req, res) => {
     try {
-        const { name, symbol, contractAddress, ownerAddress, network } = req.body;
+        const { name, symbol, contractAddress, ownerAddress, network, abi } = req.body;
 
         // Validate required fields
         if (!name || !symbol || !contractAddress || !ownerAddress) {
@@ -164,7 +164,7 @@ app.post('/api/save-token', authMiddleware, async (req, res) => {
             return res.status(403).json({ success: false, error: 'You can only save tokens for your own wallet.' });
         }
 
-        const newToken = new Token({ name, symbol, contractAddress, ownerAddress: ownerAddress.toLowerCase(), network: network || 'Sepolia' });
+        const newToken = new Token({ name, symbol, contractAddress, ownerAddress: ownerAddress.toLowerCase(), network: network || 'Sepolia', abi: abi || null });
         await newToken.save();
 
         console.log(`💾 Saved ${name} to database!`);
@@ -227,6 +227,47 @@ app.delete('/api/delete-token/:id', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error("Delete Error:", error);
         res.status(500).json({ success: false, error: "Failed to delete token." });
+    }
+});
+
+// ─── GET SINGLE DEPLOYMENT (Token, NFT, or Auction) by ID for Contract X-Ray ───
+const NFT = require('./models/NFT');
+const Auction = require('./models/Auction');
+
+app.get('/api/deployments/:id', authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ success: false, error: 'Invalid ID format.' });
+    }
+    try {
+        // Search across all three models
+        let doc = await Token.findById(id);
+        let docType = 'ERC-20';
+        if (!doc) { doc = await NFT.findById(id); docType = 'ERC-721'; }
+        if (!doc) { doc = await Auction.findById(id); docType = 'Auction'; }
+
+        if (!doc) {
+            return res.status(404).json({ success: false, error: 'Deployment not found.' });
+        }
+
+        // Ownership check
+        if (req.user.walletAddress !== doc.ownerAddress.toLowerCase()) {
+            return res.status(403).json({ success: false, error: 'Unauthorized.' });
+        }
+
+        res.json({
+            success: true,
+            deployment: {
+                _id: doc._id,
+                name: doc.name,
+                contractAddress: doc.contractAddress,
+                type: docType,
+                abi: doc.abi || null
+            }
+        });
+    } catch (err) {
+        console.error('Deployment fetch error:', err);
+        res.status(500).json({ success: false, error: 'Failed to fetch deployment.' });
     }
 });
 

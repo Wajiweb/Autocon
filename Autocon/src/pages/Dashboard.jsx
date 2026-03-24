@@ -1,11 +1,97 @@
-import { useState, useEffect } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import { useState, useEffect, memo, lazy, Suspense } from 'react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import CryptoNewsTicker from '../components/CryptoNewsTicker';
 import AnalyticsCharts from '../components/AnalyticsCharts';
 import EmptyState from '../components/EmptyState';
 import { SkeletonTable } from '../components/LoadingSkeleton';
 import { SkeletonDashboard } from '../components/LoadingSkeleton';
+
+// Lazy-load the 3D background so it doesn’t block the dashboard data
+const DashboardScene = lazy(() => import('../3d/DashboardScene'));
+
+// ─── Memoized table — isolates renders from gas-ticker polling ───
+const DeploymentTable = memo(function DeploymentTable({ deployments, filteredDeployments, isLoading, activeFilter, setActiveFilter, shortAddr, handleDelete }) {
+  return (
+    <div className="card animate-fade-in-up delay-400" style={{ overflow: 'hidden', marginBottom: 'var(--space-3)' }}>
+      {/* Table Header with Filter Tabs */}
+      <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--outline-variant)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--on-surface)' }}>Deployment Registry</h2>
+          <div style={{ display: 'flex', gap: '4px', background: 'var(--surface-highest)', borderRadius: 'var(--radius-sm)', padding: '3px' }}>
+            {[{ id: 'all', label: 'All' }, { id: 'ERC-20', label: 'Tokens' }, { id: 'ERC-721', label: 'NFTs' }, { id: 'Auction', label: 'Auctions' }].map(tab => (
+              <button key={tab.id} onClick={() => setActiveFilter(tab.id)}
+                style={{ padding: '6px 14px', borderRadius: '6px', border: 'none', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'all 0.2s ease', background: activeFilter === tab.id ? 'var(--primary-gradient)' : 'transparent', color: activeFilter === tab.id ? 'white' : 'var(--outline)' }}
+              >{tab.label}</button>
+            ))}
+          </div>
+        </div>
+        <span className="badge badge-accent">{shortAddr || 'Disconnected'}</span>
+      </div>
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--outline-variant)' }}>
+              {['Asset', 'Type', 'Contract Address', 'Timestamp', 'Actions'].map(header => (
+                <th key={header} style={{ padding: '14px 28px', fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px', textAlign: header === 'Actions' ? 'right' : 'left' }}>{header}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr><td colSpan="5" style={{ padding: '20px 28px' }}><SkeletonTable rows={3} /></td></tr>
+            ) : filteredDeployments.length > 0 ? filteredDeployments.map((item) => {
+              const isNFT = item._type === 'ERC-721';
+              const isAuction = item._type === 'Auction';
+              const typeColors = isAuction
+                ? { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)', text: '#f59e0b', icon: '🔨', label: 'Auction' }
+                : isNFT
+                  ? { bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.2)', text: '#a78bfa', icon: '🎨', label: 'ERC-721' }
+                  : { bg: 'var(--accent-glow)', border: 'rgba(6,182,212,0.2)', text: 'var(--accent)', icon: '🪙', label: 'ERC-20' };
+              return (
+                <tr key={item._id} style={{ transition: 'background 0.2s ease, transform 0.2s ease', cursor: 'pointer' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-highest)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                >
+                  <td style={{ padding: '18px 28px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '42px', height: '42px', background: `linear-gradient(135deg, ${typeColors.bg}, transparent)`, border: `1px solid ${typeColors.border}`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.7rem', color: typeColors.text, textTransform: 'uppercase' }}>{(item.symbol || item.name || '').substring(0, 3)}</div>
+                      <div>
+                        <p style={{ fontWeight: 700, color: 'var(--on-surface)', fontSize: '0.9rem' }}>{item.name}</p>
+                        <p style={{ fontSize: '0.7rem', color: 'var(--outline)' }}>{item.network} Network{isNFT && item.maxSupply ? ` · ${item.maxSupply} max` : ''}{isAuction && item.itemName ? ` · ${item.itemName}` : ''}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: '18px 16px' }}>
+                    <span style={{ padding: '4px 10px', borderRadius: '50px', fontSize: '0.65rem', fontWeight: 700, background: typeColors.bg, color: typeColors.text, border: `1px solid ${typeColors.border}` }}>{typeColors.icon} {typeColors.label}</span>
+                  </td>
+                  <td style={{ padding: '18px 28px', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--on-surface-variant)' }}>{item.contractAddress.substring(0, 10)}...{item.contractAddress.substring(36)}</td>
+                  <td style={{ padding: '18px 28px', fontSize: '0.8rem', color: 'var(--outline)' }}>{new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                  <td style={{ padding: '18px 28px', textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                      <button onClick={() => { navigator.clipboard.writeText(item.contractAddress); toast.success('Address copied!'); }} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '7px 14px' }}>📋 Copy</button>
+                      <button onClick={() => { window.open(`http://localhost:5000/api/site/view?contractAddress=${item.contractAddress}&network=${item.network}&name=${encodeURIComponent(item.name)}&type=${item._type}`, '_blank'); toast.success('Minting Site Opened! 🌐'); }} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '7px 14px', background: 'rgba(0,240,255,0.1)', color: 'var(--accent)', border: '1px solid rgba(0,240,255,0.2)' }} title="Open your hosted Web3 Minting website">🌐 Site</button>
+                      <button onClick={() => handleDelete(item)} className="btn-danger" style={{ padding: '7px 12px' }}>🗑️</button>
+                      <a href={`/explorer/${item._id}`} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '7px 14px', textDecoration: 'none', color: '#a78bfa', borderColor: 'rgba(167,139,250,0.2)', background: 'rgba(167,139,250,0.1)' }}>Interact 🪄</a>
+                      <a href={`https://sepolia.etherscan.io/address/${item.contractAddress}`} target="_blank" rel="noreferrer" className="btn-secondary" style={{ fontSize: '0.75rem', padding: '7px 14px', textDecoration: 'none', color: 'var(--accent)', borderColor: 'rgba(6,182,212,0.2)', background: 'var(--accent-glow)' }}>Explorer ↗</a>
+                    </div>
+                  </td>
+                </tr>
+              );
+            }) : null}
+          </tbody>
+        </table>
+        {!isLoading && filteredDeployments.length === 0 && (
+          <div style={{ marginTop: '24px' }}>
+            <EmptyState title={activeFilter === 'all' ? 'No deployments yet' : `No ${activeFilter} found`} description="Use the generators in the sidebar to create and deploy your first smart contract without writing code." />
+          </div>
+        )}
+      </div>
+      <CryptoNewsTicker />
+    </div>
+  );
+});
 
 export default function Dashboard() {
   const { user, authFetch } = useAuth();
@@ -165,8 +251,13 @@ export default function Dashboard() {
   };
 
   return (
-    <div>
-      <Toaster position="bottom-right" reverseOrder={false} />
+    <div style={{ position: 'relative' }}>
+      {/* 3D background — fixed, pointer-events-none, low opacity */}
+      <Suspense fallback={null}>
+        <DashboardScene />
+      </Suspense>
+
+
 
       {/* Header */}
       <div className="animate-fade-in-up" style={{
@@ -177,7 +268,7 @@ export default function Dashboard() {
             display: 'inline-flex', alignItems: 'center', gap: '8px',
             padding: '4px 12px', borderRadius: '99px', marginBottom: '12px',
             background: 'rgba(103,232,249,0.07)', border: '1px solid rgba(103,232,249,0.15)',
-            fontSize: '0.67rem', fontWeight: 700, color: 'var(--tertiary)',
+            fontSize: '0.67rem', fontWeight: 700, color: '#080c14',
             textTransform: 'uppercase', letterSpacing: '0.08em'
           }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', display: 'inline-block', boxShadow: '0 0 6px var(--success)' }} />
@@ -374,217 +465,17 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!isLoading && deployments.length > 0 && (
-        <AnalyticsCharts deployments={deployments} />
-      )}
+      {!isLoading && deployments.length > 0 && <AnalyticsCharts deployments={deployments} />}
 
-      {/* Deployment Table */}
-      <div className="card animate-fade-in-up delay-400" style={{ overflow: 'hidden', marginBottom: 'var(--space-3)' }}>
-        {/* Table Header with Filter Tabs */}
-        <div style={{
-          padding: '20px 28px',
-          borderBottom: '1px solid var(--outline-variant)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--on-surface)' }}>
-              Deployment Registry
-            </h2>
-            {/* Filter tabs */}
-            <div style={{ display: 'flex', gap: '4px', background: 'var(--surface-highest)', borderRadius: 'var(--radius-sm)', padding: '3px' }}>
-              {[
-                { id: 'all', label: 'All' },
-                { id: 'ERC-20', label: 'Tokens' },
-                { id: 'ERC-721', label: 'NFTs' },
-                { id: 'Auction', label: 'Auctions' },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveFilter(tab.id)}
-                  style={{
-                    padding: '6px 14px', borderRadius: '6px', border: 'none',
-                    fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
-                    fontFamily: 'Inter, sans-serif',
-                    transition: 'all 0.2s ease',
-                    background: activeFilter === tab.id
-                      ? 'var(--primary-gradient)'
-                      : 'transparent',
-                    color: activeFilter === tab.id ? 'white' : 'var(--outline)'
-                  }}
-                >{tab.label}</button>
-              ))}
-            </div>
-          </div>
-          <span className="badge badge-accent">
-            {shortAddr || 'Disconnected'}
-          </span>
-        </div>
-
-        {/* Table Content */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--outline-variant)' }}>
-                {['Asset', 'Type', 'Contract Address', 'Timestamp', 'Actions'].map(header => (
-                  <th key={header} style={{
-                    padding: '14px 28px',
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    color: 'var(--outline)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1.5px',
-                    textAlign: header === 'Actions' ? 'right' : 'left'
-                  }}>
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan="5" style={{ padding: '20px 28px' }}>
-                    <SkeletonTable rows={3} />
-                  </td>
-                </tr>
-              ) : filteredDeployments.length > 0 ? filteredDeployments.map((item) => {
-                const isNFT = item._type === 'ERC-721';
-                const isAuction = item._type === 'Auction';
-                const typeColors = isAuction
-                  ? { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)', text: '#f59e0b', icon: '🔨', label: 'Auction' }
-                  : isNFT
-                    ? { bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.2)', text: '#a78bfa', icon: '🎨', label: 'ERC-721' }
-                    : { bg: 'var(--accent-glow)', border: 'rgba(6,182,212,0.2)', text: 'var(--accent)', icon: '🪙', label: 'ERC-20' };
-                return (
-                    <tr key={item._id} className="table-row" style={{
-                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    cursor: 'pointer'
-                  }} onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--surface-highest)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,240,255,0.05)';
-                  }} onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}>
-                    <td style={{ padding: '18px 28px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{
-                          width: '42px', height: '42px',
-                          background: `linear-gradient(135deg, ${typeColors.bg}, transparent)`,
-                          border: `1px solid ${typeColors.border}`,
-                          borderRadius: '12px',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontWeight: 900, fontSize: '0.7rem',
-                          color: typeColors.text,
-                          textTransform: 'uppercase'
-                        }}>
-                          {(item.symbol || item.name || '').substring(0, 3)}
-                        </div>
-                        <div>
-                          <p style={{ fontWeight: 700, color: 'var(--on-surface)', fontSize: '0.9rem' }}>{item.name}</p>
-                          <p style={{ fontSize: '0.7rem', color: 'var(--outline)' }}>
-                            {item.network} Network
-                            {isNFT && item.maxSupply ? ` · ${item.maxSupply} max` : ''}
-                            {isAuction && item.itemName ? ` · ${item.itemName}` : ''}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '18px 16px' }}>
-                      <span style={{
-                        padding: '4px 10px', borderRadius: '50px',
-                        fontSize: '0.65rem', fontWeight: 700,
-                        background: typeColors.bg,
-                        color: typeColors.text,
-                        border: `1px solid ${typeColors.border}`
-                      }}>
-                        {typeColors.icon} {typeColors.label}
-                      </span>
-                    </td>
-                    <td style={{ padding: '18px 28px', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--on-surface-variant)' }}>
-                      {item.contractAddress.substring(0, 10)}...{item.contractAddress.substring(36)}
-                    </td>
-                    <td style={{ padding: '18px 28px', fontSize: '0.8rem', color: 'var(--outline)' }}>
-                      {new Date(item.createdAt).toLocaleDateString('en-US', {
-                        month: 'short', day: 'numeric', year: 'numeric'
-                      })}
-                    </td>
-                    <td style={{ padding: '18px 28px', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(item.contractAddress);
-                            toast.success("Address copied!");
-                          }}
-                          className="btn-secondary"
-                          style={{ fontSize: '0.75rem', padding: '7px 14px' }}
-                        >
-                          📋 Copy
-                        </button>
-                        <button
-                          onClick={() => {
-                            const url = `http://localhost:5000/api/site/view?contractAddress=${item.contractAddress}&network=${item.network}&name=${encodeURIComponent(item.name)}&type=${item._type}`;
-                            window.open(url, '_blank');
-                            toast.success('Minting Site Opened! 🌐');
-                          }}
-                          className="btn-secondary"
-                          style={{
-                            fontSize: '0.75rem', padding: '7px 14px',
-                            background: 'rgba(0, 240, 255, 0.1)',
-                            color: 'var(--neon-primary)',
-                            border: '1px solid rgba(0, 240, 255, 0.2)'
-                          }}
-                          title="Open your hosted Web3 Minting website"
-                        >
-                          🌐 Site
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item)}
-                          className="btn-danger"
-                          style={{ padding: '7px 12px' }}
-                        >
-                          🗑️
-                        </button>
-                        <a
-                          href={`https://sepolia.etherscan.io/address/${item.contractAddress}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn-secondary"
-                          style={{
-                            fontSize: '0.75rem', padding: '7px 14px',
-                            textDecoration: 'none',
-                            color: 'var(--accent)',
-                            borderColor: 'rgba(6,182,212,0.2)',
-                            background: 'var(--accent-glow)'
-                          }}
-                        >
-                          Explorer ↗
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              }) : null}
-            </tbody>
-          </table>
-          
-          {!isLoading && filteredDeployments.length === 0 && (
-            <div style={{ marginTop: '24px' }}>
-              <EmptyState 
-                title={activeFilter === 'all' ? "No deployments yet" : `No ${activeFilter} found`}
-                description="Use the generators in the sidebar to create and deploy your first smart contract without writing code."
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Crypto Market & News */}
-        <CryptoNewsTicker />
-      </div>
+      <DeploymentTable
+        deployments={deployments}
+        filteredDeployments={filteredDeployments}
+        isLoading={isLoading}
+        activeFilter={activeFilter}
+        setActiveFilter={setActiveFilter}
+        shortAddr={shortAddr}
+        handleDelete={handleDelete}
+      />
     </div>
   );
 }
