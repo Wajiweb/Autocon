@@ -44,6 +44,7 @@ function AnimatedRoutes() {
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
 
   // Loading state while checking session
   if (isLoading) {
@@ -67,10 +68,10 @@ function AppContent() {
   return (
     <BrowserRouter>
       <div className="flex min-h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg)', color: 'var(--on-surface)' }}>
-        <Sidebar />
-        <main className="flex-1 flex flex-col max-h-screen ml-[72px] lg:ml-[252px] transition-all duration-300">
+        <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
+        <main className={`flex-1 flex flex-col h-screen overflow-y-auto overflow-x-hidden transition-all duration-300 ${isSidebarExpanded ? 'ml-[252px]' : 'ml-[72px]'}`}>
           <Navbar />
-          <div className="container mx-auto px-8 pb-8 flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="container mx-auto px-8 pb-8 flex-1">
             <AnimatedRoutes />
           </div>
         </main>

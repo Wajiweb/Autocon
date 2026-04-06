@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, lazy, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import CryptoNewsTicker from '../components/CryptoNewsTicker';
+import LiveCryptoGraph from '../components/LiveCryptoGraph';
 import AnalyticsCharts from '../components/AnalyticsCharts';
 import EmptyState from '../components/EmptyState';
 import { SkeletonTable } from '../components/LoadingSkeleton';
@@ -87,7 +87,7 @@ const DeploymentTable = memo(function DeploymentTable({ filteredDeployments, isL
           </div>
         )}
       </div>
-      <CryptoNewsTicker />
+      <LiveCryptoGraph />
     </div>
   );
 });

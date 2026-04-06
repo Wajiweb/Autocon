@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useWallet } from '../hooks/useWallet';
@@ -26,8 +26,7 @@ const navItems = [
     { label: 'Profile', path: '/profile', icon: UserCircle },
 ];
 
-export default function Sidebar() {
-    const [isExpanded, setIsExpanded] = useState(true);
+export default function Sidebar({ isExpanded = true, setIsExpanded }) {
     const { theme, toggleTheme } = useTheme();
     const { walletAddress } = useWallet();
 
