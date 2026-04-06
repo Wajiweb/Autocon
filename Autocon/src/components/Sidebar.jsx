@@ -9,7 +9,6 @@ import {
     Gavel, 
     ShieldCheck, 
     Bot, 
-    SearchCode, 
     UserCircle,
     ChevronLeft,
     Menu,
@@ -24,7 +23,6 @@ const navItems = [
     { label: 'Auction Generator', path: '/auctions', icon: Gavel },
     { label: 'Security Audit', path: '/audit', icon: ShieldCheck },
     { label: 'AI Assistant', path: '/chatbot', icon: Bot },
-    { label: 'Contract Explorer', path: '/explorer', icon: SearchCode },
     { label: 'Profile', path: '/profile', icon: UserCircle },
 ];
 

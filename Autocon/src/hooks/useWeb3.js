@@ -6,6 +6,7 @@ import { useNetwork } from '../context/NetworkContext';
 import { API_BASE } from '../config';
 import { fireConfetti } from '../utils/confetti';
 import { classifyError, deployWithTimeout } from '../utils/classifyError';
+import { useWallet } from './useWallet';
 
 export const useWeb3 = () => {
   const { authFetch } = useAuth();
@@ -23,15 +24,16 @@ export const useWeb3 = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [gasEstimate, setGasEstimate] = useState(null);
   const [isEstimating, setIsEstimating] = useState(false);
+  const [deploymentReceipt, setDeploymentReceipt] = useState(null);
+  const [providerInstance, setProviderInstance] = useState(null);
+
+  const { connectWallet: baseConnectWallet } = useWallet();
 
   const connectWallet = async () => {
-    if (window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setFormData(prev => ({ ...prev, ownerAddress: accounts[0] }));
-        toast.success("MetaMask Connected!");
-      } catch (_err) { toast.error("Wallet connection failed."); }
-    } else { toast.error("Please install MetaMask!"); }
+    const address = await baseConnectWallet();
+    if (address) {
+      setFormData(prev => ({ ...prev, ownerAddress: address }));
+    }
   };
 
   const generateContract = async (e) => {
@@ -102,6 +104,7 @@ export const useWeb3 = () => {
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
+      setProviderInstance(provider);
       const currentNetwork = await provider.getNetwork();
 
       if (Number(currentNetwork.chainId) !== network.chainIdDecimal) {
@@ -124,6 +127,8 @@ export const useWeb3 = () => {
 
       setDeployStep(3); // Step 3: Waiting for block confirmation
       await contract.waitForDeployment();
+      const receipt = await contract.deploymentTransaction().wait();
+      setDeploymentReceipt(receipt);
       deployed = await contract.getAddress();
 
       setDeployStep(4); // Step 4: Deployment successful!
@@ -212,6 +217,7 @@ export const useWeb3 = () => {
     connectWallet, generateContract, deployContract,
     estimateGas, gasEstimate, isEstimating,
     isDeploying, deployStep, deployStepError,
-    deployedAddress, showSuccessModal, setShowSuccessModal
+    deployedAddress, showSuccessModal, setShowSuccessModal,
+    deploymentReceipt, providerInstance
   };
 };

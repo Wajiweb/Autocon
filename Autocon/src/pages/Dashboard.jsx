@@ -11,7 +11,7 @@ import { SkeletonDashboard } from '../components/LoadingSkeleton';
 const DashboardScene = lazy(() => import('../3d/DashboardScene'));
 
 // ─── Memoized table — isolates renders from gas-ticker polling ───
-const DeploymentTable = memo(function DeploymentTable({ deployments, filteredDeployments, isLoading, activeFilter, setActiveFilter, shortAddr, handleDelete }) {
+const DeploymentTable = memo(function DeploymentTable({ filteredDeployments, isLoading, activeFilter, setActiveFilter, shortAddr, handleDelete }) {
   return (
     <div className="card animate-fade-in-up delay-400" style={{ overflow: 'hidden', marginBottom: 'var(--space-3)' }}>
       {/* Table Header with Filter Tabs */}
@@ -73,7 +73,6 @@ const DeploymentTable = memo(function DeploymentTable({ deployments, filteredDep
                       <button onClick={() => { navigator.clipboard.writeText(item.contractAddress); toast.success('Address copied!'); }} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '7px 14px' }}>📋 Copy</button>
                       <button onClick={() => { window.open(`http://localhost:5000/api/site/view?contractAddress=${item.contractAddress}&network=${item.network}&name=${encodeURIComponent(item.name)}&type=${item._type}`, '_blank'); toast.success('Minting Site Opened! 🌐'); }} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '7px 14px', background: 'rgba(0,240,255,0.1)', color: 'var(--accent)', border: '1px solid rgba(0,240,255,0.2)' }} title="Open your hosted Web3 Minting website">🌐 Site</button>
                       <button onClick={() => handleDelete(item)} className="btn-danger" style={{ padding: '7px 12px' }}>🗑️</button>
-                      <a href={`/explorer/${item._id}`} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '7px 14px', textDecoration: 'none', color: '#a78bfa', borderColor: 'rgba(167,139,250,0.2)', background: 'rgba(167,139,250,0.1)' }}>Interact 🪄</a>
                       <a href={`https://sepolia.etherscan.io/address/${item.contractAddress}`} target="_blank" rel="noreferrer" className="btn-secondary" style={{ fontSize: '0.75rem', padding: '7px 14px', textDecoration: 'none', color: 'var(--accent)', borderColor: 'rgba(6,182,212,0.2)', background: 'var(--accent-glow)' }}>Explorer ↗</a>
                     </div>
                   </td>
@@ -166,7 +165,7 @@ export default function Dashboard() {
         setDeployments(prev => prev.filter(d => d._id !== item._id));
         toast.success("Deployment removed!", { id: deleteToast });
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to delete.", { id: deleteToast });
     }
   };
@@ -468,7 +467,6 @@ export default function Dashboard() {
       {!isLoading && deployments.length > 0 && <AnalyticsCharts deployments={deployments} />}
 
       <DeploymentTable
-        deployments={deployments}
         filteredDeployments={filteredDeployments}
         isLoading={isLoading}
         activeFilter={activeFilter}

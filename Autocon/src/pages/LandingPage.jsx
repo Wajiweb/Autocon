@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import TiltCard from '../animations/TiltCard';
 import ParallaxScroll from '../animations/ParallaxScroll';
 

@@ -8,16 +8,20 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { DashboardLights } from './Lights.jsx';
 import * as THREE from 'three';
 
+// Generated once at module load — stable reference, satisfies react-hooks/purity
+const STAR_POSITIONS = (() => {
+  const pos = new Float32Array(250 * 3);
+  for (let i = 0; i < 250; i++) {
+    pos[i * 3]     = (Math.random() - 0.5) * 30;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * 30;
+    pos[i * 3 + 2] = (Math.random() - 0.5) * 20;
+  }
+  return pos;
+})();
+
 // 250 background particles — pure BufferGeometry, no JS per-particle
 function TinyStarField() {
   const ref = useRef();
-  const positions = new Float32Array(250 * 3);
-  for (let i = 0; i < 250; i++) {
-    positions[i * 3]     = (Math.random() - 0.5) * 30;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
-  }
-
   useFrame(({ clock }) => {
     if (ref.current) ref.current.rotation.y = clock.getElapsedTime() * 0.008;
   });
@@ -25,7 +29,7 @@ function TinyStarField() {
   return (
     <points ref={ref}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" array={positions} count={250} itemSize={3} />
+        <bufferAttribute attach="attributes-position" array={STAR_POSITIONS} count={250} itemSize={3} />
       </bufferGeometry>
       <pointsMaterial size={0.04} color="#a78bfa" transparent opacity={0.4} sizeAttenuation depthWrite={false} />
     </points>

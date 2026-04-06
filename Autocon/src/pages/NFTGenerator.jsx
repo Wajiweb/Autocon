@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNFT } from '../hooks/useNFT';
 import toast from 'react-hot-toast';
-import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import CodeExportTools from '../components/CodeExportTools';
 import DeploymentTimeline from '../components/deploy/DeploymentTimeline';
@@ -13,9 +12,9 @@ export default function NFTGenerator() {
         connectWallet, generateNFT, deployNFT,
         estimateGas, gasEstimate, isEstimating,
         isDeploying, deployStep,
-        deployedAddress, showSuccessModal, setShowSuccessModal
+        deployedAddress, showSuccessModal, setShowSuccessModal,
+        contractData, deploymentReceipt, providerInstance
     } = useNFT();
-    const { authFetch } = useAuth();
     const { network } = useNetwork();
     const [isUploading, setIsUploading] = useState(false);
     const [uploadedFile, setUploadedFile] = useState(null);
@@ -474,6 +473,10 @@ export default function NFTGenerator() {
             network={network.name}
             contractType="NFT"
             explorerUrl={network.explorerUrl || 'https://sepolia.etherscan.io'}
+            abi={contractData?.abi}
+            contractName={formData.name || 'NFT'}
+            receipt={deploymentReceipt}
+            provider={providerInstance}
         />
         </div>
     );

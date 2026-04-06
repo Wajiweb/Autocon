@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { API_BASE } from '../config';
 import { fireConfetti } from '../utils/confetti';
+import { useWallet } from './useWallet';
 
 export const useAuction = () => {
     const { authFetch } = useAuth();
@@ -18,15 +19,18 @@ export const useAuction = () => {
     const [isDeploying, setIsDeploying] = useState(false);
     const [gasEstimate, setGasEstimate] = useState(null);
     const [isEstimating, setIsEstimating] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [deploymentReceipt, setDeploymentReceipt] = useState(null);
+    const [providerInstance, setProviderInstance] = useState(null);
+    const [deployedAddress, setDeployedAddress] = useState(null);
+
+    const { connectWallet: baseConnectWallet } = useWallet();
 
     const connectWallet = async () => {
-        if (window.ethereum) {
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                setFormData(prev => ({ ...prev, ownerAddress: accounts[0] }));
-                toast.success("MetaMask Connected!");
-            } catch (err) { toast.error("Wallet connection failed."); }
-        } else { toast.error("Please install MetaMask!"); }
+        const address = await baseConnectWallet();
+        if (address) {
+            setFormData(prev => ({ ...prev, ownerAddress: address }));
+        }
     };
 
     const generateAuction = async (e) => {
@@ -48,8 +52,8 @@ export const useAuction = () => {
             } else {
                 toast.error(data.error || "Compilation failed.", { id: loadingToast });
             }
-        } catch (err) {
-            console.error("Auction Generation Error:", err);
+        } catch (_err) {
+            console.error("Auction Generation Error:", _err);
             toast.error("Backend error.", { id: loadingToast });
         }
     };
@@ -82,8 +86,8 @@ export const useAuction = () => {
                 setGasEstimate(data);
                 toast.success("Gas estimated!");
             } else { toast.error(data.error || "Gas estimation failed."); }
-        } catch (err) {
-            console.error("Gas Error:", err);
+        } catch (_err) {
+            console.error("Gas Error:", _err);
             toast.error("Failed to estimate gas.");
         } finally { setIsEstimating(false); }
     };
@@ -94,6 +98,7 @@ export const useAuction = () => {
 
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
+            setProviderInstance(provider);
             const currentNetwork = await provider.getNetwork();
 
             // Multi-chain: check against selected network
@@ -119,6 +124,8 @@ export const useAuction = () => {
 
             const deployToast = toast.loading(`Deploying Auction to ${network.name}...`);
             await contract.waitForDeployment();
+            const receipt = await contract.deploymentTransaction().wait();
+            setDeploymentReceipt(receipt);
             const deployedAddress = await contract.getAddress();
 
             toast.success(`Auction deployed on ${network.name}! 🎉`, { id: deployToast });
@@ -188,10 +195,13 @@ export const useAuction = () => {
             setGeneratedCode('');
             setContractData({ abi: null, bytecode: null });
             setGasEstimate(null);
+            setDeployedAddress(deployedAddress);
+            
+            setShowSuccessModal(true);
 
             return deployedAddress;
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            console.error(_err);
             toast.error("Deployment failed.");
         } finally { setIsDeploying(false); }
     };
@@ -199,6 +209,8 @@ export const useAuction = () => {
     return {
         formData, setFormData, generatedCode, contractData,
         connectWallet, generateAuction, deployAuction,
-        estimateGas, gasEstimate, isEstimating, isDeploying
+        estimateGas, gasEstimate, isEstimating, isDeploying,
+        showSuccessModal, setShowSuccessModal,
+        deploymentReceipt, providerInstance, deployedAddress
     };
 };

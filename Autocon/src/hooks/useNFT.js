@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { API_BASE } from '../config';
 import { fireConfetti } from '../utils/confetti';
+import { useWallet } from './useWallet';
 
 export const useNFT = () => {
     const { authFetch } = useAuth();
@@ -21,15 +22,16 @@ export const useNFT = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [gasEstimate, setGasEstimate] = useState(null);
     const [isEstimating, setIsEstimating] = useState(false);
+    const [deploymentReceipt, setDeploymentReceipt] = useState(null);
+    const [providerInstance, setProviderInstance] = useState(null);
+
+    const { connectWallet: baseConnectWallet } = useWallet();
 
     const connectWallet = async () => {
-        if (window.ethereum) {
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                setFormData(prev => ({ ...prev, ownerAddress: accounts[0] }));
-                toast.success("MetaMask Connected!");
-            } catch (err) { toast.error("Wallet connection failed."); }
-        } else { toast.error("Please install MetaMask!"); }
+        const address = await baseConnectWallet();
+        if (address) {
+            setFormData(prev => ({ ...prev, ownerAddress: address }));
+        }
     };
 
     const generateNFT = async (e) => {
@@ -51,8 +53,8 @@ export const useNFT = () => {
             } else {
                 toast.error(data.error || "Compilation failed.", { id: loadingToast });
             }
-        } catch (err) {
-            console.error("NFT Generation Error:", err);
+        } catch (_err) {
+            console.error("NFT Generation Error:", _err);
             toast.error("Backend error. Make sure server is running.", { id: loadingToast });
         }
     };
@@ -89,8 +91,8 @@ export const useNFT = () => {
             } else {
                 toast.error(data.error || "Failed to estimate gas.");
             }
-        } catch (err) {
-            console.error("Gas Error:", err);
+        } catch (_err) {
+            console.error("Gas Error:", _err);
             toast.error("Failed to estimate gas.");
         } finally {
             setIsEstimating(false);
@@ -106,6 +108,7 @@ export const useNFT = () => {
 
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
+            setProviderInstance(provider);
             const currentNetwork = await provider.getNetwork();
 
             if (Number(currentNetwork.chainId) !== network.chainIdDecimal) {
@@ -134,6 +137,8 @@ export const useNFT = () => {
 
             setDeployStep(3); // Waiting for confirmation
             await contract.waitForDeployment();
+            const receipt = await contract.deploymentTransaction().wait();
+            setDeploymentReceipt(receipt);
             deployed = await contract.getAddress();
 
             setDeployStep(4); // Success!
@@ -161,7 +166,7 @@ export const useNFT = () => {
                 if (saveData.success) {
                     toast.success("Saved to NFT Registry!", { icon: '☁️' });
                 }
-            } catch (error) {
+            } catch (_error) {
                 toast.error("Failed to save to database.");
             }
 
@@ -195,8 +200,8 @@ export const useNFT = () => {
                 } else {
                     toast.error("Etherscan verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
                 }
-            } catch (error) {
-                console.error("Verification error:", error);
+            } catch (_error) {
+                console.error("Verification error:", _error);
                 toast.error("Failed to request Etherscan verification.");
             }
 
@@ -209,8 +214,8 @@ export const useNFT = () => {
             setShowSuccessModal(true);
             return deployed;
 
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            console.error(_err);
             toast.error("Deployment failed. Do you have enough testnet ETH?");
         } finally {
             setIsDeploying(false);
@@ -223,6 +228,7 @@ export const useNFT = () => {
         connectWallet, generateNFT, deployNFT,
         estimateGas, gasEstimate, isEstimating,
         isDeploying, deployStep,
-        deployedAddress, showSuccessModal, setShowSuccessModal
+        deployedAddress, showSuccessModal, setShowSuccessModal,
+        deploymentReceipt, providerInstance
     };
 };

@@ -1,6 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { normalizeAST, countNodes } from '../utils/astNormalizer';
-import { nodeColor } from '../utils/astColors';
+import { normalizeAST, countNodes, nodeColor } from '../utils/astUtils';
 import ASTGraph from '../components/ASTGraph';
 import ASTSummaryTree from '../components/ASTSummaryTree';
 

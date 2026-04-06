@@ -7,9 +7,6 @@ export default function ProfilePage() {
     const [deployments, setDeployments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const shortAddr = user?.walletAddress
-        ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
-        : '';
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -22,7 +19,7 @@ export default function ProfilePage() {
                 if (tokensData.success && tokensData.tokens) {
                     tokensData.tokens.forEach(t => allAssets.push({ ...t, _type: 'ERC-20' }));
                 }
-            } catch (e) { /* ignore */ }
+            } catch (_) { /* ignore */ }
 
             try {
                 const nftsRes = await authFetch(`/api/nft/my-nfts/${user.walletAddress}`);
@@ -30,7 +27,7 @@ export default function ProfilePage() {
                 if (nftsData.success && nftsData.nfts) {
                     nftsData.nfts.forEach(n => allAssets.push({ ...n, _type: 'ERC-721' }));
                 }
-            } catch (e) { /* ignore */ }
+            } catch (_) { /* ignore */ }
 
             try {
                 const auctionsRes = await authFetch(`/api/auction/my-auctions/${user.walletAddress}`);
@@ -38,7 +35,7 @@ export default function ProfilePage() {
                 if (auctionsData.success && auctionsData.auctions) {
                     auctionsData.auctions.forEach(a => allAssets.push({ ...a, _type: 'Auction' }));
                 }
-            } catch (e) { /* ignore */ }
+            } catch (_) { /* ignore */ }
 
             allAssets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             setDeployments(allAssets);

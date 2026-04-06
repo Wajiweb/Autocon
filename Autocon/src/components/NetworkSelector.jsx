@@ -1,7 +1,7 @@
 import { useNetwork } from '../context/NetworkContext';
 
 export default function NetworkSelector() {
-    const { selectedNetwork, setSelectedNetwork, network, networks, allNetworkKeys } = useNetwork();
+    const { selectedNetwork, setSelectedNetwork, networks, allNetworkKeys } = useNetwork();
 
     return (
         <div style={{

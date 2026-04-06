@@ -1,4 +1,4 @@
-import { nodeColor } from '../utils/astColors';
+import { nodeColor } from '../utils/astUtils';
 
 /**
  * ASTSummaryTree — renders only top 2 levels when contract is too large (>200 nodes).

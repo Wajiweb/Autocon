@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const slideUpVariant = {
   hidden: { opacity: 0, y: 20 },
   visible: { 

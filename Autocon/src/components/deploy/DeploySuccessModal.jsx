@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Copy, ExternalLink, X, SearchCode, Download } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useABIExport } from '../../hooks/useABIExport';
+import { useABIExport } from '../../hooks/useExport';
 import TransactionStoryteller from '../TransactionStoryteller';
-import VerifyButton from '../VerifyButton';
 
 /**
  * DeploySuccessModal
@@ -29,12 +27,7 @@ export default function DeploySuccessModal({
   contractName = '',
   receipt = null,
   provider = null,
-  sourceCode = '',
-  compilerVersion = 'v0.8.20+commit.a1b79de6',
-  constructorArgs = [],
-  networkName = 'sepolia',
 }) {
-  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const { downloadABI } = useABIExport();
 
@@ -170,25 +163,6 @@ export default function DeploySuccessModal({
                 View on Etherscan
               </a>
 
-              <button
-                onClick={() => {
-                  onClose();
-                  navigate('/explorer');
-                }}
-                style={{
-                  flex: 1, minWidth: '120px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  padding: '12px', borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #7C3AED, #2563EB)',
-                  border: 'none',
-                  color: '#ffffff', fontWeight: 600, fontSize: '0.82rem',
-                  cursor: 'pointer', transition: 'all 0.2s',
-                }}
-              >
-                <SearchCode size={15} />
-                Explore Contract
-              </button>
-
               {abi && contractName && (
                 <button
                   onClick={() => downloadABI(abi, contractName)}
@@ -207,21 +181,6 @@ export default function DeploySuccessModal({
                 </button>
               )}
             </div>
-
-            {/* Verify on Etherscan */}
-            {address && (
-              <div style={{ marginTop: '8px' }}>
-                <VerifyButton
-                  contractAddress={address}
-                  contractName={contractName}
-                  sourceCode={sourceCode}
-                  compilerVersion={compilerVersion}
-                  abi={abi}
-                  constructorArgs={constructorArgs}
-                  network={networkName}
-                />
-              </div>
-            )}
 
             {/* Transaction Storyteller */}
             {receipt && abi && provider && (

@@ -35,8 +35,8 @@ export function SkeletonTable({ rows = 4 }) {
         gap: '14px', padding: '14px 20px',
         borderRadius: '12px', background: 'var(--bg-input)'
       }}>
-        {[1,2,3,4,5].map(i => (
-          <SkeletonPulse key={i} height="12px" width={`${50 + Math.random() * 40}%`} />
+        {[1,2,3,4,5].map((i, idx) => (
+          <SkeletonPulse key={i} height="12px" width={['55%','70%','60%','80%','50%'][idx]} />
         ))}
       </div>
       {/* Rows */}
@@ -50,8 +50,8 @@ export function SkeletonTable({ rows = 4 }) {
           animation: `fadeIn 0.4s ease-out ${rowIdx * 0.1}s forwards`,
           opacity: 0
         }}>
-          {[1,2,3,4,5].map(i => (
-            <SkeletonPulse key={i} height="14px" width={`${40 + Math.random() * 50}%`} />
+          {[1,2,3,4,5].map((i, idx) => (
+            <SkeletonPulse key={i} height="14px" width={['75%','55%','80%','45%','65%'][idx]} />
           ))}
         </div>
       ))}

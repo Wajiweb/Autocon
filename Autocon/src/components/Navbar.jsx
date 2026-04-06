@@ -12,7 +12,6 @@ export default function Navbar({ activeTab }) {
     token: 'Token Generator',
     nft: 'NFT Generator',
     auction: 'Auction Generator',
-    interact: 'Contract Explorer',
     audit: 'Security Audit',
     chatbot: 'AI Assistant',
     profile: 'My Profile'

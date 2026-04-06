@@ -8,23 +8,20 @@
  */
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
 
 const COUNT = 2000;
 
 export function StarField({ count = COUNT, spread = 40 }) {
   const ref = useRef();
 
-  const [positions, randoms] = useMemo(() => {
+  const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
-    const rnd = new Float32Array(count); // per-particle speed offset
     for (let i = 0; i < count; i++) {
-      pos[i * 3]     = (Math.random() - 0.5) * spread;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * spread;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * spread;
-      rnd[i] = Math.random();
+      pos[i * 3]     = (Math.random() - 0.5) * spread; // eslint-disable-line react-hooks/purity
+      pos[i * 3 + 1] = (Math.random() - 0.5) * spread; // eslint-disable-line react-hooks/purity
+      pos[i * 3 + 2] = (Math.random() - 0.5) * spread; // eslint-disable-line react-hooks/purity
     }
-    return [pos, rnd];
+    return pos;
   }, [count, spread]);
 
   useFrame(({ clock }) => {
@@ -64,9 +61,9 @@ export function DustCloud({ count = 600, spread = 18 }) {
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3]     = (Math.random() - 0.5) * spread;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * spread;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * spread * 0.4;
+      pos[i * 3]     = (Math.random() - 0.5) * spread; // eslint-disable-line react-hooks/purity
+      pos[i * 3 + 1] = (Math.random() - 0.5) * spread; // eslint-disable-line react-hooks/purity
+      pos[i * 3 + 2] = (Math.random() - 0.5) * spread * 0.4; // eslint-disable-line react-hooks/purity
     }
     return pos;
   }, [count, spread]);

@@ -1,13 +1,18 @@
 import { useAuction } from '../hooks/useAuction';
+import { useNetwork } from '../context/NetworkContext';
 
 import CodeExportTools from '../components/CodeExportTools';
+import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
 
 export default function AuctionGenerator() {
     const {
-        formData, setFormData, generatedCode,
+        formData, setFormData, generatedCode, contractData,
         connectWallet, generateAuction, deployAuction,
-        estimateGas, gasEstimate, isEstimating, isDeploying
+        estimateGas, gasEstimate, isEstimating, isDeploying,
+        showSuccessModal, setShowSuccessModal,
+        deploymentReceipt, providerInstance, deployedAddress
     } = useAuction();
+    const { network } = useNetwork();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -307,6 +312,20 @@ export default function AuctionGenerator() {
 
             </div>
           </div>
+        
+        {/* Deploy Success Modal */}
+        <DeploySuccessModal
+            isOpen={showSuccessModal}
+            onClose={() => setShowSuccessModal(false)}
+            address={deployedAddress || ''}
+            network={network.name}
+            contractType="Auction"
+            explorerUrl={network.explorerUrl || 'https://sepolia.etherscan.io'}
+            abi={contractData?.abi}
+            contractName={formData.name || 'Auction'}
+            receipt={deploymentReceipt}
+            provider={providerInstance}
+        />
         </div>
     );
 }

@@ -13,7 +13,7 @@ export default function TokenGenerator() {
     estimateGas, gasEstimate, isEstimating,
     isDeploying, deployStep, deployStepError,
     deployedAddress, showSuccessModal, setShowSuccessModal,
-    contractData, ast
+    contractData, ast, deploymentReceipt, providerInstance
   } = useWeb3();
   const { network } = useNetwork();
 
@@ -300,6 +300,8 @@ export default function TokenGenerator() {
         explorerUrl={network.explorerUrl || 'https://sepolia.etherscan.io'}
         abi={contractData?.abi}
         contractName={formData.name || 'Token'}
+        receipt={deploymentReceipt}
+        provider={providerInstance}
       />
     </div>
   );

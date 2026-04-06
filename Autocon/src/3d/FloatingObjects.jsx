@@ -93,7 +93,7 @@ function NodeLayer({ count, z, scale, speed, color, spread }) {
   const positions = useMemo(() => generatePositions(count, spread), [count, spread]);
   const groupRef = useRef();
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (!groupRef.current) return;
     // Scroll-depth movement: background moves more slowly
     groupRef.current.position.z = z;

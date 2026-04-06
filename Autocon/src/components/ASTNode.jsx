@@ -1,7 +1,7 @@
 import { memo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronDown } from 'lucide-react';
-import { nodeColor } from '../utils/astColors';
+import { nodeColor } from '../utils/astUtils';
 
 const ASTNode = memo(function ASTNode({ node, depth = 0 }) {
   const [expanded, setExpanded] = useState(depth < 2);
