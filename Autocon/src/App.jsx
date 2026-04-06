@@ -19,6 +19,7 @@ import ProfilePage from './pages/ProfilePage';
 import ContractInteraction from './pages/ContractInteraction';
 import LandingPage from './pages/LandingPage';
 import AnimatedPage from './components/AnimatedPage';
+import ASTPage from './pages/ASTPage';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -36,6 +37,7 @@ function AnimatedRoutes() {
         <Route path="/explorer/:id?" element={<AnimatedPage><ContractInteraction /></AnimatedPage>} />
         <Route path="/profile" element={<AnimatedPage><ProfilePage /></AnimatedPage>} />
         <Route path="/templates" element={<AnimatedPage><TemplateLibrary /></AnimatedPage>} />
+        <Route path="/ast" element={<AnimatedPage><ASTPage /></AnimatedPage>} />
       </Routes>
     </AnimatePresence>
   );

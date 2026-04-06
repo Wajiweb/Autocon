@@ -100,7 +100,10 @@ app.post('/api/generate-token', strictLimiter, authMiddleware, (req, res) => {
             language: 'Solidity',
             sources: { 'Token.sol': { content: finalCode } },
             settings: {
-                outputSelection: { '*': { '*': ['abi', 'evm.bytecode.object'] } }
+                outputSelection: {
+                    '*': { '*': ['abi', 'evm.bytecode.object'] },
+                    '':  { '': ['ast'] }
+                }
             }
         };
 
@@ -127,12 +130,15 @@ app.post('/api/generate-token', strictLimiter, authMiddleware, (req, res) => {
         }
 
         const contractData = output.contracts['Token.sol'][className];
+        const fileName     = Object.keys(output.sources ?? {})[0];
+        const ast          = output.sources?.[fileName]?.ast ?? null;
 
         res.json({
             success: true,
             contractCode: finalCode,
             abi: contractData.abi,
-            bytecode: contractData.evm.bytecode.object
+            bytecode: contractData.evm.bytecode.object,
+            ast
         });
 
     } catch (error) {

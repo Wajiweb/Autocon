@@ -281,7 +281,7 @@ export default function AuctionGenerator() {
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
                                 <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                             </svg>DEPLOYING AUCTION...</>
-                        ) : '🚀 Deploy Auction to Sepolia'}
+                        ) : ' Deploy Auction to Sepolia'}
                     </button>
                 </div>
             )}

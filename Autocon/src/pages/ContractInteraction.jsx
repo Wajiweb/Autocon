@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import Input from '../components/ui/Input';
 import GradientButton from '../components/GradientButton';
+import { useABIExport } from '../hooks/useABIExport';
+import QuickActionPanel from '../components/QuickActionPanel';
+import VerifyButton from '../components/VerifyButton';
 
 export default function ContractInteraction() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const { authFetch } = useAuth();
+    const { downloadABI } = useABIExport();
     
     const [contractAddress, setContractAddress] = useState('');
     const [abiInput, setAbiInput] = useState('');
@@ -157,7 +160,7 @@ export default function ContractInteraction() {
             setReadFunctions(reads);
             setWriteFunctions(writes);
             toast.success('Connected automatically via Input!');
-        } catch (err) {
+        } catch (_err) {
             toast.error('Invalid ABI JSON format.');
         }
     };
@@ -316,14 +319,24 @@ export default function ContractInteraction() {
                         </div>
                     </div>
                 </div>
-                {!id && (
-                    <button 
-                        onClick={() => { setAbi(null); setContractAddress(''); setAbiInput(''); setResults({}); }} 
-                        className="px-4 py-2 text-xs font-bold border border-white/10 text-gray-400 rounded-lg hover:bg-white/5 transition-colors"
-                    >
-                        Disconnect
-                    </button>
-                )}
+                <div className="flex items-center gap-2">
+                    {abi && (
+                        <button
+                            onClick={() => downloadABI(abi, `Contract_${contractAddress.slice(0,8)}`)}
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold border border-white/10 text-gray-300 rounded-lg hover:bg-white/5 transition-colors"
+                        >
+                            <Download size={14} /> Download ABI
+                        </button>
+                    )}
+                    {!id && (
+                        <button 
+                            onClick={() => { setAbi(null); setContractAddress(''); setAbiInput(''); setResults({}); }} 
+                            className="px-4 py-2 text-xs font-bold border border-white/10 text-gray-400 rounded-lg hover:bg-white/5 transition-colors"
+                        >
+                            Disconnect
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -351,6 +364,24 @@ export default function ContractInteraction() {
                     </div>
                 </div>
             </div>
+
+            {/* Quick Action Panel — detected from ABI */}
+            {abi && contractAddress && (
+                <QuickActionPanel contractAddress={contractAddress} abi={abi} />
+            )}
+
+            {/* Verify on Etherscan */}
+            {abi && contractAddress && (
+                <div className="mt-6">
+                    <VerifyButton
+                        contractAddress={contractAddress}
+                        contractName={`Contract_${contractAddress.slice(0, 8)}`}
+                        sourceCode={''}
+                        compilerVersion={'v0.8.20+commit.a1b79de6'}
+                        abi={abi}
+                    />
+                </div>
+            )}
         </div>
     );
 }

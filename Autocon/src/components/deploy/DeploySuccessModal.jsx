@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Copy, ExternalLink, X, SearchCode } from 'lucide-react';
+import { CheckCircle2, Copy, ExternalLink, X, SearchCode, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useABIExport } from '../../hooks/useABIExport';
+import TransactionStoryteller from '../TransactionStoryteller';
+import VerifyButton from '../VerifyButton';
 
 /**
  * DeploySuccessModal
@@ -22,9 +25,18 @@ export default function DeploySuccessModal({
   network = 'Sepolia',
   contractType = 'Token',
   explorerUrl = 'https://sepolia.etherscan.io',
+  abi = null,
+  contractName = '',
+  receipt = null,
+  provider = null,
+  sourceCode = '',
+  compilerVersion = 'v0.8.20+commit.a1b79de6',
+  constructorArgs = [],
+  networkName = 'sepolia',
 }) {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const { downloadABI } = useABIExport();
 
   const copyAddress = () => {
     navigator.clipboard.writeText(address);
@@ -139,13 +151,13 @@ export default function DeploySuccessModal({
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
               <a
                 href={`${explorerUrl}/address/${address}`}
                 target="_blank"
                 rel="noreferrer"
                 style={{
-                  flex: 1,
+                  flex: 1, minWidth: '120px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   padding: '12px', borderRadius: '12px',
                   background: 'rgba(139,92,246,0.1)',
@@ -164,7 +176,7 @@ export default function DeploySuccessModal({
                   navigate('/explorer');
                 }}
                 style={{
-                  flex: 1,
+                  flex: 1, minWidth: '120px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   padding: '12px', borderRadius: '12px',
                   background: 'linear-gradient(135deg, #7C3AED, #2563EB)',
@@ -176,7 +188,45 @@ export default function DeploySuccessModal({
                 <SearchCode size={15} />
                 Explore Contract
               </button>
+
+              {abi && contractName && (
+                <button
+                  onClick={() => downloadABI(abi, contractName)}
+                  style={{
+                    flex: '1 1 100%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    padding: '10px', borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid var(--outline-variant)',
+                    color: 'var(--on-surface)', fontWeight: 600, fontSize: '0.82rem',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                  }}
+                >
+                  <Download size={15} />
+                  Download ABI
+                </button>
+              )}
             </div>
+
+            {/* Verify on Etherscan */}
+            {address && (
+              <div style={{ marginTop: '8px' }}>
+                <VerifyButton
+                  contractAddress={address}
+                  contractName={contractName}
+                  sourceCode={sourceCode}
+                  compilerVersion={compilerVersion}
+                  abi={abi}
+                  constructorArgs={constructorArgs}
+                  network={networkName}
+                />
+              </div>
+            )}
+
+            {/* Transaction Storyteller */}
+            {receipt && abi && provider && (
+              <TransactionStoryteller receipt={receipt} abi={abi} provider={provider} />
+            )}
           </motion.div>
         </motion.div>
       )}

@@ -113,7 +113,7 @@ export default function AuditReportTemplate({ auditResult, dateStr }) {
                 </div>
             ) : (
                 <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#161d2b', borderRadius: '8px', color: '#10b981' }}>
-                    ✅ No vulnerabilities found. This code is exceptionally clean.
+                     No vulnerabilities found. This code is exceptionally clean.
                 </div>
             )}
             

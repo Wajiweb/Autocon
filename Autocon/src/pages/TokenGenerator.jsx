@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../hooks/useWeb3';
 import CodeExportTools from '../components/CodeExportTools';
 import DeploymentTimeline from '../components/deploy/DeploymentTimeline';
@@ -5,12 +6,14 @@ import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
 import { useNetwork } from '../context/NetworkContext';
 
 export default function TokenGenerator() {
+  const navigate = useNavigate();
   const {
     formData, setFormData, generatedCode,
     connectWallet, generateContract, deployContract,
     estimateGas, gasEstimate, isEstimating,
-    isDeploying, deployStep,
-    deployedAddress, showSuccessModal, setShowSuccessModal
+    isDeploying, deployStep, deployStepError,
+    deployedAddress, showSuccessModal, setShowSuccessModal,
+    contractData, ast
   } = useWeb3();
   const { network } = useNetwork();
 
@@ -223,7 +226,11 @@ export default function TokenGenerator() {
       <div className="animate-fade-in-up">
           {isDeploying && deployStep >= 0 ? (
             <div className="card glass" style={{ padding: '28px', marginBottom: '16px' }}>
-              <DeploymentTimeline currentStep={deployStep} />
+              <DeploymentTimeline
+                currentStep={deployStep}
+                errorStep={deployStepError?.step ?? -1}
+                errorMessage={deployStepError?.message ?? ''}
+              />
             </div>
           ) : (
             <button
@@ -255,6 +262,21 @@ export default function TokenGenerator() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <CodeExportTools code={generatedCode} contractName={formData.name || 'Token'} />
               <span className="badge badge-success">Compiled ✓</span>
+              {ast && (
+                <button
+                  onClick={() => navigate('/ast', { state: { ast } })}
+                  style={{
+                    fontSize: '0.75rem', padding: '4px 10px',
+                    borderRadius: '8px', cursor: 'pointer',
+                    background: 'rgba(124,58,237,0.15)',
+                    border: '1px solid rgba(124,58,237,0.35)',
+                    color: '#a78bfa', fontWeight: 600,
+                    textDecoration: 'none',
+                  }}
+                >
+                  🌳 View AST
+                </button>
+              )}
             </div>
           </div>
           <div className="code-block">
@@ -276,6 +298,8 @@ export default function TokenGenerator() {
         network={network.name}
         contractType="Token"
         explorerUrl={network.explorerUrl || 'https://sepolia.etherscan.io'}
+        abi={contractData?.abi}
+        contractName={formData.name || 'Token'}
       />
     </div>
   );

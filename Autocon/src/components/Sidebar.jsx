@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useWallet } from '../hooks/useWallet';
 import { 
     LayoutDashboard, 
     Coins, 
@@ -30,6 +31,8 @@ const navItems = [
 export default function Sidebar() {
     const [isExpanded, setIsExpanded] = useState(true);
     const { theme, toggleTheme } = useTheme();
+    const { walletAddress } = useWallet();
+
 
     return (
         <aside 
@@ -105,6 +108,23 @@ export default function Sidebar() {
                          Powered by AutoCon
                      </div>
                  )}
+
+                 {/* Connected Wallet Pill — inline to avoid nested component anti-pattern */}
+                 <div className="mt-2">
+                     {walletAddress ? (
+                         <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+                              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', color: 'var(--on-surface)' }}>
+                             <span className="h-2 w-2 rounded-full bg-green-400 shrink-0" />
+                             {isExpanded && <span className="font-mono truncate">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>}
+                         </div>
+                     ) : (
+                         <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+                              style={{ color: 'var(--outline)' }}>
+                             <span className="h-2 w-2 rounded-full bg-gray-500 shrink-0" />
+                             {isExpanded && 'Not connected'}
+                         </div>
+                     )}
+                 </div>
             </div>
         </aside>
     );

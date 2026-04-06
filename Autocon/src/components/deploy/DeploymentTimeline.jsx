@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Circle, Loader2, CheckCircle2 } from 'lucide-react';
+import { Circle, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const STEPS = [
   'Compiling Smart Contract...',
@@ -15,14 +15,15 @@ const STEPS = [
  * A vertical stepper tracking blockchain contract deployments.
  * @param {number} currentStep - The active zero-indexed step (0 to 4).
  */
-export default function DeploymentTimeline({ currentStep = 0 }) {
+export default function DeploymentTimeline({ currentStep = 0, errorStep = -1, errorMessage = '' }) {
   return (
     <div className="flex flex-col w-full max-w-md mx-auto" style={{ fontFamily: '"Inter", sans-serif' }}>
       {STEPS.map((stepStr, idx) => {
-        const isCompleted = currentStep > idx;
-        const isActive = currentStep === idx;
-        const isPending = currentStep < idx;
-        const isLast = idx === STEPS.length - 1;
+        const isError    = errorStep === idx;
+        const isCompleted = !isError && currentStep > idx;
+        const isActive   = !isError && currentStep === idx;
+        const isPending  = !isError && currentStep < idx;
+        const isLast     = idx === STEPS.length - 1;
 
         // Colors per Kinetic Ether palette
         const primary = '#a78bfa'; // var(--primary)
@@ -100,6 +101,16 @@ export default function DeploymentTimeline({ currentStep = 0 }) {
                       <Circle size={18} color="rgba(255,255,255,0.2)" strokeWidth={2} />
                     </motion.div>
                   )}
+                  {isError && (
+                    <motion.div
+                      key="error"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                    >
+                      <AlertTriangle size={22} color="#f87171" />
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               </div>
 
@@ -108,12 +119,17 @@ export default function DeploymentTimeline({ currentStep = 0 }) {
                 className="ml-3 font-medium transition-all duration-300"
                 style={{
                   fontSize: isActive ? '0.95rem' : '0.85rem',
-                  color: isActive ? activeLabel : (isCompleted ? '#d1d5db' : mutedLabel),
+                  color: isError ? '#f87171' : (isActive ? activeLabel : (isCompleted ? '#d1d5db' : mutedLabel)),
                   textShadow: isActive ? `0 0 12px ${primary}80` : 'none',
                   letterSpacing: '0.01em'
                 }}
               >
                 {stepStr}
+                {isError && errorMessage && (
+                  <div className="mt-1 text-xs font-normal" style={{ color: '#fca5a5' }}>
+                    {errorMessage}
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

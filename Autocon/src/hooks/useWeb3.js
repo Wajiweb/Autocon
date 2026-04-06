@@ -5,17 +5,20 @@ import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { API_BASE } from '../config';
 import { fireConfetti } from '../utils/confetti';
+import { classifyError, deployWithTimeout } from '../utils/classifyError';
 
 export const useWeb3 = () => {
-  const { authFetch, user } = useAuth();
+  const { authFetch } = useAuth();
   const { network } = useNetwork();
   const [formData, setFormData] = useState({
     name: '', symbol: '', supply: '1000000', ownerAddress: ''
   });
   const [generatedCode, setGeneratedCode] = useState("");
   const [contractData, setContractData] = useState({ abi: null, bytecode: null });
+  const [ast, setAst] = useState(null);
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployStep, setDeployStep] = useState(-1);
+  const [deployStepError, setDeployStepError] = useState({ step: -1, message: '' });
   const [deployedAddress, setDeployedAddress] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [gasEstimate, setGasEstimate] = useState(null);
@@ -27,7 +30,7 @@ export const useWeb3 = () => {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         setFormData(prev => ({ ...prev, ownerAddress: accounts[0] }));
         toast.success("MetaMask Connected!");
-      } catch (err) { toast.error("Wallet connection failed."); }
+      } catch (_err) { toast.error("Wallet connection failed."); }
     } else { toast.error("Please install MetaMask!"); }
   };
 
@@ -45,6 +48,7 @@ export const useWeb3 = () => {
       if (data.success) {
         setGeneratedCode(data.contractCode);
         setContractData({ abi: data.abi, bytecode: data.bytecode });
+        setAst(data.ast ?? null);
         setGasEstimate(null);
         toast.success("Contract Compiled & Ready! 🚀", { id: loadingToast });
       } else {
@@ -113,7 +117,7 @@ export const useWeb3 = () => {
       setDeployStep(1); // Step 1: Awaiting wallet signature
       toast('Confirm transaction in MetaMask 🦊', { icon: '👆' });
 
-      const contract = await factory.deploy(formData.ownerAddress, formData.supply);
+      const contract = await deployWithTimeout(() => factory.deploy(formData.ownerAddress, formData.supply));
 
       setDeployStep(2); // Step 2: Broadcasting transaction
       const deployToast = toast.loading(`Deploying to ${network.name}...`);
@@ -143,7 +147,7 @@ export const useWeb3 = () => {
         if (saveData.success) {
           toast.success("Saved to Dashboard Registry!", { icon: '☁️' });
         }
-      } catch (error) {
+      } catch (_error) {
         toast.error("Failed to save to database.");
       }
 
@@ -193,19 +197,21 @@ export const useWeb3 = () => {
 
     } catch (err) {
       console.error(err);
-      toast.error("Deployment failed. Do you have enough testnet ETH?");
+      const message = classifyError(err);
+      setDeployStepError({ step: deployStep >= 0 ? deployStep : 0, message });
+      toast.error(message);
     } finally {
       setIsDeploying(false);
-      // Reset deploy step after a delay so user sees "complete" state
-      setTimeout(() => setDeployStep(-1), 2000);
+      // Reset deploy step after a delay so user sees "complete" or error state
+      setTimeout(() => { setDeployStep(-1); setDeployStepError({ step: -1, message: '' }); }, 3000);
     }
   };
 
   return {
-    formData, setFormData, generatedCode, contractData,
+    formData, setFormData, generatedCode, contractData, ast,
     connectWallet, generateContract, deployContract,
     estimateGas, gasEstimate, isEstimating,
-    isDeploying, deployStep,
+    isDeploying, deployStep, deployStepError,
     deployedAddress, showSuccessModal, setShowSuccessModal
   };
 };
