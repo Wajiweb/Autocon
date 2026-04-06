@@ -16,20 +16,48 @@
 Purpose: 
 AutoCon is an enterprise-grade, No-Code Web3 platform designed to demystify blockchain technology. It allows non-technical users and developers to generate, audit, and deploy Ethereum smart contracts seamlessly without writing a single line of Solidity code.
 
-Goals:  
-- Eliminate the steep learning curve associated with smart contract development.
-- Provide a secure, verifiable, and gas-efficient deployment pipeline.
-- Offer educational tools (like the Transaction Storyteller and AST X-Ray) to teach blockchain concepts.
+Goals:
+(Accessibility): To democratize Web3 development by providing a no-code interface that eliminates the technical barriers of Solidity programming.
 
-Key Features:
-- Token & NFT Generators:** Deploy ERC-20 tokens, ERC-721 NFT collections (with IPFS), and decentralized english auctions in seconds.
-- 🛡️ **AI Security Audit:** Built-in vulnerability scanner for reentrancy, overflow, and access control flaws.
-- 🔍 **AST Graph X-Ray:** Visual node-tree representation of generated smart contracts.
-- 📖 **Transaction Storyteller:** Translates raw transaction receipts into human-readable steps.
-- ⛽ **Live Gas Estimator:** Real-time fiat ($) cost estimations based on current Sepolia network conditions.
-- ✅ **Automated Verification:** One-click contract source code verification on Etherscan.
+(Security & Trust): To ensure contract integrity through a secure deployment pipeline featuring AI-driven auditing and automated Etherscan verification.
 
+(Educational Transparency): To bridge the blockchain knowledge gap using interactive visualizers that translate complex smart contract data into human-readable insights.
 
+Core Features
+1. Multi-Standard Asset Generators
+Deploy industry-standard contracts in seconds through a guided visual interface:
+
+ERC-20 Token Factory: Create fungible tokens with custom supply, decimals, and ownership logic.
+
+ERC-721 NFT Collections: Launch NFT projects with integrated IPFS metadata support.
+
+Decentralized English Auctions: Deploy time-bound bidding contracts for transparent asset sales.
+
+2.  AI-Powered Security Audit
+Safety-first deployment with an integrated vulnerability scanner:
+
+Automated Scans: Detects reentrancy, overflow risks, and access control flaws before deployment.
+
+PDF Audit Export: Generates professional security reports for every contract—perfect for project documentation.
+
+3.  One-Click Etherscan Verification
+Build trust instantly by making your code transparent:
+
+Automated Verification: Uses the Etherscan API to verify and publish source code with a single click, obtaining the official "Green Checkmark."
+
+4.  Deployment & Management Dashboard
+Contract X-Ray: Provides a detailed breakdown of contract logic and state variables.
+
+Live Gas Estimator: Real-time Gwei/ETH cost tracking based on current Sepolia network congestion.
+
+Deployment Timeline: A step-by-step visual tracker that monitors the lifecycle of a transaction from "Pending" to "Confirmed."
+
+5.  Modern, Theme-Aware UI
+Built with React 19 and Tailwind CSS 4.
+
+Dynamic Theming: Uses CSS custom variables (var(--bg), var(--on-surface)) for a consistent, accessible dark/light mode experience.
+
+Smooth Motion: Powered by framer-motion for fluid state transitions and feedback.
 2. Installation Guide
 
 Follow these steps to set up the project locally on your machine.
