@@ -10,53 +10,78 @@
   ![Ethereum](https://img.shields.io/badge/Ethereum-Sepolia-3C3C3D?logo=ethereum)
 </div>
 
----
 
-## 1. Project Overview
+ 1. Project Overview
 
-**Purpose:**  
+Purpose: 
 AutoCon is an enterprise-grade, No-Code Web3 platform designed to demystify blockchain technology. It allows non-technical users and developers to generate, audit, and deploy Ethereum smart contracts seamlessly without writing a single line of Solidity code.
 
-**Goals:**  
-- Eliminate the steep learning curve associated with smart contract development.
-- Provide a secure, verifiable, and gas-efficient deployment pipeline.
-- Offer educational tools (like the Transaction Storyteller and AST X-Ray) to teach blockchain concepts.
+Goals:
+(Accessibility): To democratize Web3 development by providing a no-code interface that eliminates the technical barriers of Solidity programming.
 
-**Key Features:**  
-- 🪙 **Token & NFT Generators:** Deploy ERC-20 tokens, ERC-721 NFT collections (with IPFS), and decentralized english auctions in seconds.
-- 🛡️ **AI Security Audit:** Built-in vulnerability scanner for reentrancy, overflow, and access control flaws.
-- 🔍 **AST Graph X-Ray:** Visual node-tree representation of generated smart contracts.
-- 📖 **Transaction Storyteller:** Translates raw transaction receipts into human-readable steps.
-- ⛽ **Live Gas Estimator:** Real-time fiat ($) cost estimations based on current Sepolia network conditions.
-- ✅ **Automated Verification:** One-click contract source code verification on Etherscan.
+(Security & Trust): To ensure contract integrity through a secure deployment pipeline featuring AI-driven auditing and automated Etherscan verification.
 
----
+(Educational Transparency): To bridge the blockchain knowledge gap using interactive visualizers that translate complex smart contract data into human-readable insights.
 
-## 2. Installation Guide
+Core Features
+1. Multi-Standard Asset Generators
+Deploy industry-standard contracts in seconds through a guided visual interface:
+
+ERC-20 Token Factory: Create fungible tokens with custom supply, decimals, and ownership logic.
+
+ERC-721 NFT Collections: Launch NFT projects with integrated IPFS metadata support.
+
+Decentralized English Auctions: Deploy time-bound bidding contracts for transparent asset sales.
+
+2.  AI-Powered Security Audit
+Safety-first deployment with an integrated vulnerability scanner:
+
+Automated Scans: Detects reentrancy, overflow risks, and access control flaws before deployment.
+
+PDF Audit Export: Generates professional security reports for every contract—perfect for project documentation.
+
+3.  One-Click Etherscan Verification
+Build trust instantly by making your code transparent:
+
+Automated Verification: Uses the Etherscan API to verify and publish source code with a single click, obtaining the official "Green Checkmark."
+
+4.  Deployment & Management Dashboard
+Contract X-Ray: Provides a detailed breakdown of contract logic and state variables.
+
+Live Gas Estimator: Real-time Gwei/ETH cost tracking based on current Sepolia network congestion.
+
+Deployment Timeline: A step-by-step visual tracker that monitors the lifecycle of a transaction from "Pending" to "Confirmed."
+
+5.  Modern, Theme-Aware UI
+Built with React 19 and Tailwind CSS 4.
+
+Dynamic Theming: Uses CSS custom variables (var(--bg), var(--on-surface)) for a consistent, accessible dark/light mode experience.
+
+Smooth Motion: Powered by framer-motion for fluid state transitions and feedback.
+2. Installation Guide
 
 Follow these steps to set up the project locally on your machine.
 
-### Prerequisites
-- **Node.js** (v18.x or higher)
-- **npm** (v9.x or higher)
-- A **MongoDB Atlas** URI (or local MongoDB instance)
-- **MetaMask** browser extension installed
+ Prerequisites
+Node.js (v18.x or higher)
+npm (v9.x or higher)
+A MongoDB Atlas URI (or local MongoDB instance)
+MetaMask browser extension installed
 
-### Step-by-Step Setup
+ Step-by-Step Setup
 
-**1. Clone the repository**
-```bash
+1. Clone the repository
+bash
 git clone https://github.com/Wajiweb/Autocon.git
 cd Autocon-fyp
-```
 
-**2. Install Backend Dependencies**
+2. Install Backend Dependencies
 ```bash
 cd server
 npm install
 ```
 
-**3. Configure Backend Environment**
+3. Configure Backend Environment**
 Create a `.env` file inside the `server/` directory:
 ```env
 # server/.env
@@ -69,13 +94,13 @@ SEPOLIA_RPC_URL=https://rpc.sepolia.org
 NODE_ENV=development
 ```
 
-**4. Install Frontend Dependencies**
+4. Install Frontend Dependencies
 ```bash
 cd ../Autocon
 npm install
 ```
 
-**5. Configure Frontend Environment**
+5. Configure Frontend Environment
 Create a `.env` file inside the `Autocon/` directory:
 ```env
 # Autocon/.env
@@ -85,22 +110,22 @@ VITE_API_URL=http://127.0.0.1:5000
 
 ---
 
-## 3. Usage Guide
+ 3. Usage Guide
 
-### Running the Project Locally
+ Running the Project Locally
 
 You will need two terminal windows to run both the frontend and backend servers.
 
-**Terminal 1 — Backend:**
+Terminal 1 — Backend:
 ```bash
 cd server
 node index.js
 # Output:
-# 🚀 Server running on port 5000
-# ✅ Connected to MongoDB Atlas!
+#  Server running on port 5000
+#  Connected to MongoDB Atlas!
 ```
 
-**Terminal 2 — Frontend:**
+Terminal 2 — Frontend:
 ```bash
 cd Autocon
 npm run dev
@@ -108,7 +133,7 @@ npm run dev
 # ➜  Local:   http://localhost:5173/
 ```
 
-### Application Workflow Example (Deploying a Token)
+ Application Workflow Example (Deploying a Token)
 1. Open `http://localhost:5173` in your browser.
 2. Click **Connect Wallet** and sign the MetaMask message to securely authenticate (SIWE protocol).
 3. Navigate to **Token Generator** from your Dashboard.
@@ -119,15 +144,15 @@ npm run dev
 
 ---
 
-## 4. Architecture & Structure
+ 4. Architecture & Structure
 
 AutoCon follows a decoupled Client-Server architecture utilizing standard REST APIs and Web3 JSON-RPC communication.
 
-### Workflow Architecture
+Workflow Architecture
 - **Frontend (Client):** Manages wallet context, UI state, form inputs, and directs MetaMask to broadcast signed transactions directly to the Ethereum network.
 - **Backend (Server):** Handles heavy computation like Solidity compilation (`solc`), AI audits, IPFS uploading, and stores historical deployment metadata securely in MongoDB.
 
-### Folder Structure
+ Folder Structure
 ```text
 Autocon-fyp/
 ├── Autocon/                     # React Frontend (Vite)
@@ -150,45 +175,45 @@ Autocon-fyp/
 
 ---
 
-## 5. Technologies Used
+5. Technologies Used
 
-**Frontend:**
+Frontend:
 - **Framework:** React 19 + Vite 7
 - **Styling:** Tailwind CSS 4, Framer Motion (Animations)
 - **Web3 Interaction:** ethers.js v6
 - **Data Visualization:** Chart.js, React-Three-Fiber (3D models)
 
-**Backend:**
+Backend:
 - **Server:** Node.js, Express 5
 - **Database:** MongoDB Atlas, Mongoose v9
 - **Compilation:** `solc` (Solidity Compiler)
 - **Security:** Helmet, express-rate-limit, cors
 
-**Blockchain / DevOps:**
+Blockchain / DevOps:
 - **Network:** Ethereum Sepolia Testnet
 - **Authentication:** SIWE (Sign-In with Ethereum) utilizing JWTs.
 - **Storage:** IPFS (via Pinata APIs)
 
 ---
 
-## 6. API Documentation
+6. API Documentation
 
 Complete interaction with the AutoCon backend requires a Bearer JWT obtained during the MetaMask login flow.
 
 ### Setup Base URL
 `http://127.0.0.1:5000/api`
 
-### 1. Authentication (SIWE)
-- **`GET /auth/nonce/:walletAddress`**
+ 1. Authentication (SIWE)
+- `GET /auth/nonce/:walletAddress`
   - **Purpose:** Fetches a cryptographic nonce for signing.
   - **Response:** `{ "success": true, "message": "Sign this message..." }`
 
-- **`POST /auth/verify`**
+- `POST /auth/verify`
   - **Purpose:** Verifies the signed message and returns a JWT.
   - **Body:** `{ "walletAddress": "0x...", "signature": "0x..." }`
   - **Response:** `{ "success": true, "token": "ey...", "user": {...} }`
 
-### 2. Contract Generation & Compilation
+ 2. Contract Generation & Compilation
 - **`POST /generate-token`** *(Auth required)*
   - **Purpose:** Injects parameters into the ERC-20 template and compiles via `solc`.
   - **Body:** `{ "name": "MyToken", "symbol": "MTK", "supply": 1000, "ownerAddress": "0x..." }`
@@ -201,33 +226,13 @@ Complete interaction with the AutoCon backend requires a Bearer JWT obtained dur
       "ast": {...}
     }
     ```
-
-### 3. Analytics & Saving
+3. Analytics & Saving
 - **`POST /deploy-token`** *(Auth required)*
   - **Purpose:** Saves the successfully deployed contract data to the user's dashboard.
   - **Body:** `{ "name": "...", "symbol": "...", "contractAddress": "0x...", "network": "Sepolia" }`
 
 ---
-
-## 7. Screenshots & Demos
-
-> *Note: Placeholders for visuals. Replace the `[Screenshot]` blocks with actual local file paths or hosted image URLs.*
-
-### Landing Page & Authentication
-![Landing Page Placeholder](https://via.placeholder.com/800x400.png?text=AutoCon+Landing+Page)
-*The modern glassmorphic landing page greeting users.*
-
-### Contract Generator Dashboard
-![Generator Placeholder](https://via.placeholder.com/800x400.png?text=Token+Generator+Dashboard)
-*The token generator featuring live parameter injection, AST toggles, and syntax-highlighted previews.*
-
-### Post-Deployment & Verification
-![Verification Placeholder](https://via.placeholder.com/800x400.png?text=Post-Deployment+Success+Modal)
-*The success modal showing the Etherscan Verification button and the Transaction Storyteller dropdown.*
-
----
-
-## 8. Contributing Guidelines
+ 8. Contributing Guidelines
 
 We welcome community contributions! Please follow the steps below if you wish to help improve AutoCon.
 
@@ -247,8 +252,7 @@ We welcome community contributions! Please follow the steps below if you wish to
 5. **Open a Pull Request:** Navigate to the original repository and submit your PR for review. Ensure your code passes the existing ESLint configurations (`npm run lint`).
 
 ---
-
-## 9. License
+ 9. License
 
 This project is distributed under the **ISC License**. See the `LICENSE` file for more information.
 
