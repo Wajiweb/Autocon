@@ -103,7 +103,7 @@ export default function AnalyticsCharts({ deployments = [] }) {
       {/* Doughnut — Asset Distribution */}
       <div className="card animate-fade-in-up delay-100" style={{ padding: '20px' }}>
         <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>
-          📊 Asset Distribution
+           Asset Distribution
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           <div style={{ width: '140px', height: '140px', position: 'relative' }}>
