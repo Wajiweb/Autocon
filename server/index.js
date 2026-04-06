@@ -56,8 +56,8 @@ app.use(generalLimiter);
 
 // ─── MongoDB Connection ───
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ Connected to MongoDB Atlas!'))
-    .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+    .then(() => console.log(' Connected to MongoDB Atlas!'))
+    .catch((err) => console.error(' MongoDB Connection Error:', err));
 
 // ─── PUBLIC ROUTES ───
 app.get('/api/health', (req, res) => {
