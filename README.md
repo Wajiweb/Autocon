@@ -85,13 +85,7 @@ npm install
 Create a `.env` file inside the `server/` directory:
 ```env
 # server/.env
-MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/autocon_db
-JWT_SECRET=your_super_secret_jwt_key_here
-ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-RATE_LIMIT_MAX=100
-RATE_LIMIT_WINDOW_MS=60000
-SEPOLIA_RPC_URL=https://rpc.sepolia.org
-NODE_ENV=development
+
 ```
 
 4. Install Frontend Dependencies
