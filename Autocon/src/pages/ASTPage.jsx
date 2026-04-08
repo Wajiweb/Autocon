@@ -35,7 +35,7 @@ export default function ASTPage() {
 
   return (
     <div
-      className="flex flex-col gap-6 p-6 max-w-[900px] mx-auto"
+      className="flex flex-col gap-6 p-6 max-w-225 mx-auto"
       style={{ paddingTop: '24px' }}
     >
       {/* Header */}

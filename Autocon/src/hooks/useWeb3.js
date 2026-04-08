@@ -22,8 +22,7 @@ export const useWeb3 = () => {
   const [deployStepError, setDeployStepError] = useState({ step: -1, message: '' });
   const [deployedAddress, setDeployedAddress] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [gasEstimate, setGasEstimate] = useState(null);
-  const [isEstimating, setIsEstimating] = useState(false);
+  const [estimatedCost, setEstimatedCost] = useState(null);
   const [deploymentReceipt, setDeploymentReceipt] = useState(null);
   const [providerInstance, setProviderInstance] = useState(null);
 
@@ -41,7 +40,7 @@ export const useWeb3 = () => {
     const loadingToast = toast.loading("Compiling smart contract...");
 
     try {
-      const res = await authFetch('/api/generate-token', {
+      const res = await authFetch('/api/token/generate-token', {
         method: 'POST',
         body: JSON.stringify(formData)
       });
@@ -51,8 +50,8 @@ export const useWeb3 = () => {
         setGeneratedCode(data.contractCode);
         setContractData({ abi: data.abi, bytecode: data.bytecode });
         setAst(data.ast ?? null);
-        setGasEstimate(null);
         toast.success("Contract Compiled & Ready! 🚀", { id: loadingToast });
+        await calculateGas(); // ⛽ Fetch the live price now!
       } else {
         toast.error(data.error || "Compilation failed.", { id: loadingToast });
       }
@@ -63,35 +62,24 @@ export const useWeb3 = () => {
     }
   };
 
-  const estimateGas = async () => {
-    if (!contractData.abi || !contractData.bytecode) {
-      return toast.error("Generate a contract first!");
-    }
-
-    setIsEstimating(true);
+  // --- NEW: Live Gas Estimator ---
+  const calculateGas = async () => {
+    if (!window.ethereum) return;
     try {
-      const res = await authFetch('/api/estimate-gas', {
-        method: 'POST',
-        body: JSON.stringify({
-          abi: contractData.abi,
-          bytecode: contractData.bytecode,
-          ownerAddress: formData.ownerAddress,
-          supply: formData.supply
-        })
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        setGasEstimate(data);
-        toast.success("Gas estimated successfully!");
-      } else {
-        toast.error(data.error || "Failed to estimate gas.");
-      }
-    } catch (err) {
-      console.error("Gas Error:", err);
-      toast.error("Failed to estimate gas. Check RPC connection.");
-    } finally {
-      setIsEstimating(false);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const feeData = await provider.getFeeData();
+      
+      // Standard ERC-20 deployment is roughly 1.5 million gas
+      const estimatedGasLimit = 1500000n; 
+      
+      // Multiply live gas price by the gas limit
+      const costInWei = feeData.gasPrice * estimatedGasLimit;
+      
+      // Convert from tiny Wei to readable ETH and round to 4 decimals
+      const costInEth = ethers.formatEther(costInWei);
+      setEstimatedCost(parseFloat(costInEth).toFixed(4));
+    } catch (error) {
+      console.error("Failed to estimate gas:", error);
     }
   };
 
@@ -138,7 +126,7 @@ export const useWeb3 = () => {
 
       // Save to database via authenticated endpoint
       try {
-        const saveRes = await authFetch('/api/save-token', {
+        const saveRes = await authFetch('/api/token/save-token', {
           method: 'POST',
           body: JSON.stringify({
             name: formData.name, symbol: formData.symbol,
@@ -193,7 +181,7 @@ export const useWeb3 = () => {
       setFormData(prev => ({ ...prev, name: '', symbol: '', supply: '1000000' }));
       setGeneratedCode('');
       setContractData({ abi: null, bytecode: null });
-      setGasEstimate(null);
+      setEstimatedCost(null);
 
       // Show success modal
       setShowSuccessModal(true);
@@ -215,8 +203,8 @@ export const useWeb3 = () => {
   return {
     formData, setFormData, generatedCode, contractData, ast,
     connectWallet, generateContract, deployContract,
-    estimateGas, gasEstimate, isEstimating,
     isDeploying, deployStep, deployStepError,
+    estimatedCost,
     deployedAddress, showSuccessModal, setShowSuccessModal,
     deploymentReceipt, providerInstance
   };

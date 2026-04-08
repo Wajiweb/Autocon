@@ -10,7 +10,7 @@ export default function TokenGenerator() {
   const {
     formData, setFormData, generatedCode,
     connectWallet, generateContract, deployContract,
-    estimateGas, gasEstimate, isEstimating,
+    estimatedCost,
     isDeploying, deployStep, deployStepError,
     deployedAddress, showSuccessModal, setShowSuccessModal,
     contractData, ast, deploymentReceipt, providerInstance
@@ -155,75 +155,24 @@ export default function TokenGenerator() {
       {generatedCode && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
-          {/* Gas Estimation Panel */}
-          <div className="card glass animate-fade-in-up diff-bg" style={{ padding: '28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: gasEstimate ? '20px' : '0' }}>
-            <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '4px' }}>
-                ⛽ Gas Estimation
-              </h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--outline)' }}>
-                Estimate deployment cost before you spend real ETH
-              </p>
-            </div>
-            <button
-              onClick={estimateGas}
-              disabled={isEstimating}
-              className="btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              {isEstimating ? (
-                <>
-                  <svg style={{ animation: 'spin-slow 1s linear infinite', width: 14, height: 14 }} viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                  </svg>
-                  Estimating...
-                </>
-              ) : 'Estimate Gas'}
-            </button>
-          </div>
-
-          {gasEstimate && (
-            <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px'
-            }}>
-              <div style={{
-                padding: '16px', borderRadius: '14px',
-                background: 'var(--accent-glow)',
-                border: '1px solid rgba(6,182,212,0.15)'
-              }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Units</p>
-                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--tertiary)' }}>
-                  {parseInt(gasEstimate.gasUnits).toLocaleString()}
-                </p>
+      {/* Deploy Actions & Gas Estimator */}
+      <div className="animate-fade-in-up">
+          {/* --- NEW: GAS ESTIMATOR UI --- */}
+          {generatedCode && estimatedCost && (
+            <div className="mt-4 p-4 mb-4 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center animate-in fade-in slide-in-from-bottom-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⛽</span>
+                <div>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Estimated Network Fee</p>
+                  <p className="text-sm text-slate-700">Live {network.name} Gas Price</p>
+                </div>
               </div>
-              <div style={{
-                padding: '16px', borderRadius: '14px',
-                background: 'rgba(139,92,246,0.08)',
-                border: '1px solid rgba(139,92,246,0.15)'
-              }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Price</p>
-                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#a78bfa' }}>
-                  {gasEstimate.gasPriceGwei} Gwei
-                </p>
-              </div>
-              <div style={{
-                padding: '16px', borderRadius: '14px',
-                background: 'rgba(16,185,129,0.08)',
-                border: '1px solid rgba(16,185,129,0.15)'
-              }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>Est. Cost</p>
-                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--success)' }}>
-                  {gasEstimate.estimatedCostETH} ETH
-                </p>
+              <div className="text-right">
+                <p className="text-lg font-black text-slate-900">{estimatedCost} ETH</p>
               </div>
             </div>
           )}
-        </div>
 
-      {/* Deploy Button */}
-      <div className="animate-fade-in-up">
           {isDeploying && deployStep >= 0 ? (
             <div className="card glass" style={{ padding: '28px', marginBottom: '16px' }}>
               <DeploymentTimeline
@@ -234,6 +183,7 @@ export default function TokenGenerator() {
             </div>
           ) : (
             <button
+              type="button"
               onClick={deployContract}
               disabled={!generatedCode || isDeploying}
               className="btn-primary"

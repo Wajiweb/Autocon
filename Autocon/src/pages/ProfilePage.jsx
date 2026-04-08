@@ -14,7 +14,7 @@ export default function ProfilePage() {
             const allAssets = [];
 
             try {
-                const tokensRes = await authFetch(`/api/my-tokens/${user.walletAddress}`);
+                const tokensRes = await authFetch(`/api/token/my-tokens/${user.walletAddress}`);
                 const tokensData = await tokensRes.json();
                 if (tokensData.success && tokensData.tokens) {
                     tokensData.tokens.forEach(t => allAssets.push({ ...t, _type: 'ERC-20' }));

@@ -37,32 +37,50 @@ function TinyStarField() {
 }
 
 // 3 minimal wireframe shapes at far z-depth
+// Exact change for CSS Variable support in 3D
+const colors = {
+  primary: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#7C3AED',
+  secondary: getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#0891b2'
+};
+
+// Refactored FarShapes for conciseness
 function FarShapes() {
   const ref = useRef();
   useFrame(({ clock }) => {
     if (ref.current) ref.current.rotation.y = clock.getElapsedTime() * 0.015;
   });
+
   return (
     <group ref={ref}>
       {[[-5, 2, -14], [7, -3, -16], [-3, -4, -18]].map((pos, i) => (
         <mesh key={i} position={pos}>
           <octahedronGeometry args={[0.5, 0]} />
-          <meshBasicMaterial color={['#7C3AED', '#0891b2', '#2563EB'][i]} wireframe transparent opacity={0.18} />
+          {/* Use CSS Variable based colors here */}
+          <meshBasicMaterial 
+            color={i === 0 ? "var(--color-primary)" : "var(--color-secondary)"} 
+            wireframe 
+            transparent 
+            opacity={0.18} 
+          />
         </mesh>
       ))}
     </group>
   );
 }
-
 export default function DashboardScene() {
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none opacity-35">
+    <div 
+      // z-0 keeps it visible; pointer-events-none lets scroll pass through
+      className="fixed inset-0 z-0 pointer-events-none select-none opacity-35"
+      aria-hidden="true"
+    >
       <Canvas
         camera={{ position: [0, 0, 8], fov: 60 }}
-        gl={{ antialias: false, alpha: true, stencil: false, powerPreference: 'default' }}
+        gl={{ antialias: false, alpha: true, stencil: false, powerPreference: 'low-power' }}
         dpr={1}
         frameloop="always"
-        style={{ background: 'transparent' }}
+        // Style ensures the Canvas element itself doesn't trap the cursor
+        style={{ background: 'transparent', pointerEvents: 'none' }}
       >
         <Suspense fallback={null}>
           <DashboardLights />

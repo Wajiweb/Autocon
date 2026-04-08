@@ -1,6 +1,5 @@
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
-import GasWidget from './GasWidget';
 
 export default function Navbar({ activeTab }) {
   const { user, logout } = useAuth();
@@ -51,9 +50,6 @@ export default function Navbar({ activeTab }) {
 
       {/* Right Side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* Gas Widget */}
-        <GasWidget />
-
         {/* Network Badge */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '6px',

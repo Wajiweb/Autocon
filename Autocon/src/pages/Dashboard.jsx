@@ -107,7 +107,7 @@ export default function Dashboard() {
 
         // Fetch tokens (independent try/catch so one failure doesn't block the other)
         try {
-          const tokensRes = await authFetch(`/api/my-tokens/${user.walletAddress}`);
+          const tokensRes = await authFetch(`/api/token/my-tokens/${user.walletAddress}`);
           const tokensData = await tokensRes.json();
           if (tokensData.success && tokensData.tokens) {
             tokensData.tokens.forEach(t => allAssets.push({ ...t, _type: 'ERC-20' }));
@@ -156,7 +156,7 @@ export default function Dashboard() {
       ? `/api/nft/delete/${item._id}`
       : item._type === 'Auction'
         ? `/api/auction/delete/${item._id}`
-        : `/api/delete-token/${item._id}`;
+        : `/api/token/delete-token/${item._id}`;
 
     try {
       const res = await authFetch(endpoint, { method: 'DELETE' });
@@ -316,7 +316,9 @@ export default function Dashboard() {
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#7C3AED,#06B6D4)' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
             <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Total Assets</p>
-            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(124,58,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🗂️</div>
+            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(124,58,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
+              <img src="dist/folder.png" alt="Total Assets" style={{ width: '16px', height: '16px' }} />
+            </div>
           </div>
           <p style={{ fontSize: '2.4rem', fontWeight: 900, color: 'var(--on-surface)', lineHeight: 1 }}>{deployments.length}</p>
           <p style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '6px' }}>All contract types</p>
@@ -335,7 +337,9 @@ export default function Dashboard() {
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#2563EB,#06B6D4)' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
             <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>ERC-20 Tokens</p>
-            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(6,182,212,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>⚡</div>
+            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(6,182,212,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
+              
+            </div>
           </div>
           <p className="gradient-text" style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1 }}>{tokenCount}</p>
           <p style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '6px' }}>Fungible tokens deployed</p>
@@ -354,7 +358,9 @@ export default function Dashboard() {
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#8b5cf6,#ec4899)' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
             <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>NFT Collections</p>
-            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🎨</div>
+            <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
+              <img src="dist/coin.png" alt="ERC-20 Tokens" style={{ width: '16px', height: '16px' }} />
+            </div>
           </div>
           <p style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1, background: 'linear-gradient(135deg,#8b5cf6,#ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{nftCount}</p>
           <p style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '6px' }}>ERC-721 collections</p>
@@ -444,7 +450,7 @@ export default function Dashboard() {
           {/* Share Button */}
           <a
             href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-              `🚀 Just deployed ${deployments.length} smart contract${deployments.length > 1 ? 's' : ''} on Sepolia using AutoCon! No-code Web3 is the future. #Web3 #Blockchain #SmartContracts #AutoCon`
+              ` Just deployed ${deployments.length} smart contract${deployments.length > 1 ? 's' : ''} on Sepolia using AutoCon! No-code Web3 is the future. #Web3 #Blockchain #SmartContracts #AutoCon`
             )}`}
             target="_blank"
             rel="noreferrer"
@@ -459,7 +465,8 @@ export default function Dashboard() {
               boxShadow: '0 2px 10px rgba(29,161,242,0.3)'
             }}
           >
-            🐦 Share on X
+             <img src="dist/twitter.png" alt="Twitter" style={{ width: '16px', height: '16px' }} />
+             Share on X
           </a>
         </div>
       )}

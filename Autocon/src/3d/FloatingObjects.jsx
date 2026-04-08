@@ -11,45 +11,27 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 // ─── Layer definitions ─────────────────────────────────────
+// 1. Move colors to CSS variables (defined in your Tailwind 4 theme)
 const LAYERS = [
-  { count: 6,  z: -2, scale: 0.18, speed: 0.18, color: '#a78bfa', spread: 8 },   // foreground
-  { count: 10, z: -5, scale: 0.12, speed: 0.10, color: '#60a5fa', spread: 12 },  // mid
-  { count: 14, z: -9, scale: 0.07, speed: 0.05, color: '#67e8f9', spread: 16 },  // background
+  { count: 6,  z: -2, scale: 0.18, speed: 0.18, color: 'var(--color-primary)', spread: 8 }, 
+  { count: 10, z: -5, scale: 0.12, speed: 0.10, color: 'var(--color-secondary)', spread: 12 },
+  { count: 14, z: -9, scale: 0.07, speed: 0.05, color: 'var(--color-accent)', spread: 16 },
 ];
 
-// Pre-generate positions for a given layer
-function generatePositions(count, spread) {
-  return Array.from({ length: count }, () => [
-    (Math.random() - 0.5) * spread,
-    (Math.random() - 0.5) * spread * 0.6,
-    0,
-  ]);
-}
-
-// A single node sphere
+// 2. Extract Material to a single reference (Improve performance)
 function Node({ position, color, scale, speed, offset }) {
   const ref = useRef();
-
   useFrame(({ clock }) => {
     if (!ref.current) return;
     const t = clock.getElapsedTime();
     ref.current.position.y = position[1] + Math.sin(t * speed + offset) * 0.4;
-    ref.current.rotation.x = t * speed * 0.6;
-    ref.current.rotation.y = t * speed;
   });
 
   return (
     <mesh ref={ref} position={position}>
       <icosahedronGeometry args={[scale, 1]} />
-      <meshPhysicalMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={0.8}
-        roughness={0.1}
-        metalness={0.7}
-        transparent
-        opacity={0.85}
-      />
+      {/* Use the CSS variable color directly */}
+      <meshBasicMaterial color={color} transparent opacity={0.6} wireframe />
     </mesh>
   );
 }

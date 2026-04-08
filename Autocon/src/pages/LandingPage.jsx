@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import TiltCard from '../animations/TiltCard';
 import ParallaxScroll from '../animations/ParallaxScroll';
+ import { Twitter, Linkedin, Github, MessageSquare } from 'lucide-react';
 
 // Code-split the heavy Three.js bundle — won't block the main thread
 const HeroCanvas = lazy(() => import('../components/3d/HeroCanvas'));
@@ -379,7 +380,7 @@ const AboutSection = () => (
             padding: '8px 18px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700,
             background: 'linear-gradient(135deg,#7C3AED,#06B6D4)', color: '#fff',
             boxShadow: '0 4px 12px rgba(124,58,237,0.4)'
-          }}>🚀 Deploy to Sepolia</div>
+          }}> Deploy to Sepolia</div>
         </div>
       </div>
     </div>
@@ -409,18 +410,25 @@ const Footer = () => (
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-        {['Twitter', 'LinkedIn', 'GitHub', 'Discord'].map(social => (
-          <a key={social} href="#" style={{
-            color: '#374151', textDecoration: 'none', fontSize: '0.85rem',
-            transition: 'color 0.15s ease', fontWeight: 500
-          }}
-            onMouseOver={e => e.currentTarget.style.color = '#67e8f9'}
-            onMouseOut={e => e.currentTarget.style.color = '#374151'}>
-            {social}
-          </a>
-        ))}
-      </div>
+<div className="flex items-center gap-4">
+  {[
+    { name: 'Twitter', icon: <Twitter size={20} />, href: 'https://twitter.com/AutoCon' },
+    { name: 'LinkedIn', icon: <Linkedin size={20} />, href: 'https://linkedin.com/company/autocon' },
+    { name: 'GitHub', icon: <Github size={20} />, href: 'https://github.com/Wajiweb/Autocon' },
+    { name: 'Discord', icon: <MessageSquare size={20} />, href: 'https://discord.gg/autocon' },
+  ].map((social) => (
+    <a
+      key={social.name}
+      href={social.href}
+      target="_blank"
+      rel="noreferrer"
+      className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-high)] text-[var(--outline)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] hover:shadow-[0_0_15px_rgba(103,232,249,0.15)]"
+      aria-label={social.name}
+    >
+      {social.icon}
+    </a>
+  ))}
+</div>
     </div>
 
     <div style={{
