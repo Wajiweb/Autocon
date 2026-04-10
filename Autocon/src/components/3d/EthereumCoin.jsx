@@ -5,67 +5,86 @@ import * as THREE from 'three';
 
 export default function EthereumCoin(props) {
   const meshRef  = useRef();
-  const ringRef  = useRef();
+  const innerRingRef = useRef();
+  const outerRingRef = useRef();
 
   useFrame(({ clock }, delta) => {
     const t = clock.elapsedTime;
 
-    // Crystal spin
+    // Crystal spin & float
     if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.4;
+      meshRef.current.rotation.y += delta * 0.15;
+      meshRef.current.rotation.z = Math.sin(t * 0.5) * 0.05;
     }
 
-    // Orbiting ring — counter-tilted rotation
-    if (ringRef.current) {
-      ringRef.current.rotation.x = t * 0.6;
-      ringRef.current.rotation.z = t * 0.4;
+    // Orbiting rings (counter-rotating)
+    if (innerRingRef.current) {
+      innerRingRef.current.rotation.x = t * 0.2;
+      innerRingRef.current.rotation.y = t * 0.15;
+    }
+    if (outerRingRef.current) {
+      outerRingRef.current.rotation.x = -(t * 0.1);
+      outerRingRef.current.rotation.y = -(t * 0.25);
     }
   });
 
   return (
-    <Float speed={2.5} rotationIntensity={1} floatIntensity={1.5} floatingRange={[-0.2, 0.2]}>
+    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5} floatingRange={[-0.1, 0.1]}>
       <group {...props}>
 
-        {/* ── Octahedron crystal (original) ── */}
-        <mesh ref={meshRef} scale={1.8}>
+        {/* ── Minimal Octahedron Core ── */}
+        <mesh ref={meshRef} scale={1.5}>
           <octahedronGeometry args={[1, 0]} />
+          
+          {/* Ultra-Shiny Physical Glass Core */}
           <meshPhysicalMaterial
-            color="#a78bfa"
-            emissive="#67e8f9"
-            emissiveIntensity={0.35}
-            roughness={0.15}
-            metalness={0.9}
-            transmission={0.95}
-            thickness={0.8}
+            color="#ffffff"
+            emissive="#7b61ff"
+            emissiveIntensity={1.8}
+            transmission={1}
+            opacity={1}
+            metalness={0.0}
+            roughness={0}
             clearcoat={1}
-            clearcoatRoughness={0.1}
+            clearcoatRoughness={0}
+            ior={1.8}
+            thickness={1.5}
+            specularIntensity={4}
+            specularColor="#ff8ce6"
           />
+          
+          {/* Elegant wireframe edges overlay */}
+          <mesh>
+            <octahedronGeometry args={[1.003, 0]} />
+            <meshBasicMaterial
+              color="#ff8ce6"
+              wireframe={true}
+              transparent={true}
+              opacity={1}
+            />
+          </mesh>
         </mesh>
 
-        {/* ── Orbiting cyan ring (from first TokenModel) ── */}
-        <mesh ref={ringRef}>
-          <torusGeometry args={[1.85, 0.04, 16, 80]} />
-          <meshStandardMaterial
-            color="#06B6D4"
-            emissive="#0891b2"
-            emissiveIntensity={1.4}
-            roughness={0.1}
-            metalness={0.9}
-          />
-        </mesh>
-
-        {/* ── Outer purple glow sphere ── */}
-        <mesh>
-          <sphereGeometry args={[2.2, 16, 16]} />
+        {/* ── Orbiting Torus Rings ── */}
+        {/* Inner Ring - Bright Purplish Blue */}
+        <mesh ref={innerRingRef}>
+          <torusGeometry args={[1.7, 0.008, 16, 100]} />
           <meshBasicMaterial
-            color="#7C3AED"
-            transparent
-            opacity={0.06}
-            side={THREE.BackSide}
-            depthWrite={false}
+            color="#7b61ff"
+            transparent={true}
+            opacity={1}
           />
         </mesh>
 
+        {/* Outer Ring - Bright Light Pink */}
+        <mesh ref={outerRingRef} rotation={[Math.PI / 4, 0, 0]}>
+          <torusGeometry args={[2.0, 0.006, 16, 100]} />
+          <meshBasicMaterial
+            color="#ff8ce6"
+            transparent={true}
+            opacity={0.95}
+          />
+        </mesh>
       </group>
     </Float>
   );

@@ -1,7 +1,3 @@
-/**
- * EmptyState — Reusable empty state component with icon, title, and description.
- * Used when there's no data to display (empty tables, no deployments, etc.)
- */
 export default function EmptyState({ 
   icon = '📭', 
   title = 'Nothing here yet', 

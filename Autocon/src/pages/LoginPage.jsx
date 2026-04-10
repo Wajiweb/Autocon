@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -30,6 +31,24 @@ export default function LoginPage() {
             overflow: 'hidden'
         }}>
 
+            {/* Back to Home Button */}
+            <a href="/" style={{
+                position: 'absolute', top: '32px', left: '32px', zIndex: 10,
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '10px 18px', borderRadius: '12px',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                backdropFilter: 'blur(10px)',
+                color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600,
+                textDecoration: 'none', transition: 'all 0.2s ease',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}
+            onMouseOver={e => { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
+            onMouseOut={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}
+            >
+                <ArrowLeft size={16} />
+                Back to Home
+            </a>
 
             {/* Background decorative elements */}
             <div style={{

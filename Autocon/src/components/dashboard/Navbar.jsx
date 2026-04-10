@@ -1,5 +1,5 @@
-import { useAuth } from '../context/AuthContext';
-import { useNetwork } from '../context/NetworkContext';
+import { useAuth } from '../../context/AuthContext';
+import { useNetwork } from '../../context/NetworkContext';
 
 export default function Navbar({ activeTab }) {
   const { user, logout } = useAuth();

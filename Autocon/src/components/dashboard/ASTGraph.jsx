@@ -1,8 +1,5 @@
 import ASTNode from './ASTNode';
 
-/**
- * ASTGraph — renders the full normalized AST as a recursive interactive tree.
- */
 export default function ASTGraph({ ast }) {
   if (!ast) return (
     <p className="text-sm" style={{ color: 'var(--outline)' }}>

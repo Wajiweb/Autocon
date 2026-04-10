@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
-import { useWallet } from '../hooks/useWallet';
+import { useTheme } from '../../context/ThemeContext';
+import { useWallet } from '../../hooks/useWallet';
 import { 
     LayoutDashboard, 
     Coins, 

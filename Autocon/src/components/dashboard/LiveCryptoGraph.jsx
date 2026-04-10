@@ -46,8 +46,8 @@ export default function LiveCryptoGraph() {
         const data = await res.json();
         
         const formattedData = data.map(item => ({
-          x: item[0], // Open timestamp
-          y: parseFloat(item[4]) // Close price
+          x: item[0], 
+          y: parseFloat(item[4]) 
         }));
         
         setChartData(formattedData);
@@ -75,8 +75,6 @@ export default function LiveCryptoGraph() {
         const json = JSON.parse(event.data);
         const livePrice = parseFloat(json.p);
         const loopNow = Date.now();
-        
-        // Throttling to 2 frames per second perfectly optimizes the React-Canvas link
         if (loopNow - lastUpdate < 500) return;
         lastUpdate = loopNow;
 
@@ -91,13 +89,13 @@ export default function LiveCryptoGraph() {
             const intervalMs = timeframe === 'live' ? 2000 : (timeframe === '1' ? 45000 : (timeframe === '7' ? 300000 : 1800000));
             
             if (now - last.x < intervalMs) {
-                // Stretch the floating edge point forward horizontally creating a live tracing effect!
+
                 const withoutLast = prev.slice(0, -1);
                 return [...withoutLast, { x: now, y: livePrice }];
             }
-            // Step forward and cement the line natively when interval passes
+          
             const newArr = [...prev, { x: now, y: livePrice }];
-            if (newArr.length > 500) newArr.shift(); // Hard constraint
+            if (newArr.length > 500) newArr.shift(); 
             return newArr;
           });
         }
@@ -125,8 +123,8 @@ export default function LiveCryptoGraph() {
         backgroundColor: (context) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-          gradient.addColorStop(0, `${activeCoin.color}80`); // 50% opacity
-          gradient.addColorStop(1, `${activeCoin.color}00`); // 0% opacity
+          gradient.addColorStop(0, `${activeCoin.color}80`); 
+          gradient.addColorStop(1, `${activeCoin.color}00`); 
           return gradient;
         },
         borderWidth: 2,
@@ -140,7 +138,7 @@ export default function LiveCryptoGraph() {
 
   const options = {
     animation: {
-      duration: 0 // Disable global transitions to let the native WS render synchronously
+      duration: 0 
     },
     responsive: true,
     maintainAspectRatio: false,

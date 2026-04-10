@@ -1,7 +1,8 @@
 import React, { lazy, Suspense } from 'react';
 import TiltCard from '../animations/TiltCard';
 import ParallaxScroll from '../animations/ParallaxScroll';
- import { Twitter, Linkedin, Github, MessageSquare } from 'lucide-react';
+import { Twitter, Linkedin, Github, MessageSquare, NotepadTextDashed } from 'lucide-react';
+import { Footer as AnimatedFooter } from '../components/ui/modem-animated-footer';
 
 // Code-split the heavy Three.js bundle — won't block the main thread
 const HeroCanvas = lazy(() => import('../components/3d/HeroCanvas'));
@@ -180,29 +181,11 @@ const HeroSection = ({ onGetStarted }) => (
 const FeatureCard = ({ icon, gradient, title, description, index }) => (
   <div className="animate-fade-in-up" style={{ animationDelay: `${index * 0.08}s`, opacity: 0 }}>
     <TiltCard className="h-full">
-    <div style={{
-      background: 'rgba(22,29,43,0.8)',
-      backdropFilter: 'blur(16px)',
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: '20px', padding: '32px',
-      textAlign: 'left', height: '100%',
-      transition: 'all 0.25s cubic-bezier(0.23,1,0.32,1)',
-      cursor: 'default', position: 'relative', overflow: 'hidden'
-    }}
-      onMouseOver={e => {
-        e.currentTarget.style.transform = 'translateY(-6px)';
-        e.currentTarget.style.borderColor = 'rgba(103,232,249,0.2)';
-        e.currentTarget.style.boxShadow = '0 20px 48px rgba(0,0,0,0.4), 0 0 30px rgba(6,182,212,0.08)';
-      }}
-      onMouseOut={e => {
-        e.currentTarget.style.transform = '';
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-        e.currentTarget.style.boxShadow = '';
-      }}>
+    <div className="card" style={{ padding: '32px', textAlign: 'left', height: '100%', cursor: 'default' }}>
       {/* Top gradient line */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: '2px',
-        background: gradient, opacity: 0.6
+        background: gradient, opacity: 0.8
       }} />
 
       <div style={{
@@ -210,14 +193,14 @@ const FeatureCard = ({ icon, gradient, title, description, index }) => (
         background: gradient, opacity: 0.15,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         marginBottom: '20px', fontSize: '24px',
-        position: 'relative'
+        position: 'relative', zIndex: 10
       }}>
         <div style={{ position: 'absolute', inset: 0, borderRadius: '14px', background: gradient, opacity: 1 }} />
         <span style={{ position: 'relative', zIndex: 1, fontSize: '22px' }}>{icon}</span>
       </div>
 
-      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f1f5f9', marginBottom: '10px' }}>{title}</h3>
-      <p style={{ color: '#64748b', lineHeight: 1.65, fontSize: '0.88rem' }}>{description}</p>
+      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f1f5f9', marginBottom: '10px', position: 'relative', zIndex: 10 }}>{title}</h3>
+      <p style={{ color: '#64748b', lineHeight: 1.65, fontSize: '0.88rem', position: 'relative', zIndex: 10 }}>{description}</p>
     </div>
     </TiltCard>
   </div>
@@ -277,6 +260,11 @@ const FeaturesSection = () => (
         gradient="linear-gradient(135deg,#2563EB,#06B6D4)"
         title="Security Audits"
         description="Automated Solidity vulnerability scanning powered by AI. Detect reentrancy, overflow, access control issues before deployment." />
+      <FeatureCard index={4} icon="🤖"
+        gradient="linear-gradient(135deg,#10B981,#3B82F6)"
+        title="Web3 AI Assistant"
+        description="Chat with an advanced AI companion trained specifically on Solidity and Ethereum architecture to guide your configurations and deployments." />
+
     </div>
     </ParallaxScroll>
   </section>
@@ -339,14 +327,8 @@ const AboutSection = () => (
 
     {/* Visual card */}
     <div style={{ flex: '1 1 360px', maxWidth: '460px', position: 'relative', zIndex: 1 }}>
-      <div style={{
-        background: 'rgba(22,29,43,0.9)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '24px', padding: '32px',
-        boxShadow: '0 24px 80px rgba(0,0,0,0.5)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
+      <div className="card-glow" style={{ padding: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px', position: 'relative', zIndex: 10 }}>
           <img src="/autocon-logo.png" alt="AutoCon" style={{
             width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover',
             boxShadow: '0 4px 16px rgba(6,182,212,0.25)'
@@ -388,57 +370,34 @@ const AboutSection = () => (
 );
 
 // ─── FOOTER ───
-const Footer = () => (
-  <footer id="contact" style={{
-    background: 'rgba(13,17,23,0.98)',
-    padding: '60px 5% 40px',
-    borderTop: '1px solid rgba(255,255,255,0.05)'
-  }}>
-    <div style={{
-      display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '40px',
-      maxWidth: '1200px', margin: '0 auto', marginBottom: '40px'
-    }}>
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-          <img src="/autocon-logo.png" alt="AutoCon" style={{
-            width: '30px', height: '30px', borderRadius: '8px', objectFit: 'cover'
-          }} />
-          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f1f5f9' }}>AutoCon</span>
-        </div>
-        <p style={{ color: '#374151', maxWidth: '280px', fontSize: '0.85rem', lineHeight: 1.6 }}>
-          No-code Web3 smart contract platform. Deploy on any EVM chain.
-        </p>
-      </div>
+const Footer = () => {
+  const socialLinks = [
+    { icon: <Twitter className="w-6 h-6" />, href: "https://twitter.com/AutoCon", label: "Twitter" },
+    { icon: <Linkedin className="w-6 h-6" />, href: "https://linkedin.com/company/autocon", label: "LinkedIn" },
+    { icon: <Github className="w-6 h-6" />, href: "https://github.com/Wajiweb/Autocon", label: "GitHub" },
+    { icon: <MessageSquare className="w-6 h-6" />, href: "https://discord.gg/autocon", label: "Discord" },
+  ];
 
-<div className="flex items-center gap-4">
-  {[
-    { name: 'Twitter', icon: <Twitter size={20} />, href: 'https://twitter.com/AutoCon' },
-    { name: 'LinkedIn', icon: <Linkedin size={20} />, href: 'https://linkedin.com/company/autocon' },
-    { name: 'GitHub', icon: <Github size={20} />, href: 'https://github.com/Wajiweb/Autocon' },
-    { name: 'Discord', icon: <MessageSquare size={20} />, href: 'https://discord.gg/autocon' },
-  ].map((social) => (
-    <a
-      key={social.name}
-      href={social.href}
-      target="_blank"
-      rel="noreferrer"
-      className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-high)] text-[var(--outline)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] hover:shadow-[0_0_15px_rgba(103,232,249,0.15)]"
-      aria-label={social.name}
-    >
-      {social.icon}
-    </a>
-  ))}
-</div>
-    </div>
+  const navLinks = [
+    { label: "Features", href: "#features" },
+    { label: "About", href: "#about" },
+    { label: "Contact", href: "#contact" },
+  ];
 
-    <div style={{
-      textAlign: 'center', color: '#1f2937', fontSize: '0.8rem',
-      paddingTop: '28px', borderTop: '1px solid rgba(255,255,255,0.03)'
-    }}>
-      © {new Date().getFullYear()} AutoCon Systems. All rights reserved.
+  return (
+    <div id="contact">
+      <AnimatedFooter
+        brandName="AutoCon"
+        brandDescription="No-code Web3 smart contract platform. Deploy on any EVM chain."
+        socialLinks={socialLinks}
+        navLinks={navLinks}
+        creatorName="Wajiweb"
+        creatorUrl="https://github.com/Wajiweb"
+        brandIcon={<img src="/autocon-logo.png" alt="AutoCon Logo" className="w-full h-full object-cover rounded-2xl drop-shadow-lg" />}
+      />
     </div>
-  </footer>
-);
+  );
+};
 
 // ─── MAIN ───
 export default function LandingPage({ onLoginClick }) {

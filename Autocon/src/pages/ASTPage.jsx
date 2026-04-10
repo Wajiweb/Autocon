@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { normalizeAST, countNodes, nodeColor } from '../utils/astUtils';
-import ASTGraph from '../components/ASTGraph';
-import ASTSummaryTree from '../components/ASTSummaryTree';
+import ASTGraph from '../components/dashboard/ASTGraph';
+import ASTSummaryTree from '../components/dashboard/ASTSummaryTree';
 
 /**
  * ASTPage — full-page view of the compiled contract's Abstract Syntax Tree.

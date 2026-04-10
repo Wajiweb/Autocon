@@ -1,11 +1,11 @@
 import { useState, useEffect, memo, lazy, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import LiveCryptoGraph from '../components/LiveCryptoGraph';
-import AnalyticsCharts from '../components/AnalyticsCharts';
-import EmptyState from '../components/EmptyState';
-import { SkeletonTable } from '../components/LoadingSkeleton';
-import { SkeletonDashboard } from '../components/LoadingSkeleton';
+import LiveCryptoGraph from '../components/dashboard/LiveCryptoGraph';
+import AnalyticsCharts from '../components/dashboard/AnalyticsCharts';
+import EmptyState from '../components/dashboard/EmptyState';
+import { SkeletonTable } from '../components/dashboard/LoadingSkeleton';
+import { SkeletonDashboard } from '../components/dashboard/LoadingSkeleton';
 
 // Lazy-load the 3D background so it doesn’t block the dashboard data
 const DashboardScene = lazy(() => import('../3d/DashboardScene'));
@@ -304,15 +304,7 @@ export default function Dashboard() {
       {/* Stats Cards */}
       <div className="grid-cards" style={{ marginBottom: 'var(--space-4)' }}>
         {/* Total Assets */}
-        <div className="animate-fade-in-up delay-100" style={{
-          background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
-          borderRadius: 'var(--radius-xl)', padding: 'var(--space-3)',
-          position: 'relative', overflow: 'hidden',
-          transition: 'all 0.25s ease'
-        }}
-          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(124,58,237,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-          onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--outline-variant)'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = ''; }}
-        >
+        <div className="stat-card animate-fade-in-up delay-100">
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#7C3AED,#06B6D4)' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
             <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Total Assets</p>
@@ -325,15 +317,7 @@ export default function Dashboard() {
         </div>
 
         {/* ERC-20 Tokens */}
-        <div className="animate-fade-in-up delay-200" style={{
-          background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
-          borderRadius: 'var(--radius-xl)', padding: 'var(--space-3)',
-          position: 'relative', overflow: 'hidden',
-          transition: 'all 0.25s ease'
-        }}
-          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(6,182,212,0.3)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(6,182,212,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-          onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--outline-variant)'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = ''; }}
-        >
+        <div className="stat-card animate-fade-in-up delay-200">
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#2563EB,#06B6D4)' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
             <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>ERC-20 Tokens</p>
@@ -346,15 +330,7 @@ export default function Dashboard() {
         </div>
 
         {/* NFT Collections */}
-        <div className="animate-fade-in-up delay-300" style={{
-          background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
-          borderRadius: 'var(--radius-xl)', padding: 'var(--space-3)',
-          position: 'relative', overflow: 'hidden',
-          transition: 'all 0.25s ease'
-        }}
-          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(139,92,246,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-          onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--outline-variant)'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = ''; }}
-        >
+        <div className="stat-card animate-fade-in-up delay-300">
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#8b5cf6,#ec4899)' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
             <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>NFT Collections</p>
@@ -367,15 +343,7 @@ export default function Dashboard() {
         </div>
 
         {/* Status */}
-        <div className="animate-fade-in-up delay-400" style={{
-          background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
-          borderRadius: 'var(--radius-xl)', padding: 'var(--space-3)',
-          position: 'relative', overflow: 'hidden',
-          transition: 'all 0.25s ease'
-        }}
-          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.3)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(16,185,129,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-          onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--outline-variant)'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = ''; }}
-        >
+        <div className="stat-card animate-fade-in-up delay-400">
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg,#10b981,#06b6d4)' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
             <p style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Status</p>
@@ -391,12 +359,9 @@ export default function Dashboard() {
 
       {/* Milestone Badges + Social Proof */}
       {deployments.length > 0 && (
-        <div className="animate-fade-in-up delay-400" style={{
+        <div className="card animate-fade-in-up delay-400" style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '20px', padding: '18px 24px',
-          borderRadius: '16px',
-          background: 'var(--surface-high)',
-          border: '1px solid var(--outline-variant)'
+          marginBottom: '20px', padding: '18px 24px'
         }}>
           {/* Badges */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>

@@ -1,8 +1,5 @@
-import { nodeColor } from '../utils/astUtils';
+import { nodeColor } from '../../utils/astUtils';
 
-/**
- * ASTSummaryTree — renders only top 2 levels when contract is too large (>200 nodes).
- */
 export default function ASTSummaryTree({ ast }) {
   return (
     <div className="flex flex-col gap-2">

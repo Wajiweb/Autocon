@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../hooks/useWeb3';
-import CodeExportTools from '../components/CodeExportTools';
+import CodeExportTools from '../components/dashboard/CodeExportTools';
 import DeploymentTimeline from '../components/deploy/DeploymentTimeline';
 import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
 import { useNetwork } from '../context/NetworkContext';

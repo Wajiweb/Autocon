@@ -13,19 +13,15 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 export default function AnalyticsCharts({ deployments = [] }) {
   if (deployments.length === 0) return null;
 
-  // Count by type
   const tokens = deployments.filter(d => d._type === 'ERC-20').length;
   const nfts = deployments.filter(d => d._type === 'ERC-721').length;
   const auctions = deployments.filter(d => d._type === 'Auction').length;
-
-  // Count by network
   const networkCounts = {};
   deployments.forEach(d => {
     const net = d.network || 'Sepolia';
     networkCounts[net] = (networkCounts[net] || 0) + 1;
   });
 
-  // Monthly deployments (last 6 months)
   const months = [];
   const monthlyCounts = [];
   for (let i = 5; i >= 0; i--) {

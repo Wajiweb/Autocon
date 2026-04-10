@@ -1,16 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { parseReceipt } from '../hooks/useReceiptParser';
+import { parseReceipt } from '../../hooks/useReceiptParser';
 
-/**
- * TransactionStoryteller
- * Collapsible panel that decodes a tx receipt into plain-English steps.
- *
- * @param {object} receipt  - ethers TransactionReceipt
- * @param {Array}  abi      - contract ABI
- * @param {object} provider - ethers Provider
- */
 export default function TransactionStoryteller({ receipt, abi, provider }) {
   const [open,  setOpen]  = useState(false);
   const [steps, setSteps] = useState([]);

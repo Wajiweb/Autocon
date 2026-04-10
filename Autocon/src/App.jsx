@@ -5,8 +5,8 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { NetworkProvider } from './context/NetworkContext';
-import Sidebar from './components/Sidebar';
-import Navbar from './components/Navbar';
+import Sidebar from './components/dashboard/Sidebar';
+import Navbar from './components/dashboard/Navbar';
 import LoginPage from './pages/LoginPage';
 import TokenGenerator from './pages/TokenGenerator';
 import Dashboard from './pages/Dashboard';
@@ -17,7 +17,7 @@ import TemplateLibrary from './pages/TemplateLibrary';
 import ChatbotPage from './pages/ChatbotPage';
 import ProfilePage from './pages/ProfilePage';
 import LandingPage from './pages/LandingPage';
-import AnimatedPage from './components/AnimatedPage';
+import AnimatedPage from './components/dashboard/AnimatedPage';
 import ASTPage from './pages/ASTPage';
 
 function AnimatedRoutes() {
@@ -46,7 +46,6 @@ function AppContent() {
   const [showLogin, setShowLogin] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
 
-  // Loading state while checking session
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center gap-4">
@@ -56,7 +55,6 @@ function AppContent() {
     );
   }
 
-  // Show Landing Page or Login page if not authenticated
   if (!isAuthenticated) {
     if (showLogin) {
       return <LoginPage />;

@@ -1,7 +1,7 @@
 import { useAuction } from '../hooks/useAuction';
 import { useNetwork } from '../context/NetworkContext';
 
-import CodeExportTools from '../components/CodeExportTools';
+import CodeExportTools from '../components/dashboard/CodeExportTools';
 import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
 
 export default function AuctionGenerator() {

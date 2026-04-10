@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Copy, ExternalLink, X, SearchCode, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useABIExport } from '../../hooks/useExport';
-import TransactionStoryteller from '../TransactionStoryteller';
+import TransactionStoryteller from '../dashboard/TransactionStoryteller';
 
 /**
  * DeploySuccessModal

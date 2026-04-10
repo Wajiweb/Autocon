@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNFT } from '../hooks/useNFT';
 import toast from 'react-hot-toast';
 import { useNetwork } from '../context/NetworkContext';
-import CodeExportTools from '../components/CodeExportTools';
+import CodeExportTools from '../components/dashboard/CodeExportTools';
 import DeploymentTimeline from '../components/deploy/DeploymentTimeline';
 import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
 

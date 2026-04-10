@@ -16,7 +16,6 @@ export default function ActionCard({ fn, onExecute, onEstimateGas, result, walle
 
   const args = fn.inputs.map(inp => argValues[inp.name || inp.type]);
 
-  // Debounced gas estimation on arg change
   const argsKey = JSON.stringify(argValues);
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -25,7 +24,7 @@ export default function ActionCard({ fn, onExecute, onEstimateGas, result, walle
       setGasEst(gas);
     }, 600);
     return () => clearTimeout(debounceRef.current);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, [argsKey]);
 
   const canExecute = isOwner !== false && result?.status !== 'pending';
