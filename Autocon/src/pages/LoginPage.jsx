@@ -28,14 +28,14 @@ export default function LoginPage() {
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative',
-            overflow: 'hidden'
+            overflowX: 'hidden'
         }}>
 
             {/* Back to Home Button */}
             <a href="/" style={{
-                position: 'absolute', top: '32px', left: '32px', zIndex: 10,
+                position: 'absolute', top: '16px', left: '16px', zIndex: 50,
                 display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 18px', borderRadius: '12px',
+                padding: '8px 14px', borderRadius: '10px',
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid rgba(255,255,255,0.06)',
                 backdropFilter: 'blur(10px)',
@@ -52,14 +52,14 @@ export default function LoginPage() {
 
             {/* Background decorative elements */}
             <div style={{
-                position: 'absolute', top: '-200px', right: '-200px',
-                width: '600px', height: '600px',
+                position: 'absolute', top: '-10%', right: '-10%',
+                width: '150vw', maxWidth: '600px', height: '150vw', maxHeight: '600px',
                 background: 'radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)',
                 borderRadius: '50%', pointerEvents: 'none'
             }} />
             <div style={{
-                position: 'absolute', bottom: '-150px', left: '-150px',
-                width: '500px', height: '500px',
+                position: 'absolute', bottom: '-10%', left: '-10%',
+                width: '120vw', maxWidth: '500px', height: '120vw', maxHeight: '500px',
                 background: 'radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)',
                 borderRadius: '50%', pointerEvents: 'none'
             }} />
@@ -73,11 +73,10 @@ export default function LoginPage() {
 
             {/* Login Card */}
             <div className="animate-fade-in-up" style={{
-                width: '100%', maxWidth: '440px', padding: '0 24px', position: 'relative', zIndex: 1
+                width: '100%', maxWidth: '440px', padding: '0 16px', position: 'relative', zIndex: 1
             }}>
-                <div className="glass" style={{
+                <div className="glass px-6 py-10 sm:px-10" style={{
                     borderRadius: '28px',
-                    padding: '48px 40px',
                     textAlign: 'center'
                 }}>
                     {/* Logo */}

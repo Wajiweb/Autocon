@@ -26,14 +26,25 @@ const navItems = [
     { label: 'Profile', path: '/profile', icon: UserCircle },
 ];
 
-export default function Sidebar({ isExpanded = true, setIsExpanded }) {
+export default function Sidebar({ isExpanded = true, setIsExpanded, isMobileOpen, setIsMobileOpen }) {
     const { theme, toggleTheme } = useTheme();
     const { walletAddress } = useWallet();
 
-
+    // Close mobile menu on route change implicitly via nav interaction or backdrop
     return (
+        <>
+        {/* Mobile Backdrop overlay */}
+        {isMobileOpen && (
+             <div 
+                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+                 onClick={() => setIsMobileOpen(false)}
+             />
+        )}
         <aside 
-            className={`flex flex-col h-screen fixed left-0 top-0 backdrop-blur-2xl transition-all duration-300 ease-in-out z-50 ${isExpanded ? 'w-[252px]' : 'w-[72px]'}`}
+            className={`flex flex-col h-screen fixed left-0 top-0 backdrop-blur-2xl transition-all duration-300 ease-in-out z-50 
+            ${isExpanded ? 'w-[252px]' : 'w-[72px]'}
+            ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}
             style={{ background: 'var(--surface-high)', borderRight: '1px solid var(--outline-variant)' }}
         >
             {/* Logo area */}
@@ -59,6 +70,7 @@ export default function Sidebar({ isExpanded = true, setIsExpanded }) {
                     <NavLink
                         key={item.label}
                         to={item.path}
+                        onClick={() => { if (setIsMobileOpen) setIsMobileOpen(false); }}
                         className={({ isActive }) => `
                             group flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 cursor-pointer overflow-hidden
                             ${isActive ? 'bg-white/10 shadow-sm relative' : 'hover:bg-white/5'}
@@ -124,5 +136,6 @@ export default function Sidebar({ isExpanded = true, setIsExpanded }) {
                  </div>
             </div>
         </aside>
+        </>
     );
 }

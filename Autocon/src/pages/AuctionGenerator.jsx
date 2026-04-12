@@ -79,10 +79,7 @@ export default function AuctionGenerator() {
             </div>
 
             {/* Content Grid */}
-            <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-                gap: '32px', alignItems: 'start'
-            }}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                 {/* Left Column: Form */}
                 <div className="card glass animate-fade-in-up delay-100" style={{ padding: '36px' }}>
                     <form onSubmit={generateAuction}>
@@ -97,7 +94,7 @@ export default function AuctionGenerator() {
                     </div>
 
                     {/* Item Name + Description */}
-                    <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                    <div className="flex flex-col md:flex-row gap-4 mb-6">
                         <div style={{ flex: 1 }}>
                             <label style={{
                                 display: 'block', fontSize: '0.8rem', fontWeight: 700,
@@ -179,7 +176,7 @@ export default function AuctionGenerator() {
                             color: 'var(--outline)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>Owner / Beneficiary</label>
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div className="flex flex-col sm:flex-row gap-3">
                             <input name="ownerAddress" value={formData.ownerAddress} className="input"
                                 style={{ fontFamily: 'monospace', fontSize: '0.85rem' }} readOnly
                                 placeholder="Connect your wallet →" />

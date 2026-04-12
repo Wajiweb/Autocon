@@ -1,7 +1,7 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import TiltCard from '../animations/TiltCard';
 import ParallaxScroll from '../animations/ParallaxScroll';
-import { Twitter, Linkedin, Github, MessageSquare, NotepadTextDashed } from 'lucide-react';
+import { Twitter, Linkedin, Github, MessageSquare, NotepadTextDashed, Menu, X } from 'lucide-react';
 import { Footer as AnimatedFooter } from '../components/ui/modem-animated-footer';
 
 // Code-split the heavy Three.js bundle — won't block the main thread
@@ -10,71 +10,92 @@ const HeroCanvas = lazy(() => import('../components/3d/HeroCanvas'));
 // Glowing CSS fallback while the WebGL assets load
 const HeroCanvasFallback = () => (
   <div className="absolute inset-0 z-0 pointer-events-none">
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-30 blur-[120px]"
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] sm:w-[600px] h-[150vw] sm:h-[600px] max-w-[600px] max-h-[600px] rounded-full opacity-30 blur-[120px]"
       style={{ background: 'linear-gradient(135deg, #7C3AED, #2563EB, #06B6D4)' }}
     />
   </div>
 );
 
 // ─── NAV BAR ───
-const NavBar = ({ onConnect }) => (
-  <nav style={{
-    position: 'fixed', top: 0, left: 0, right: 0, height: '64px',
-    background: 'rgba(8, 12, 20, 0.75)',
-    backdropFilter: 'blur(24px) saturate(200%)',
-    WebkitBackdropFilter: 'blur(24px) saturate(200%)',
-    borderBottom: '1px solid rgba(255,255,255,0.05)',
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '0 5%', zIndex: 1000,
-    boxShadow: '0 1px 0 rgba(255,255,255,0.03)'
-  }}>
-    {/* Logo */}
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <img src="/autocon-logo.png" alt="AutoCon" style={{
-        width: '36px', height: '36px', borderRadius: '10px',
-        objectFit: 'cover'
-      }} />
-      <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.04em' }}>
-        AutoCon
-      </span>
-    </div>
+const NavBar = ({ onConnect }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <nav className="fixed top-0 left-0 right-0 h-16 z-50 flex justify-between items-center px-4 md:px-[5%]" style={{
+      background: 'rgba(8, 12, 20, 0.75)',
+      backdropFilter: 'blur(24px) saturate(200%)',
+      WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+      borderBottom: '1px solid rgba(255,255,255,0.05)',
+      boxShadow: '0 1px 0 rgba(255,255,255,0.03)'
+    }}>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <img src="/autocon-logo.png" alt="AutoCon" style={{
+          width: '36px', height: '36px', borderRadius: '10px',
+          objectFit: 'cover'
+        }} />
+        <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.04em' }}>
+          AutoCon
+        </span>
+      </div>
 
-    {/* Links */}
-    <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
-      {['Features', 'About', 'Contact'].map(link => (
-        <a key={link} href={`#${link.toLowerCase()}`} style={{
-          color: '#94a3b8', textDecoration: 'none',
-          fontSize: '0.88rem', fontWeight: 500, transition: 'color 0.15s ease'
+      {/* Desktop Links */}
+      <div className="hidden md:flex gap-7 items-center">
+        {['Features', 'About', 'Contact'].map(link => (
+          <a key={link} href={`#${link.toLowerCase()}`} style={{
+            color: '#94a3b8', textDecoration: 'none',
+            fontSize: '0.88rem', fontWeight: 500, transition: 'color 0.15s ease'
+          }}
+            onMouseOver={e => e.currentTarget.style.color = '#f1f5f9'}
+            onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}>
+            {link}
+          </a>
+        ))}
+
+        <button onClick={onConnect} style={{
+          padding: '8px 20px', borderRadius: '10px', border: 'none',
+          background: 'linear-gradient(135deg, #7C3AED, #2563EB)',
+          color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 2px 12px rgba(124,58,237,0.35)'
         }}
-          onMouseOver={e => e.currentTarget.style.color = '#f1f5f9'}
-          onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}>
-          {link}
-        </a>
-      ))}
+          onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)'; }}
+          onMouseOut={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.35)'; }}>
+          Connect Wallet
+        </button>
+      </div>
 
-      <button onClick={onConnect} style={{
-        padding: '8px 20px', borderRadius: '10px', border: 'none',
-        background: 'linear-gradient(135deg, #7C3AED, #2563EB)',
-        color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        boxShadow: '0 2px 12px rgba(124,58,237,0.35)'
-      }}
-        onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(124,58,237,0.5)'; }}
-        onMouseOut={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.35)'; }}>
-        Connect Wallet
-      </button>
-    </div>
-  </nav>
-);
+      {/* Mobile Controls */}
+      <div className="flex md:hidden items-center gap-3">
+        <button onClick={onConnect} style={{
+          padding: '6px 14px', borderRadius: '8px', border: 'none',
+          background: 'linear-gradient(135deg, #7C3AED, #2563EB)',
+          color: '#fff', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer',
+        }}>
+          Connect
+        </button>
+        <button onClick={() => setIsOpen(!isOpen)} className="text-slate-300 hover:text-white p-1">
+          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Dropdown Menu */}
+      {isOpen && (
+        <div className="absolute top-16 left-0 right-0 bg-[#080c14]/95 backdrop-blur-xl border-b border-white/10 md:hidden flex flex-col p-6 gap-6 shadow-2xl animate-fade-in">
+           {['Features', 'About', 'Contact'].map(link => (
+            <a key={link} href={`#${link.toLowerCase()}`} onClick={() => setIsOpen(false)} style={{ color: '#f1f5f9', fontSize: '1.05rem', fontWeight: 600 }}>
+              {link}
+            </a>
+          ))}
+        </div>
+      )}
+    </nav>
+  );
+};
 
 // ─── HERO ───
 const HeroSection = ({ onGetStarted }) => (
-  <section id="home" style={{
-    minHeight: '100vh', display: 'flex', flexDirection: 'column',
-    justifyContent: 'center', alignItems: 'center',
-    textAlign: 'center', padding: '100px 5% 60px',
-    position: 'relative', overflow: 'hidden'
-  }}>
+  <section id="home" className="min-h-screen pt-32 pb-16 px-4 md:px-[5%] flex flex-col justify-center items-center text-center relative overflow-hidden">
     <Suspense fallback={<HeroCanvasFallback />}>
       <HeroCanvas />
     </Suspense>
@@ -156,7 +177,7 @@ const HeroSection = ({ onGetStarted }) => (
 
     {/* Trust bar */}
     <div className="animate-fade-in-up delay-400" style={{
-      display: 'flex', gap: '40px', marginTop: '72px', flexWrap: 'wrap',
+      display: 'flex', gap: '20px md:gap-40px', marginTop: '60px', flexWrap: 'wrap',
       justifyContent: 'center', zIndex: 1
     }}>
       {[
@@ -208,11 +229,11 @@ const FeatureCard = ({ icon, gradient, title, description, index }) => (
 
 // ─── FEATURES SECTION ───
 const FeaturesSection = () => (
-  <section id="features" style={{ padding: '120px 5%', background: 'rgba(13,17,23,0.95)', position: 'relative' }}>
+  <section id="features" className="py-24 px-4 md:px-[5%] relative" style={{ background: 'rgba(13,17,23,0.95)' }}>
     {/* glow */}
     <div style={{
       position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)',
-      width: '800px', height: '400px',
+      width: '100%', maxWidth: '800px', height: '400px',
       background: 'radial-gradient(ellipse, rgba(37,99,235,0.06) 0%, transparent 70%)',
       filter: 'blur(40px)', pointerEvents: 'none'
     }} />
@@ -240,10 +261,7 @@ const FeaturesSection = () => (
     </div>
 
     <ParallaxScroll offset={[-60, 60]}>
-    <div style={{
-      display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))',
-      gap: '24px', maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1
-    }}>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto relative z-10 w-full" style={{ position: 'relative', zIndex: 1 }}>
       <FeatureCard index={0} icon="⚙️"
         gradient="linear-gradient(135deg,#7C3AED,#4F46E5)"
         title="Token Generator"
@@ -272,18 +290,14 @@ const FeaturesSection = () => (
 
 // ─── ABOUT SECTION ───
 const AboutSection = () => (
-  <section id="about" style={{
-    padding: '120px 5%', background: 'var(--bg)',
-    display: 'flex', alignItems: 'center', gap: '80px',
-    justifyContent: 'center', flexWrap: 'wrap', position: 'relative', overflow: 'hidden'
-  }}>
+  <section id="about" className="py-24 px-4 md:px-[5%] flex flex-col lg:flex-row items-center gap-12 lg:gap-20 justify-center relative overflow-hidden" style={{ background: 'var(--bg)' }}>
     <div style={{
-      position: 'absolute', bottom: '-100px', left: '-100px', width: '600px', height: '600px',
+      position: 'absolute', bottom: '-100px', left: '-50px', width: '150vw', maxWidth: '600px', height: '150vw', maxHeight: '600px',
       background: 'radial-gradient(circle, rgba(124,58,237,0.07) 0%, transparent 65%)',
       filter: 'blur(60px)', pointerEvents: 'none'
     }} />
 
-    <div style={{ flex: '1 1 480px', maxWidth: '580px', position: 'relative', zIndex: 1 }}>
+    <div className="flex-1 max-w-[580px] w-full relative z-10 text-center lg:text-left">
       <div style={{
         display: 'inline-block', padding: '5px 14px', borderRadius: '99px', marginBottom: '20px',
         background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)',
@@ -307,7 +321,7 @@ const AboutSection = () => (
         Connect MetaMask, fill a form, and deploy. Your contract goes live on the blockchain in under 30 seconds.
       </p>
 
-      <div style={{ display: 'flex', gap: '40px', marginTop: '40px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '30px', marginTop: '40px', flexWrap: 'wrap', justifyContent: 'inherit' }}>
         {[
           { value: '30s', label: 'Time to Deploy' },
           { value: '3+', label: 'Contract Types' },
@@ -326,7 +340,7 @@ const AboutSection = () => (
     </div>
 
     {/* Visual card */}
-    <div style={{ flex: '1 1 360px', maxWidth: '460px', position: 'relative', zIndex: 1 }}>
+    <div className="flex-1 w-full max-w-[460px] relative z-10">
       <div className="card-glow" style={{ padding: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px', position: 'relative', zIndex: 10 }}>
           <img src="/autocon-logo.png" alt="AutoCon" style={{
@@ -402,7 +416,7 @@ const Footer = () => {
 // ─── MAIN ───
 export default function LandingPage({ onLoginClick }) {
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--on-surface)' }}>
+    <div className="overflow-x-hidden min-h-screen" style={{ background: 'var(--bg)', color: 'var(--on-surface)' }}>
       <NavBar onConnect={onLoginClick} />
       <HeroSection onGetStarted={onLoginClick} />
       <FeaturesSection />

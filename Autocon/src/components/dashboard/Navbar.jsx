@@ -1,7 +1,8 @@
 import { useAuth } from '../../context/AuthContext';
 import { useNetwork } from '../../context/NetworkContext';
+import { Menu } from 'lucide-react';
 
-export default function Navbar({ activeTab }) {
+export default function Navbar({ activeTab, onMenuClick }) {
   const { user, logout } = useAuth();
   const { network } = useNetwork();
 
@@ -36,23 +37,31 @@ export default function Navbar({ activeTab }) {
       position: 'sticky', top: 0, zIndex: 50,
       marginBottom: '24px',
     }}>
-      {/* Page Title */}
-      <div>
-        <h2 style={{
-          fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--on-surface)'
-        }}>
-          {firstWord}{rest ? <> <span className="gradient-text">{rest}</span></> : ''}
-        </h2>
-        <p style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '1px' }}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-        </p>
+      {/* Left Side: Mobile Menu + Page Title */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <button 
+            onClick={onMenuClick}
+            className="md:hidden flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+        >
+            <Menu className="w-6 h-6" />
+        </button>
+        <div>
+          <h2 style={{
+            fontSize: 'max(1rem, 1.1vw)', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--on-surface)'
+          }}>
+            {firstWord}{rest ? <> <span className="gradient-text">{rest}</span></> : ''}
+          </h2>
+          <p className="hidden sm:block" style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '1px' }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </p>
+        </div>
       </div>
 
       {/* Right Side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* Network Badge */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
+        {/* Network Badge - Hidden on very small screens */}
+        <div className="hidden sm:flex" style={{
+          alignItems: 'center', gap: '6px',
           padding: '5px 12px', borderRadius: '99px',
           background: `${network.color}12`,
           border: `1px solid ${network.color}28`,
@@ -105,7 +114,7 @@ export default function Navbar({ activeTab }) {
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-          Sign Out
+          <span className="hidden sm:inline">Sign Out</span>
         </button>
       </div>
     </header>

@@ -259,9 +259,7 @@ export default function Dashboard() {
 
 
       {/* Header */}
-      <div className="animate-fade-in-up" style={{
-        marginBottom: 'var(--space-5)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'
-      }}>
+      <div className="animate-fade-in-up flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
@@ -359,10 +357,7 @@ export default function Dashboard() {
 
       {/* Milestone Badges + Social Proof */}
       {deployments.length > 0 && (
-        <div className="card animate-fade-in-up delay-400" style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '20px', padding: '18px 24px'
-        }}>
+        <div className="card animate-fade-in-up delay-400 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-5 p-6">
           {/* Badges */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {deployments.length >= 1 && (

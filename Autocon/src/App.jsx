@@ -45,6 +45,7 @@ function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -66,10 +67,15 @@ function AppContent() {
   return (
     <BrowserRouter>
       <div className="flex min-h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg)', color: 'var(--on-surface)' }}>
-        <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
-        <main className={`flex-1 flex flex-col h-screen overflow-y-auto overflow-x-hidden transition-all duration-300 ${isSidebarExpanded ? 'ml-[252px]' : 'ml-[72px]'}`}>
-          <Navbar />
-          <div className="container mx-auto px-8 pb-8 flex-1">
+        <Sidebar 
+          isExpanded={isSidebarExpanded} 
+          setIsExpanded={setIsSidebarExpanded} 
+          isMobileOpen={isMobileMenuOpen} 
+          setIsMobileOpen={setIsMobileMenuOpen} 
+        />
+        <main className={`flex-1 flex flex-col h-screen overflow-y-auto overflow-x-hidden transition-all duration-300 ml-0 ${isSidebarExpanded ? 'md:ml-[252px]' : 'md:ml-[72px]'}`}>
+          <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
+          <div className="container mx-auto px-4 md:px-8 pb-8 flex-1">
             <AnimatedRoutes />
           </div>
         </main>
