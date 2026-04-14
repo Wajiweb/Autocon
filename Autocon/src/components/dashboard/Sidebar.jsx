@@ -1,141 +1,120 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useWallet } from '../../hooks/useWallet';
-import { 
-    LayoutDashboard, 
-    Coins, 
-    Image as ImageIcon, 
-    Gavel, 
-    ShieldCheck, 
-    Bot, 
-    UserCircle,
-    ChevronLeft,
-    Menu,
-    Sun,
-    Moon
-} from 'lucide-react';
+import toast from 'react-hot-toast';
+import './styles/dashboard.css';
 
-const navItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Token Generator', path: '/tokens', icon: Coins },
-    { label: 'NFT Generator', path: '/nfts', icon: ImageIcon },
-    { label: 'Auction Generator', path: '/auctions', icon: Gavel },
-    { label: 'Security Audit', path: '/audit', icon: ShieldCheck },
-    { label: 'AI Assistant', path: '/chatbot', icon: Bot },
-    { label: 'Profile', path: '/profile', icon: UserCircle },
+const NAV_GROUPS = [
+  {
+    label: 'Contracts',
+    items: [
+      { label: 'Dashboard',        path: '/dashboard', icon: '◈' },
+      { label: 'Token Generator',  path: '/tokens',    icon: '⬡', badge: null },
+      { label: 'NFT Generator',    path: '/nfts',      icon: '⬢' },
+      { label: 'Auction Generator',path: '/auctions',  icon: '◉' },
+      { label: 'Security Audit',   path: '/audit',     icon: '⚑' },
+    ],
+  },
+  {
+    label: 'Tools',
+    items: [
+      { label: 'AI Assistant', path: '/chatbot', icon: '◎' },
+      { label: 'Profile',      path: '/profile', icon: '⊙' },
+    ],
+  },
 ];
 
-export default function Sidebar({ isExpanded = true, setIsExpanded, isMobileOpen, setIsMobileOpen }) {
-    const { theme, toggleTheme } = useTheme();
-    const { walletAddress } = useWallet();
+export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
+  const { theme, toggleTheme } = useTheme();
+  const { walletAddress } = useWallet();
+  const [blockNum, setBlockNum] = useState(8241036);
 
-    // Close mobile menu on route change implicitly via nav interaction or backdrop
-    return (
-        <>
-        {/* Mobile Backdrop overlay */}
-        {isMobileOpen && (
-             <div 
-                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-                 onClick={() => setIsMobileOpen(false)}
-             />
-        )}
-        <aside 
-            className={`flex flex-col h-screen fixed left-0 top-0 backdrop-blur-2xl transition-all duration-300 ease-in-out z-50 
-            ${isExpanded ? 'w-[252px]' : 'w-[72px]'}
-            ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-            `}
-            style={{ background: 'var(--surface-high)', borderRight: '1px solid var(--outline-variant)' }}
-        >
-            {/* Logo area */}
-            <div className="flex items-center justify-between p-4 mb-4 shadow-sm min-h-[72px]" style={{ borderBottom: '1px solid var(--outline-variant)' }}>
-                <div className={`flex items-center gap-3 overflow-hidden transition-all duration-300 ${isExpanded ? 'opacity-100 w-full' : 'opacity-0 w-0'}`}>
-                    <div className="w-8 h-8 rounded-lg bg-[image:var(--image-primary-gradient)] flex items-center justify-center shrink-0">
-                        <span className="font-space font-bold text-white text-lg leading-none">A</span>
-                    </div>
-                    <span className="font-space font-bold text-xl tracking-tight text-white truncate">AutoCon</span>
-                </div>
-                
-                <button 
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+  useEffect(() => {
+    const id = setInterval(() => {
+      setBlockNum((n) => n + Math.floor(Math.random() * 2 + 1));
+    }, 4000);
+    return () => clearInterval(id);
+  }, []);
+
+  const shortAddr = walletAddress
+    ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+    : '0x0000...0000';
+
+  return (
+    <>
+      {/* Mobile backdrop */}
+      {isMobileOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 99, backdropFilter: 'blur(3px)' }}
+          onClick={() => setIsMobileOpen?.(false)}
+        />
+      )}
+
+      <aside className={`db-sidebar${isMobileOpen ? ' mobile-open' : ''}`}>
+        {/* Logo */}
+        <div className="db-sb-logo">
+          <div className="db-logo-mark">AC</div>
+          <div>
+            <div className="db-logo-name">AutoCon</div>
+            <div className="db-logo-tag">v2.4 · Blockchain Studio</div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="db-sb-nav">
+          {NAV_GROUPS.map((group) => (
+            <React.Fragment key={group.label}>
+              <div className="db-nav-group-label">{group.label}</div>
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) => `db-nav-link${isActive ? ' active' : ''}`}
+                  onClick={() => setIsMobileOpen?.(false)}
                 >
-                    {isExpanded ? <ChevronLeft className="w-5 h-5" /> : <Menu className="w-5 h-5 mx-auto" />}
-                </button>
+                  <span className="db-nav-icon">{item.icon}</span>
+                  {item.label}
+                  {item.badge != null && (
+                    <span className="db-nav-badge">{item.badge}</span>
+                  )}
+                </NavLink>
+              ))}
+            </React.Fragment>
+          ))}
+        </nav>
+
+        {/* Bottom */}
+        <div className="db-sb-bottom">
+          {/* Wallet chip */}
+          <div className="db-wallet-chip">
+            <div className="db-wc-label">Connected Wallet</div>
+            <div className="db-wc-addr">
+              {shortAddr}
+              <button
+                className="db-wc-copy"
+                onClick={() => {
+                  if (walletAddress) navigator.clipboard.writeText(walletAddress);
+                  toast.success('Address copied');
+                }}
+                title="Copy address"
+              >
+                ⎘
+              </button>
             </div>
-
-            {/* Navigation links */}
-            <nav className="flex-1 px-3 space-y-2 overflow-y-auto pb-4">
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.label}
-                        to={item.path}
-                        onClick={() => { if (setIsMobileOpen) setIsMobileOpen(false); }}
-                        className={({ isActive }) => `
-                            group flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 cursor-pointer overflow-hidden
-                            ${isActive ? 'bg-white/10 shadow-sm relative' : 'hover:bg-white/5'}
-                        `}
-                    >
-                        {({ isActive }) => (
-                            <>
-                                {isActive && (
-                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-lg" />
-                                )}
-                                <item.icon 
-                                    className={`w-5 h-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-primary' : 'text-slate-400 group-hover:text-primary'}`} 
-                                />
-                                <span 
-                                    className={`font-medium tracking-wide whitespace-nowrap transition-all duration-300 ${isActive ? 'text-white font-semibold' : 'text-slate-400 group-hover:text-primary'} ${isExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 hidden'}`}
-                                >
-                                    {item.label}
-                                </span>
-                            </>
-                        )}
-                    </NavLink>
-                ))}
-            </nav>
-            
-            {/* Footer Area */}
-            <div className={`p-3 transition-all duration-300 overflow-hidden ${isExpanded ? 'opacity-100' : ''}`} style={{ borderTop: '1px solid var(--outline-variant)' }}>
-                 {/* Theme Toggle */}
-                 <button
-                     onClick={toggleTheme}
-                     title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                     className={`group flex items-center gap-4 w-full px-3 py-3 rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/5 overflow-hidden`}
-                 >
-                     {theme === 'dark' 
-                         ? <Sun className="w-5 h-5 shrink-0 text-yellow-400 transition-colors" />
-                         : <Moon className="w-5 h-5 shrink-0 text-indigo-400 transition-colors" />
-                     }
-                     <span className={`font-medium tracking-wide whitespace-nowrap text-slate-400 group-hover:text-white transition-all duration-300 ${isExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 w-0 hidden'}`}>
-                         {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                     </span>
-                 </button>
-
-                 {isExpanded && (
-                     <div className="text-xs text-slate-500 font-medium tracking-wider uppercase text-center mt-2">
-                         Powered by AutoCon
-                     </div>
-                 )}
-
-                 {/* Connected Wallet Pill — inline to avoid nested component anti-pattern */}
-                 <div className="mt-2">
-                     {walletAddress ? (
-                         <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
-                              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', color: 'var(--on-surface)' }}>
-                             <span className="h-2 w-2 rounded-full bg-green-400 shrink-0" />
-                             {isExpanded && <span className="font-mono truncate">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>}
-                         </div>
-                     ) : (
-                         <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
-                              style={{ color: 'var(--outline)' }}>
-                             <span className="h-2 w-2 rounded-full bg-gray-500 shrink-0" />
-                             {isExpanded && 'Not connected'}
-                         </div>
-                     )}
-                 </div>
+            <div className="db-net-row">
+              <div className="db-net-dot" />
+              <span className="db-net-name">Sepolia Testnet</span>
+              <span className="db-net-block">#{blockNum.toLocaleString()}</span>
             </div>
-        </aside>
-        </>
-    );
+          </div>
+
+          {/* Theme toggle */}
+          <button className="db-theme-btn" onClick={toggleTheme}>
+            {theme === 'dark' ? '☀' : '☾'} {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </button>
+        </div>
+      </aside>
+    </>
+  );
 }

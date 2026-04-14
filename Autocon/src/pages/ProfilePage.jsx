@@ -1,266 +1,215 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import '../components/dashboard/styles/dashboard.css';
+
+const BADGES = [
+  { cond: (d) => d >= 1,  icon: '🏅', label: 'First Deploy',    color: 'var(--db-acc)' },
+  { cond: (d) => d >= 5,  icon: '🌟', label: 'Power User',      color: '#a78bfa' },
+  { cond: (d) => d >= 10, icon: '🏆', label: 'Blockchain Pro',  color: 'var(--db-amber)' },
+];
+const NFT_BADGE    = { icon: '🎨', label: 'NFT Creator',  color: '#ec4899' };
+const AUC_BADGE    = { icon: '🔨', label: 'Auctioneer',   color: 'var(--db-amber)' };
+const TOKEN_BADGE  = { icon: '💎', label: 'Token Master', color: 'var(--db-blue)' };
 
 export default function ProfilePage() {
-    const { user, authFetch } = useAuth();
-    const [deployments, setDeployments] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+  const { user, authFetch } = useAuth();
+  const [deployments, setDeployments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchAll = async () => {
+      if (!user?.walletAddress) return;
+      const all = [];
+      try {
+        const r = await authFetch(`/api/token/my-tokens/${user.walletAddress}`);
+        const d = await r.json();
+        if (d.success && d.tokens) d.tokens.forEach(t => all.push({ ...t, _type: 'ERC-20' }));
+      } catch (_) {}
+      try {
+        const r = await authFetch(`/api/nft/my-nfts/${user.walletAddress}`);
+        const d = await r.json();
+        if (d.success && d.nfts) d.nfts.forEach(t => all.push({ ...t, _type: 'ERC-721' }));
+      } catch (_) {}
+      try {
+        const r = await authFetch(`/api/auction/my-auctions/${user.walletAddress}`);
+        const d = await r.json();
+        if (d.success && d.auctions) d.auctions.forEach(t => all.push({ ...t, _type: 'Auction' }));
+      } catch (_) {}
+      all.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setDeployments(all);
+      setIsLoading(false);
+    };
+    fetchAll();
+  }, [user, authFetch]);
 
-    useEffect(() => {
-        const fetchAll = async () => {
-            if (!user?.walletAddress) return;
-            const allAssets = [];
+  const tokenCount   = deployments.filter(d => d._type === 'ERC-20').length;
+  const nftCount     = deployments.filter(d => d._type === 'ERC-721').length;
+  const auctionCount = deployments.filter(d => d._type === 'Auction').length;
 
-            try {
-                const tokensRes = await authFetch(`/api/token/my-tokens/${user.walletAddress}`);
-                const tokensData = await tokensRes.json();
-                if (tokensData.success && tokensData.tokens) {
-                    tokensData.tokens.forEach(t => allAssets.push({ ...t, _type: 'ERC-20' }));
-                }
-            } catch (_) { /* ignore */ }
+  const badges = [
+    ...BADGES.filter(b => b.cond(deployments.length)),
+    ...(nftCount >= 1 ? [NFT_BADGE] : []),
+    ...(auctionCount >= 1 ? [AUC_BADGE] : []),
+    ...(tokenCount >= 3 ? [TOKEN_BADGE] : []),
+  ];
 
-            try {
-                const nftsRes = await authFetch(`/api/nft/my-nfts/${user.walletAddress}`);
-                const nftsData = await nftsRes.json();
-                if (nftsData.success && nftsData.nfts) {
-                    nftsData.nfts.forEach(n => allAssets.push({ ...n, _type: 'ERC-721' }));
-                }
-            } catch (_) { /* ignore */ }
+  const firstDeploy = deployments.length > 0
+    ? new Date(deployments[deployments.length - 1].createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'N/A';
+  const uniqueNetworks = [...new Set(deployments.map(d => d.network).filter(Boolean))];
+  const shortAddr = user?.walletAddress
+    ? `${user.walletAddress.slice(0, 8)}…${user.walletAddress.slice(-6)}`
+    : '';
 
-            try {
-                const auctionsRes = await authFetch(`/api/auction/my-auctions/${user.walletAddress}`);
-                const auctionsData = await auctionsRes.json();
-                if (auctionsData.success && auctionsData.auctions) {
-                    auctionsData.auctions.forEach(a => allAssets.push({ ...a, _type: 'Auction' }));
-                }
-            } catch (_) { /* ignore */ }
+  const typeInfo = (type) => ({
+    'Auction': { color: 'var(--db-amber)', label: 'Auction', icon: '🔨' },
+    'ERC-721': { color: '#ec4899',         label: 'NFT Collection', icon: '🎨' },
+  }[type] ?? { color: 'var(--db-acc)', label: 'ERC-20 Token', icon: '🪙' });
 
-            allAssets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            setDeployments(allAssets);
-            setIsLoading(false);
-        };
-        fetchAll();
-    }, [user, authFetch]);
+  return (
+    <div className="pg-wrap" style={{ maxWidth: 860 }}>
 
-    const tokenCount = deployments.filter(d => d._type === 'ERC-20').length;
-    const nftCount = deployments.filter(d => d._type === 'ERC-721').length;
-    const auctionCount = deployments.filter(d => d._type === 'Auction').length;
-
-    // Milestone badges
-    const badges = [];
-    if (deployments.length >= 1) badges.push({ icon: '🏅', label: 'First Deploy', color: '#06b6d4' });
-    if (deployments.length >= 5) badges.push({ icon: '🌟', label: 'Power User', color: '#a78bfa' });
-    if (deployments.length >= 10) badges.push({ icon: '🏆', label: 'Blockchain Pro', color: '#f59e0b' });
-    if (nftCount >= 1) badges.push({ icon: '🎨', label: 'NFT Creator', color: '#ec4899' });
-    if (auctionCount >= 1) badges.push({ icon: '🔨', label: 'Auctioneer', color: '#f59e0b' });
-    if (tokenCount >= 3) badges.push({ icon: '💎', label: 'Token Master', color: '#06b6d4' });
-
-    // Activity timeline (last 5)
-    const recentActivity = deployments.slice(0, 5);
-
-    // Stats
-    const firstDeploy = deployments.length > 0
-        ? new Date(deployments[deployments.length - 1].createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        : 'N/A';
-
-    const uniqueNetworks = [...new Set(deployments.map(d => d.network).filter(Boolean))];
-
-    return (
-        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
-
-
-            {/* Profile Header Card */}
-            <div className="card glass-strong animate-fade-in-up" style={{
-                padding: '0', overflow: 'hidden', marginBottom: '24px',
-                borderTop: '2px solid rgba(139,92,246,0.5)',
-                boxShadow: '0 12px 40px rgba(0,0,0,0.4), 0 0 20px rgba(139,92,246,0.1)'
-            }}>
-                {/* Gradient Banner */}
-                <div style={{
-                    height: '120px',
-                    background: 'linear-gradient(135deg, #06b6d4, #8b5cf6, #ec4899)',
-                    position: 'relative'
-                }}>
-                    <div style={{
-                        position: 'absolute', bottom: '-32px', left: '32px',
-                        width: '72px', height: '72px',
-                        background: 'var(--surface)',
-                        borderRadius: '20px',
-                        border: '4px solid var(--surface)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '32px', boxShadow: 'var(--shadow-ambient)'
-                    }}>
-                        🦊
-                    </div>
-                </div>
-
-                <div style={{ padding: '44px 32px 28px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                            <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--on-surface)', marginBottom: '4px' }}>
-                                Web3 Builder
-                            </h1>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{
-                                    fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--tertiary)',
-                                    background: 'rgba(6,182,212,0.1)', padding: '4px 12px', borderRadius: '8px',
-                                    border: '1px solid rgba(6,182,212,0.2)'
-                                }}>
-                                    {user?.walletAddress || ''}
-                                </span>
-                                <button onClick={() => { navigator.clipboard.writeText(user?.walletAddress || ''); toast.success('Address copied!'); }}
-                                    style={{
-                                        padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--outline-variant)',
-                                        background: 'transparent', color: 'var(--outline)', fontSize: '0.7rem',
-                                        fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif'
-                                    }}>📋 Copy</button>
-                            </div>
-                        </div>
-                        <a
-                            href={`https://sepolia.etherscan.io/address/${user?.walletAddress}`}
-                            target="_blank" rel="noreferrer"
-                            style={{
-                                padding: '8px 16px', borderRadius: '10px',
-                                background: 'var(--surface-high)', border: '1px solid var(--outline-variant)',
-                                color: 'var(--on-surface-variant)', fontSize: '0.8rem', fontWeight: 600,
-                                textDecoration: 'none', transition: 'all 0.2s ease'
-                            }}
-                        >View on Etherscan ↗</a>
-                    </div>
-                </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="animate-fade-in-up delay-100" style={{
-                display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px'
-            }}>
-                {[
-                    { label: 'Total Deploys', value: deployments.length, icon: '🚀', color: '#06b6d4' },
-                    { label: 'ERC-20 Tokens', value: tokenCount, icon: '🪙', color: '#8b5cf6' },
-                    { label: 'NFT Collections', value: nftCount, icon: '🎨', color: '#ec4899' },
-                    { label: 'Auctions', value: auctionCount, icon: '🔨', color: '#f59e0b' },
-                ].map(s => (
-                    <div key={s.label} className="card" style={{ padding: '20px', textAlign: 'center' }}>
-                        <span style={{ fontSize: '1.8rem', display: 'block', marginBottom: '8px' }}>{s.icon}</span>
-                        <p style={{ fontSize: '1.8rem', fontWeight: 900, color: s.color, marginBottom: '4px' }}>{s.value}</p>
-                        <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</p>
-                    </div>
-                ))}
-            </div>
-
-            {/* Badges + Info */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
-                {/* Badges */}
-                <div className="card animate-fade-in-up delay-200" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '16px' }}>
-                        🏆 Earned Badges
-                    </h3>
-                    {badges.length === 0 ? (
-                        <p style={{ fontSize: '0.85rem', color: 'var(--outline)' }}>Deploy your first contract to earn badges!</p>
-                    ) : (
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            {badges.map(b => (
-                                <div key={b.label} style={{
-                                    padding: '10px 16px', borderRadius: '14px',
-                                    background: `${b.color}15`,
-                                    border: `1px solid ${b.color}30`,
-                                    display: 'flex', alignItems: 'center', gap: '8px'
-                                }}>
-                                    <span style={{ fontSize: '1.3rem' }}>{b.icon}</span>
-                                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: b.color }}>{b.label}</span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Account Info */}
-                <div className="card animate-fade-in-up delay-300" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '16px' }}>
-                        📋 Account Details
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: '0.82rem', color: 'var(--outline)' }}>First Deploy</span>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)' }}>{firstDeploy}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: '0.82rem', color: 'var(--outline)' }}>Networks Used</span>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)' }}>{uniqueNetworks.join(', ') || 'None'}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: '0.82rem', color: 'var(--outline)' }}>Badges Earned</span>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)' }}>{badges.length} / 6</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: '0.82rem', color: 'var(--outline)' }}>Member Since</span>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)' }}>
-                                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Recent Activity Timeline */}
-            <div className="card animate-fade-in-up delay-400" style={{ padding: '24px' }}>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '16px' }}>
-                    📜 Recent Activity
-                </h3>
-                {isLoading ? (
-                    <p style={{ color: 'var(--outline)', fontSize: '0.85rem' }}>Loading...</p>
-                ) : recentActivity.length === 0 ? (
-                    <p style={{ color: 'var(--outline)', fontSize: '0.85rem' }}>No deployments yet. Create your first contract!</p>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                        {recentActivity.map((item, idx) => {
-                            const typeInfo = item._type === 'Auction'
-                                ? { icon: '🔨', color: '#f59e0b', label: 'Auction' }
-                                : item._type === 'ERC-721'
-                                    ? { icon: '🎨', color: '#ec4899', label: 'NFT Collection' }
-                                    : { icon: '🪙', color: '#06b6d4', label: 'ERC-20 Token' };
-                            return (
-                                <div key={item._id} style={{
-                                    display: 'flex', alignItems: 'flex-start', gap: '14px',
-                                    padding: '14px 0',
-                                    borderBottom: idx < recentActivity.length - 1 ? '1px solid var(--outline-variant)' : 'none'
-                                }}>
-                                    {/* Timeline dot */}
-                                    <div style={{
-                                        width: '36px', height: '36px', borderRadius: '12px', flexShrink: 0,
-                                        background: `${typeInfo.color}15`,
-                                        border: `1px solid ${typeInfo.color}30`,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '1rem'
-                                    }}>{typeInfo.icon}</div>
-
-                                    <div style={{ flex: 1 }}>
-                                        <p style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '2px' }}>
-                                            Deployed {typeInfo.label}: <span style={{ color: typeInfo.color }}>{item.name}</span>
-                                        </p>
-                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '0.72rem', color: 'var(--outline)' }}>
-                                                {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                            </span>
-                                            {item.contractAddress && (
-                                                <a
-                                                    href={`https://sepolia.etherscan.io/address/${item.contractAddress}`}
-                                                    target="_blank" rel="noreferrer"
-                                                    style={{ fontSize: '0.72rem', color: 'var(--tertiary)', textDecoration: 'none' }}
-                                                >
-                                                    {item.contractAddress.substring(0, 10)}...{item.contractAddress.substring(36)} ↗
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
+      {/* Profile Banner Card */}
+      <div className="pg-card db-enter db-enter-1" style={{ padding: 0, overflow: 'hidden',
+        borderTop: '2px solid var(--db-acc)', marginBottom: 16 }}>
+        {/* Gradient banner */}
+        <div style={{ height: 110,
+          background: 'linear-gradient(135deg, #0d2818, #16401e, #0f2d18)',
+          borderBottom: '.5px solid var(--db-br)', position: 'relative' }}>
+          {/* Avatar */}
+          <div style={{ position: 'absolute', bottom: -28, left: 28,
+            width: 64, height: 64, borderRadius: 16, background: 'var(--db-s1)',
+            border: '3px solid var(--db-s1)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: 28, boxShadow: '0 4px 20px rgba(0,0,0,.5)' }}>
+            🦊
+          </div>
         </div>
-    );
+
+        <div style={{ padding: '44px 28px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 6 }}>
+              Web3 Builder
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: 'var(--db-mono)', fontSize: 12, color: 'var(--db-t2)',
+                background: 'var(--db-acc-d)', padding: '4px 12px', borderRadius: 8,
+                border: '.5px solid rgba(34,197,94,.2)' }}>{shortAddr || 'Not connected'}</span>
+              <button onClick={() => { navigator.clipboard.writeText(user?.walletAddress || ''); toast.success('Address copied!'); }}
+                className="pg-btn pg-btn-outline" style={{ padding: '4px 10px', fontSize: 11 }}>
+                📋 Copy
+              </button>
+            </div>
+          </div>
+          <a href={`https://sepolia.etherscan.io/address/${user?.walletAddress}`}
+            target="_blank" rel="noreferrer" className="pg-btn pg-btn-outline"
+            style={{ textDecoration: 'none', fontSize: 12 }}>
+            Etherscan ↗
+          </a>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="pg-mini-stats cols-4 db-enter db-enter-2">
+        {[
+          { label: 'Total Deploys', value: deployments.length, icon: '🚀', color: 'var(--db-acc)' },
+          { label: 'ERC-20 Tokens', value: tokenCount,         icon: '🪙', color: 'var(--db-blue)' },
+          { label: 'NFT Collections', value: nftCount,         icon: '🎨', color: '#ec4899' },
+          { label: 'Auctions',       value: auctionCount,      icon: '🔨', color: 'var(--db-amber)' },
+        ].map(s => (
+          <div key={s.label} className="pg-stat-card">
+            <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
+            <div className="pg-stat-val" style={{ color: s.color }}>{s.value}</div>
+            <div className="pg-stat-lbl">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Badges + Account Details */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }} className="db-enter db-enter-3">
+        <div className="pg-card">
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 14 }}>
+            🏆 Earned Badges
+          </div>
+          {badges.length === 0 ? (
+            <div style={{ fontSize: 13, color: 'var(--db-t3)' }}>Deploy your first contract to earn badges!</div>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {badges.map(b => (
+                <div key={b.label} style={{ padding: '8px 14px', borderRadius: 10,
+                  background: `${b.color}18`, border: `.5px solid ${b.color}40`,
+                  display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ fontSize: 18 }}>{b.icon}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: b.color }}>{b.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="pg-card">
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 14 }}>
+            📋 Account Details
+          </div>
+          {[
+            { label: 'First Deploy',  value: firstDeploy },
+            { label: 'Networks Used', value: uniqueNetworks.join(', ') || 'None' },
+            { label: 'Badges Earned', value: `${badges.length} / 6` },
+            { label: 'Member Since',  value: user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A' },
+          ].map(row => (
+            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0',
+              borderBottom: '.5px solid var(--db-br)' }}>
+              <span style={{ fontSize: 12, color: 'var(--db-t3)' }}>{row.label}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--db-t1)', fontFamily: 'var(--db-font)' }}>{row.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Activity Timeline */}
+      <div className="pg-card db-enter db-enter-4">
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 14 }}>
+          📜 Recent Activity
+        </div>
+        {isLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--db-t3)', fontSize: 13 }}>
+            <div className="pg-spinner" /> Loading…
+          </div>
+        ) : deployments.slice(0, 5).length === 0 ? (
+          <div style={{ fontSize: 13, color: 'var(--db-t3)' }}>No deployments yet. Create your first contract!</div>
+        ) : (
+          deployments.slice(0, 5).map((item, idx) => {
+            const ti = typeInfo(item._type);
+            return (
+              <div key={item._id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12,
+                padding: '12px 0', borderBottom: idx < 4 ? '.5px solid var(--db-br)' : 'none' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                  background: `${ti.color}18`, border: `.5px solid ${ti.color}35`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                  {ti.icon}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 3 }}>
+                    Deployed {ti.label}: <span style={{ color: ti.color }}>{item.name}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: 'var(--db-t3)', fontFamily: 'var(--db-mono)' }}>
+                      {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    {item.contractAddress && (
+                      <a href={`https://sepolia.etherscan.io/address/${item.contractAddress}`}
+                        target="_blank" rel="noreferrer"
+                        style={{ fontSize: 11, color: 'var(--db-acc)', textDecoration: 'none', fontFamily: 'var(--db-mono)' }}>
+                        {item.contractAddress.slice(0, 10)}…{item.contractAddress.slice(-6)} ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 }

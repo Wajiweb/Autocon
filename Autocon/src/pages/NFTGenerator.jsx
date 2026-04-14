@@ -67,7 +67,7 @@ export default function NFTGenerator() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
                     <div style={{
                         width: '44px', height: '44px',
-                        background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                        background: 'var(--primary-gradient)',
                         borderRadius: '14px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '22px', boxShadow: 'var(--shadow-ambient)'
@@ -76,12 +76,7 @@ export default function NFTGenerator() {
                         fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
                         color: 'var(--on-surface)'
                     }}>
-                        NFT <span style={{
-                            background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text'
-                        }}>Generator</span>
+                        NFT <span className="gradient-text">Generator</span>
                     </h1>
                 </div>
                 <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
@@ -166,7 +161,7 @@ export default function NFTGenerator() {
                             color: 'var(--outline)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>
-                            Mint Price (ETH)
+                            Mint Price ({network.currencySymbol || 'ETH'})
                         </label>
                         <input
                             name="mintPrice"
@@ -288,11 +283,11 @@ export default function NFTGenerator() {
                                 onClick={connectWallet}
                                 style={{
                                     padding: '14px 24px', borderRadius: '14px', border: 'none',
-                                    background: 'linear-gradient(135deg, #f6851b, #e2761b)',
+                                    background: 'var(--primary-gradient)',
                                     color: 'white', fontWeight: 700, fontSize: '0.9rem',
                                     cursor: 'pointer', whiteSpace: 'nowrap',
                                     transition: 'all 0.2s ease',
-                                    boxShadow: '0 4px 20px rgba(246,133,27,0.3)'
+                                    boxShadow: 'var(--shadow-primary)'
                                 }}
                             >🦊 Connect</button>
                         </div>
@@ -301,7 +296,7 @@ export default function NFTGenerator() {
                     {/* Generate Button */}
                     <button type="submit" className="btn-primary" style={{
                         width: '100%', padding: '16px',
-                        background: 'linear-gradient(135deg, #8b5cf6, #ec4899)'
+                        background: 'var(--primary-gradient)'
                     }}>
                         🎨 Generate NFT Contract
                     </button>
@@ -422,7 +417,7 @@ export default function NFTGenerator() {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
                                 background: (!generatedCode || isDeploying)
                                     ? 'var(--surface-highest)'
-                                    : 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                                    : 'var(--primary-gradient)',
                                 color: (!generatedCode || isDeploying) ? 'var(--outline)' : 'white',
                                 cursor: (!generatedCode || isDeploying) ? 'not-allowed' : 'pointer'
                             }}
@@ -469,7 +464,7 @@ export default function NFTGenerator() {
             address={deployedAddress || ''}
             network={network.name}
             contractType="NFT"
-            explorerUrl={network.explorerUrl || 'https://sepolia.etherscan.io'}
+            explorerUrl={network.explorer || 'https://sepolia.etherscan.io'}
             abi={contractData?.abi}
             contractName={formData.name || 'NFT'}
             receipt={deploymentReceipt}

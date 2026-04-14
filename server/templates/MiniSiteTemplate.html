@@ -1,222 +1,817 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>%%PROJECT_NAME%% | AutoCon Powered</title>
-    <!-- Modern Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
-    <!-- Ethers.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
-    <style>
-        :root {
-            --bg-dark: #0f111a;
-            --glass-bg: rgba(16, 20, 35, 0.6);
-            --neon-primary: #00f0ff;
-            --neon-secondary: #b026ff;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>%%PROJECT_NAME%% | AutoCon</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
+  <style>
+    /* ── Design Tokens ─────────────────────────────────── */
+    :root {
+      --bg:      #070e0a;
+      --s1:      #0d1812;
+      --s2:      #111f16;
+      --s3:      #16261b;
+      --acc:     #22c55e;
+      --acc-d:   rgba(34,197,94,.12);
+      --acc-dd:  rgba(34,197,94,.06);
+      --red:     #ef4444;
+      --red-d:   rgba(239,68,68,.12);
+      --amber:   #f59e0b;
+      --amber-d: rgba(245,158,11,.12);
+      --blue:    #60a5fa;
+      --blue-d:  rgba(96,165,250,.12);
+      --t1:      #e2ede6;
+      --t2:      #7a9e85;
+      --t3:      #3d5f47;
+      --br:      rgba(34,197,94,.12);
+      --br2:     rgba(34,197,94,.25);
+      --r:       16px;
+      --r-sm:    10px;
+      --font:    'Outfit', sans-serif;
+      --mono:    'IBM Plex Mono', monospace;
+    }
 
-        body {
-            background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.15), transparent 25%),
-                              radial-gradient(circle at 85% 30%, rgba(176, 38, 255, 0.15), transparent 25%);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Glassmorphism Card */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 240, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
-                        inset 0 0 10px rgba(0, 240, 255, 0.05);
-            border-radius: 24px;
-            padding: 40px;
-            width: 100%;
-            max-width: 480px;
-            text-align: center;
-        }
+    body {
+      background: var(--bg);
+      color: var(--t1);
+      font-family: var(--font);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-        h1 {
-            font-weight: 900;
-            font-size: 2rem;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, var(--neon-primary), var(--neon-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    /* ── Background glows ──────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 10% 10%, rgba(34,197,94,.08) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 90% 80%, rgba(96,165,250,.05) 0%, transparent 55%);
+    }
 
-        .subtitle {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 32px;
-            line-height: 1.5;
-        }
+    /* ── Layout ────────────────────────────────────────── */
+    .page { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 24px 18px 80px; }
 
-        /* Network & Contract Badges */
-        .badges {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
+    /* ── Hero card ─────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      background: var(--s1);
+      border: .5px solid var(--br2);
+      border-radius: 24px;
+      padding: 36px 28px 28px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 200px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--acc), transparent);
+    }
 
-        .badge {
-            padding: 6px 14px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            font-family: monospace;
-            background: rgba(0, 240, 255, 0.1);
-            color: var(--neon-primary);
-            border: 1px solid rgba(0, 240, 255, 0.2);
-        }
+    .hero-emoji { font-size: 52px; margin-bottom: 12px; display: block; line-height: 1; }
 
-        /* Neon Button */
-        .btn-neon {
-            background: transparent;
-            color: var(--text-main);
-            border: 1px solid var(--neon-primary);
-            padding: 16px 32px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-            font-family: 'Inter', sans-serif;
-        }
+    .hero-name {
+      font-size: 28px; font-weight: 900; letter-spacing: -.5px;
+      background: linear-gradient(135deg, var(--acc) 30%, #86efac);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
 
-        .btn-neon:hover {
-            background: rgba(0, 240, 255, 0.1);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4),
-                        inset 0 0 15px rgba(0, 240, 255, 0.2);
-        }
+    .hero-desc {
+      font-size: 14px; color: var(--t2); line-height: 1.6; max-width: 420px; margin: 0 auto 20px;
+    }
 
-        .btn-neon:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            border-color: var(--text-muted);
-            box-shadow: none;
-        }
+    /* Network + address pill row */
+    .hero-meta {
+      display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+    }
+    .meta-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 13px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    .meta-pill.net  { background: var(--acc-d); color: var(--acc); border: .5px solid rgba(34,197,94,.25); }
+    .meta-pill.addr { background: var(--blue-d); color: var(--blue); border: .5px solid rgba(96,165,250,.25); font-family: var(--mono); font-size: 11px; cursor: pointer; }
+    .meta-pill.addr:hover { background: rgba(96,165,250,.2); }
+    .net-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--acc); animation: pulse 2s ease infinite; }
 
-        /* Status Text */
-        #status {
-            margin-top: 24px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            min-height: 20px;
-        }
+    /* Live stats bar inside hero */
+    .hero-stats {
+      display: flex; justify-content: center; gap: 0;
+      margin-top: 22px;
+      border: .5px solid var(--br); border-radius: var(--r-sm);
+      overflow: hidden; background: var(--bg);
+    }
+    .hs-item {
+      flex: 1; text-align: center; padding: 12px 8px;
+      border-right: .5px solid var(--br);
+    }
+    .hs-item:last-child { border-right: none; }
+    .hs-val { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--t1); }
+    .hs-lbl { font-size: 10px; color: var(--t3); margin-top: 3px; text-transform: uppercase; letter-spacing: .07em; }
 
-        .footer {
-            margin-top: 32px;
-            font-size: 0.75rem;
-            color: rgba(148, 163, 184, 0.5);
-        }
-    </style>
+    /* ── Connect wallet bar ─────────────────────────────── */
+    .connect-bar {
+      background: var(--s1); border: .5px solid var(--br2);
+      border-radius: var(--r); padding: 16px 20px;
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .connect-bar .icon { font-size: 26px; flex-shrink: 0; }
+    .connect-bar .text { flex: 1; }
+    .connect-bar .text strong { font-size: 14px; font-weight: 700; color: var(--t1); display: block; }
+    .connect-bar .text span   { font-size: 12px; color: var(--t2); }
+
+    #connectBtn {
+      display: flex; align-items: center; gap: 9px;
+      padding: 11px 22px; border-radius: var(--r-sm);
+      background: var(--acc); border: none;
+      color: #070e0a; font-size: 13px; font-weight: 800;
+      font-family: var(--font); cursor: pointer;
+      transition: all .15s; white-space: nowrap; flex-shrink: 0;
+    }
+    #connectBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,.35); }
+    #connectBtn.connected { background: var(--s2); color: var(--acc); border: .5px solid var(--br2); box-shadow: none; }
+    #connectBtn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── Section header ─────────────────────────────────── */
+    .section-hdr {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--t3); margin: 24px 0 12px;
+    }
+    .section-hdr::after { content: ''; flex: 1; height: .5px; background: var(--br); }
+
+    /* ── Action cards ───────────────────────────────────── */
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .action-grid { grid-template-columns: 1fr; } }
+
+    .action-card {
+      background: var(--s1); border: .5px solid var(--br);
+      border-radius: var(--r); padding: 20px;
+      display: flex; flex-direction: column; gap: 14px;
+      transition: border-color .15s, transform .15s;
+    }
+    .action-card:hover { border-color: var(--br2); transform: translateY(-1px); }
+
+    .ac-head { display: flex; align-items: flex-start; gap: 12px; }
+    .ac-ico {
+      width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .ac-ico.green  { background: var(--acc-d); }
+    .ac-ico.amber  { background: var(--amber-d); }
+    .ac-ico.blue   { background: var(--blue-d); }
+    .ac-ico.red    { background: var(--red-d); }
+
+    .ac-title { font-size: 15px; font-weight: 700; color: var(--t1); margin-bottom: 3px; }
+    .ac-desc  { font-size: 12px; color: var(--t2); line-height: 1.5; }
+
+    /* Inputs */
+    .ac-input-wrap { display: flex; flex-direction: column; gap: 6px; }
+    .ac-label { font-size: 11px; color: var(--t3); font-weight: 600; }
+    .ac-input {
+      background: var(--bg); border: .5px solid var(--br);
+      border-radius: var(--r-sm); padding: 10px 13px;
+      color: var(--t1); font-size: 13px;
+      width: 100%; outline: none; font-family: var(--font);
+      transition: border-color .12s;
+    }
+    .ac-input:focus { border-color: var(--acc); }
+    .ac-input::placeholder { color: var(--t3); }
+
+    /* Action buttons */
+    .ac-btn {
+      width: 100%; padding: 12px; border-radius: var(--r-sm);
+      border: none; cursor: pointer;
+      font-size: 13px; font-weight: 700; font-family: var(--font);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all .15s;
+    }
+    .ac-btn.green { background: var(--acc-d); color: var(--acc); border: .5px solid rgba(34,197,94,.25); }
+    .ac-btn.green:hover { background: rgba(34,197,94,.22); }
+    .ac-btn.amber { background: var(--amber-d); color: var(--amber); border: .5px solid rgba(245,158,11,.25); }
+    .ac-btn.amber:hover { background: rgba(245,158,11,.22); }
+    .ac-btn.blue  { background: var(--blue-d); color: var(--blue); border: .5px solid rgba(96,165,250,.25); }
+    .ac-btn.blue:hover  { background: rgba(96,165,250,.22); }
+    .ac-btn.red   { background: var(--red-d); color: var(--red); border: .5px solid rgba(239,68,68,.25); }
+    .ac-btn.red:hover   { background: rgba(239,68,68,.22); }
+    .ac-btn:disabled { opacity: .35; cursor: not-allowed; transform: none !important; }
+
+    /* Result bubbles */
+    .ac-result {
+      border-radius: var(--r-sm); padding: 11px 14px;
+      font-size: 13px; line-height: 1.5;
+      display: none; animation: slideIn .2s ease;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .ac-result.show    { display: block; }
+    .ac-result.success { background: var(--acc-d); color: var(--acc); border: .5px solid rgba(34,197,94,.25); }
+    .ac-result.error   { background: var(--red-d);  color: var(--red);  border: .5px solid rgba(239,68,68,.25); }
+    .ac-result.info    { background: var(--s2); color: var(--t2); border: .5px solid var(--br); }
+
+    /* Spinner */
+    .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.15); border-top-color: currentColor; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin  { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+    /* ── Full-width card ─────────────────────────── */
+    .action-card.full { grid-column: 1 / -1; }
+
+    /* ── TX success celebrate ───────────────────────────── */
+    .celebrate {
+      text-align: center; padding: 14px;
+      background: var(--acc-d); border: .5px solid rgba(34,197,94,.3);
+      border-radius: var(--r-sm);
+    }
+    .celebrate .big { font-size: 32px; }
+    .celebrate p    { font-size: 13px; color: var(--t2); margin-top: 6px; }
+    .celebrate a    { color: var(--acc); font-weight: 700; text-decoration: none; }
+    .celebrate a:hover { text-decoration: underline; }
+
+    /* ── Footer ─────────────────────────────────────────── */
+    .site-footer {
+      text-align: center; margin-top: 48px;
+      font-size: 11px; color: var(--t3); font-family: var(--mono);
+    }
+    .site-footer a { color: var(--acc); text-decoration: none; }
+  </style>
 </head>
 <body>
+<div class="page">
 
-    <div class="glass-card">
-        <h1>%%PROJECT_NAME%%</h1>
-        <p class="subtitle">Welcome to the official interface for %%PROJECT_NAME%%. Connect your wallet to interact directly with the smart contract.</p>
-        
-        <div class="badges">
-            <span class="badge" title="Network">🌐 %%NETWORK_NAME%%</span>
-            <span class="badge" title="Contract">📄 %%CONTRACT_ADDRESS_SHORT%%</span>
-        </div>
-
-        <button id="actionBtn" class="btn-neon">Connect Wallet</button>
-        <p id="status"></p>
-
-        <div class="footer">
-            Powered by AutoCon • Decentralized Web3 Infrastructure
-        </div>
+  <!-- ═══ HERO ═══ -->
+  <div class="hero">
+    <span class="hero-emoji">%%CONTRACT_EMOJI%%</span>
+    <div class="hero-name">%%PROJECT_NAME%%</div>
+    <p class="hero-desc">%%CONTRACT_DESC%%</p>
+    <div class="hero-meta">
+      <span class="meta-pill net"><span class="net-dot"></span>%%NETWORK_NAME%%</span>
+      <span class="meta-pill addr" onclick="copyAddr()" title="Click to copy full address">📋 %%CONTRACT_ADDRESS_SHORT%%</span>
     </div>
+    <!-- Live stats auto-loaded on page open -->
+    <div class="hero-stats" id="heroStats" style="display:none"></div>
+  </div>
 
-    <script>
-        // --- INJECTED DATA ---
-        const CONTRACT_ADDRESS = "%%CONTRACT_ADDRESS%%";
-        const EXPECTED_NETWORK = "%%NETWORK_NAME%%";
-        const RAW_ABI = `%%SMART_CONTRACT_ABI%%`;
-        let contractABI = [];
-        try { contractABI = JSON.parse(RAW_ABI); } catch(e) { console.error("ABI parse error"); }
+  <!-- ═══ CONNECT WALLET BAR ═══ -->
+  <div class="connect-bar">
+    <div class="icon">🦊</div>
+    <div class="text">
+      <strong id="connectTitle">Connect your MetaMask wallet</strong>
+      <span id="connectSub">You need MetaMask to send transactions. Reading info works without it.</span>
+    </div>
+    <button id="connectBtn" onclick="connectWallet()">🔗 Connect</button>
+  </div>
 
-        // --- STATE ---
-        let signer = null;
-        let contract = null;
-        let isConnected = false;
+  <!-- ═══ CONTRACT-SPECIFIC ACTIONS ═══ -->
+  <div id="actionsRoot"></div>
 
-        const actionBtn = document.getElementById('actionBtn');
-        const statusEl = document.getElementById('status');
+  <footer class="site-footer">
+    Powered by <a href="#" target="_blank">AutoCon</a> &nbsp;·&nbsp; Web3 for Everyone
+  </footer>
+</div>
 
-        function setStatus(msg, error = false) {
-            statusEl.style.color = error ? '#ef4444' : 'var(--text-muted)';
-            statusEl.innerText = msg;
+<script>
+/* ═══════════════════════════════════════════════════════════
+   INJECTED DATA FROM SERVER
+═══════════════════════════════════════════════════════════ */
+const CONTRACT_ADDRESS  = "%%CONTRACT_ADDRESS%%";
+const NETWORK_NAME      = "%%NETWORK_NAME%%";
+const CONTRACT_CATEGORY = "%%CONTRACT_CATEGORY%%"; // token | nft | auction
+const RAW_ABI           = `%%SMART_CONTRACT_ABI%%`;
+
+/* ── Explorer URL ── */
+function getExplorer() {
+  const n = NETWORK_NAME.toLowerCase();
+  if (n.includes('amoy') || n.includes('polygon')) return 'https://amoy.polygonscan.com';
+  if (n.includes('bnb') || n.includes('bsc'))      return 'https://testnet.bscscan.com';
+  return 'https://sepolia.etherscan.io';
+}
+const EXPLORER = getExplorer();
+
+/* ── Derive required chain ID from the deployment network name ── */
+function getRequiredChainId() {
+  const n = NETWORK_NAME.toLowerCase();
+  if (n.includes('amoy') || n.includes('polygon')) return { chainId: '0x13882', name: 'Polygon Amoy', rpc: 'https://rpc-amoy.polygon.technology', explorer: 'https://amoy.polygonscan.com', symbol: 'MATIC' };
+  if (n.includes('bnb') || n.includes('bsc'))      return { chainId: '0x61',    name: 'BNB Testnet',   rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545', explorer: 'https://testnet.bscscan.com', symbol: 'tBNB' };
+  return { chainId: '0xaa36a7', name: 'Sepolia',     rpc: 'https://rpc.sepolia.org',  explorer: 'https://sepolia.etherscan.io', symbol: 'ETH' };
+}
+const REQUIRED_CHAIN = getRequiredChainId();
+
+/* ── ABI ── */
+let ABI = [];
+try {
+  const raw = JSON.parse(RAW_ABI);
+  if (raw.length && typeof raw[0] === 'string') {
+    ABI = new ethers.Interface(raw).fragments.map(f => ({
+      name: f.name, type: f.type, stateMutability: f.stateMutability,
+      inputs:  Array.from(f.inputs  || []),
+      outputs: Array.from(f.outputs || []),
+    }));
+  } else { ABI = raw; }
+} catch(e) { console.error('ABI parse error', e); }
+
+/* ── Provider / Signer ── */
+let provider, signer, rwContract, roContract;
+
+async function silentRead() {
+  try {
+    if (!window.ethereum) return;
+    provider  = new ethers.BrowserProvider(window.ethereum);
+    roContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+    loadHeroStats();
+  } catch(_) {}
+}
+silentRead();
+
+async function connectWallet() {
+  const btn = document.getElementById('connectBtn');
+  if (!window.ethereum) { return alert('Please install MetaMask (metamask.io) to interact with this contract.'); }
+  try {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Connecting…';
+    provider    = new ethers.BrowserProvider(window.ethereum);
+    const accs  = await provider.send('eth_requestAccounts', []);
+    signer      = await provider.getSigner();
+    rwContract  = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    roContract  = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+
+    const short = `${accs[0].slice(0,6)}…${accs[0].slice(-4)}`;
+    btn.innerHTML  = `✅ ${short}`;
+    btn.classList.add('connected');
+    document.getElementById('connectTitle').textContent = 'Wallet connected!';
+    document.getElementById('connectSub').textContent   = `You are connected as ${accs[0].slice(0,10)}…${accs[0].slice(-6)}`;
+
+    // Enable all write buttons
+    document.querySelectorAll('[data-requires-wallet]').forEach(b => b.disabled = false);
+    loadHeroStats();
+  } catch(err) {
+    btn.innerHTML = '🔗 Connect';
+    alert('Could not connect: ' + (err.message || String(err)));
+  } finally { btn.disabled = false; }
+}
+
+/* ── Network Guard — switches MetaMask to the correct chain before write txs ── */
+async function ensureCorrectNetwork() {
+  if (!window.ethereum) return;
+  const currentChain = await window.ethereum.request({ method: 'eth_chainId' });
+  if (currentChain.toLowerCase() === REQUIRED_CHAIN.chainId.toLowerCase()) return; // already correct
+
+  // Wrong network — try to switch
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: REQUIRED_CHAIN.chainId }],
+    });
+  } catch (switchErr) {
+    if (switchErr.code === 4902) {
+      // Network not in MetaMask yet — add it
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [{
+          chainId: REQUIRED_CHAIN.chainId,
+          chainName: REQUIRED_CHAIN.name,
+          rpcUrls: [REQUIRED_CHAIN.rpc],
+          blockExplorerUrls: [REQUIRED_CHAIN.explorer],
+          nativeCurrency: { name: REQUIRED_CHAIN.symbol, symbol: REQUIRED_CHAIN.symbol, decimals: 18 },
+        }],
+      });
+    } else {
+      throw new Error(`Please switch MetaMask to ${REQUIRED_CHAIN.name} to interact with this contract.`);
+    }
+  }
+
+  // Refresh provider/signer after network change
+  provider   = new ethers.BrowserProvider(window.ethereum);
+  signer     = await provider.getSigner();
+  rwContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+  roContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+}
+
+/* ── Show a network warning banner in the connect bar if wrong chain ── */
+async function checkNetworkMismatch() {
+  if (!window.ethereum) return;
+  try {
+    const current = await window.ethereum.request({ method: 'eth_chainId' });
+    if (current.toLowerCase() !== REQUIRED_CHAIN.chainId.toLowerCase()) {
+      const sub = document.getElementById('connectSub');
+      if (sub) {
+        sub.innerHTML = `⚠️ This contract lives on <strong>${NETWORK_NAME}</strong>. Your MetaMask is on a different network. Connect to auto-switch.`;
+        sub.style.color = 'var(--amber)';
+      }
+    }
+  } catch(_) {}
+}
+checkNetworkMismatch();
+
+
+/* ── Copy address ── */
+function copyAddr() {
+  navigator.clipboard.writeText(CONTRACT_ADDRESS).then(() => {
+    const el = document.querySelector('.meta-pill.addr');
+    el.textContent = '✅ Copied!';
+    setTimeout(() => el.textContent = '📋 %%CONTRACT_ADDRESS_SHORT%%', 1800);
+  }).catch(() => {});
+}
+
+/* ── Generic helpers ── */
+function showResult(el, msg, type, isHtml = false) {
+  el.className = `ac-result show ${type}`;
+  if (isHtml) el.innerHTML = msg; else el.textContent = msg;
+}
+function clearResult(el)   { el.className = 'ac-result'; el.textContent = ''; }
+function fmtWei(wei)       { return parseFloat(ethers.formatEther(wei)).toFixed(4) + ' ETH'; }
+function fmtAddr(a)        { return `${a.slice(0,8)}…${a.slice(-6)}`; }
+function fmtBool(b)        { return b ? '✅ Yes' : '❌ No'; }
+
+async function safeRead(fn, ...args) {
+  const rc = roContract || rwContract;
+  if (!rc) throw new Error('Not connected to network');
+  return rc[fn](...args);
+}
+
+function explorerTxLink(hash) {
+  return `<a href="${EXPLORER}/tx/${hash}" target="_blank" style="color:var(--acc);font-weight:700;text-decoration:none;">View on Explorer ↗</a>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HERO STATS — automatically read key contract info
+═══════════════════════════════════════════════════════════ */
+async function loadHeroStats() {
+  const bar  = document.getElementById('heroStats');
+  const items = [];
+  const rc    = roContract;
+  if (!rc) return;
+
+  // Contract-type-specific stat attempts using correct function names
+  let attempts = [];
+  if (CONTRACT_CATEGORY === 'token') {
+    attempts = [
+      { fn: 'name',        label: 'Name',         fmt: v => v },
+      { fn: 'symbol',      label: 'Symbol',        fmt: v => v },
+      { fn: 'totalSupply', label: 'Total Supply',  fmt: v => {
+          try { return parseFloat(ethers.formatUnits(v, 18)).toLocaleString(); } catch { return v.toString(); }
         }
+      },
+      { fn: 'decimals',    label: 'Decimals',      fmt: v => v.toString() },
+    ];
+  } else if (CONTRACT_CATEGORY === 'nft') {
+    attempts = [
+      { fn: 'name',         label: 'Name',       fmt: v => v },
+      { fn: 'symbol',       label: 'Symbol',     fmt: v => v },
+      { fn: 'totalMinted',  label: 'Minted',     fmt: v => v.toString() },
+      { fn: 'maxSupply',    label: 'Max Supply', fmt: v => v.toString() },
+      { fn: 'mintPrice',    label: 'Mint Price', fmt: v => fmtWei(v) },
+    ];
+  } else if (CONTRACT_CATEGORY === 'auction') {
+    attempts = [
+      { fn: 'itemName',      label: 'Item',           fmt: v => v },
+      { fn: 'highestBid',    label: 'Highest Bid',    fmt: v => fmtWei(v) },
+      { fn: 'minimumBid',    label: 'Minimum Bid',    fmt: v => fmtWei(v) },
+      { fn: 'ended',         label: 'Status',         fmt: v => v ? '🔴 Ended' : '🟢 Active' },
+      { fn: 'auctionEndTime',label: 'Ends At',        fmt: v => new Date(Number(v) * 1000).toLocaleString() },
+    ];
+  }
 
-        actionBtn.addEventListener('click', async () => {
-            if (!isConnected) {
-                await connectWallet();
-            } else {
-                await executeAction();
-            }
-        });
+  await Promise.allSettled(attempts.map(async ({ fn, label, fmt }) => {
+    try {
+      const v = await rc[fn]();
+      items.push({ label, val: fmt(v) });
+    } catch(_) {}
+  }));
 
-        async function connectWallet() {
-            if (window.location.protocol === 'file:') {
-                setStatus("MetaMask cannot connect to local files. Please host this file on a web server (e.g., 'npx serve', Vercel, or GitHub Pages).", true);
-                return;
-            }
-            if (!window.ethereum) {
-                setStatus("MetaMask is not installed. Please install it to continue.", true);
-                return;
-            }
+  if (!items.length) return;
+  bar.style.display = 'flex';
+  bar.innerHTML = items.slice(0, 4).map(i =>
+    `<div class="hs-item"><div class="hs-val">${i.val}</div><div class="hs-lbl">${i.label}</div></div>`
+  ).join('');
+}
 
-            try {
-                setStatus("Connecting to wallet...");
-                const provider = new ethers.BrowserProvider(window.ethereum);
-                const accounts = await provider.send("eth_requestAccounts", []);
-                signer = await provider.getSigner();
-                
-                contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
-                isConnected = true;
-                
-                // Change UI state
-                actionBtn.innerText = "Interact with Contract ✨";
-                actionBtn.style.border = "1px solid var(--neon-secondary)";
-                actionBtn.style.boxShadow = "0 0 10px rgba(176, 38, 255, 0.3)";
-                
-                setStatus(`Connected: ${accounts[0].substring(0,6)}...${accounts[0].substring(38)}`);
-            } catch (err) {
-                console.error(err);
-                setStatus("Failed to connect wallet.", true);
-            }
-        }
+/* ═══════════════════════════════════════════════════════════
+   CARD BUILDER
+═══════════════════════════════════════════════════════════ */
+function makeCard({ title, desc, icon, color, inputs = [], btnText, writeAction, readAction, full = false }) {
+  const card = document.createElement('div');
+  card.className = `action-card${full ? ' full' : ''}`;
 
-        async function executeAction() {
-            if (!contract) return;
-            
-            setStatus("Please select a function to call from a block explorer (like Etherscan) for complex interactions. Basic implementation loaded.");
-            // Note: Since we don't know if this is a Token, NFT, or Auction dynamically in this single button, 
-            // a true general-purpose UI would parse the ABI and build inputs for every writable function.
-            // For now, we alert the user that connection is successful and the contract object is primed in console.
-            console.log("Contract Object:", contract);
-            alert("Contract is loaded into ethers.js! Open console to interact, or connect this UI to specific Mint/Transfer ABI functions.");
-        }
-    </script>
+  const head = document.createElement('div');
+  head.className = 'ac-head';
+  head.innerHTML = `
+    <div class="ac-ico ${color}">${icon}</div>
+    <div><div class="ac-title">${title}</div><div class="ac-desc">${desc}</div></div>
+  `;
+  card.appendChild(head);
+
+  // Input fields
+  const fieldEls = [];
+  inputs.forEach(({ label, placeholder, type = 'text' }) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'ac-input-wrap';
+    const inp = document.createElement('input');
+    inp.className  = 'ac-input';
+    inp.placeholder = placeholder;
+    inp.type        = type;
+    inp.step        = type === 'number' ? 'any' : undefined;
+    wrap.innerHTML  = `<label class="ac-label">${label}</label>`;
+    wrap.appendChild(inp);
+    card.appendChild(wrap);
+    fieldEls.push(inp);
+  });
+
+  // Button
+  const btn = document.createElement('button');
+  btn.className   = `ac-btn ${color}`;
+  btn.textContent = btnText;
+  if (writeAction) {
+    btn.setAttribute('data-requires-wallet', '1');
+    btn.disabled = !rwContract;
+  }
+  card.appendChild(btn);
+
+  // Result area
+  const result = document.createElement('div');
+  result.className = 'ac-result';
+  card.appendChild(result);
+
+  // Handler
+  btn.addEventListener('click', async () => {
+    const vals = fieldEls.map(i => i.value.trim());
+    clearResult(result);
+    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.innerHTML = `<span class="spin"></span> Working…`;
+    try {
+      if (readAction)  await readAction(vals, result);
+      if (writeAction) await writeAction(vals, result);
+    } catch(err) {
+      const msg = err.reason || err.shortMessage || err.message || String(err);
+      showResult(result, '❌ ' + msg, 'error');
+    } finally {
+      btn.disabled = writeAction ? !rwContract : false;
+      btn.textContent = origText;
+    }
+  });
+
+  return card;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTRACT-SPECIFIC WIZARDS
+═══════════════════════════════════════════════════════════ */
+async function sendTx(fn, args, overrides, result, successMsg) {
+  if (!rwContract) throw new Error('Please connect your wallet first.');
+  // Ensure MetaMask is on the correct network for this contract
+  showResult(result, `⏳ Checking network (${NETWORK_NAME})…`, 'info');
+  await ensureCorrectNetwork();
+  showResult(result, '⏳ Waiting for MetaMask confirmation…', 'info');
+  const tx = await rwContract[fn](...args, overrides || {});
+  showResult(result, '⏳ Transaction sent! Waiting for blockchain confirmation…', 'info');
+  const receipt = await tx.wait();
+  result.className = 'ac-result show success';
+  result.innerHTML = `<div class="celebrate">
+    <div class="big">🎉</div>
+    <p>${successMsg}<br><br>${explorerTxLink(tx.hash)}</p>
+  </div>`;
+  loadHeroStats();
+}
+
+/* ── TOKEN ────────────────────────────────────────────── */
+function buildTokenUI(root) {
+  const grid = document.createElement('div');
+  grid.className = 'action-grid';
+
+  // Check Balance
+  grid.appendChild(makeCard({
+    title: '💰 Check Balance', color: 'green',
+    icon: '💰', desc: 'Enter any wallet address to see how many tokens they hold.',
+    inputs: [{ label: 'Wallet Address', placeholder: '0x...' }],
+    btnText: '🔍 Check Balance',
+    readAction: async ([addr], result) => {
+      if (!addr) throw new Error('Please enter a wallet address.');
+      if (!ethers.isAddress(addr)) throw new Error('That does not look like a valid wallet address. It should start with 0x.');
+      const [bal, sym, dec] = await Promise.all([
+        safeRead('balanceOf', addr),
+        safeRead('symbol').catch(() => 'tokens'),
+        safeRead('decimals').catch(() => 18n),
+      ]);
+      const fmt = parseFloat(ethers.formatUnits(bal, dec)).toLocaleString(undefined, { maximumFractionDigits: 4 });
+      showResult(result, `✅ This wallet holds ${fmt} ${sym}`, 'success');
+    },
+  }));
+
+  // Send Tokens
+  grid.appendChild(makeCard({
+    title: '📤 Send Tokens', color: 'amber',
+    icon: '📤', desc: 'Transfer tokens from your wallet to another address.',
+    inputs: [
+      { label: 'Recipient Wallet Address', placeholder: '0x...' },
+      { label: 'Amount to Send', placeholder: 'e.g. 100', type: 'number' },
+    ],
+    btnText: '✈️ Send Tokens',
+    writeAction: async ([to, amount], result) => {
+      if (!to || !ethers.isAddress(to)) throw new Error('Please enter a valid recipient address starting with 0x.');
+      if (!amount || isNaN(amount) || Number(amount) <= 0) throw new Error('Please enter an amount greater than 0.');
+      const dec  = await safeRead('decimals').catch(() => 18n);
+      const val  = ethers.parseUnits(String(amount), dec);
+      await sendTx('transfer', [to, val], {}, result, `${amount} tokens sent to ${fmtAddr(to)}!`);
+    },
+  }));
+
+  // Contract Info
+  grid.appendChild(makeCard({
+    title: '📋 Contract Info', color: 'blue',
+    icon: '📋', desc: 'View live information about this token contract.',
+    inputs: [], btnText: '📊 Load Info', full: false,
+    readAction: async (_, result) => {
+      const [name, sym, supply, dec] = await Promise.all([
+        safeRead('name'),
+        safeRead('symbol'),
+        safeRead('totalSupply'),
+        safeRead('decimals').catch(() => 18n),
+      ]);
+      const supplyFmt = parseFloat(ethers.formatUnits(supply, dec)).toLocaleString();
+      showResult(result,
+        `📌 Name: ${name}\n🔤 Symbol: ${sym}\n📦 Total Supply: ${supplyFmt} ${sym}\n🔢 Decimals: ${dec}`,
+        'success');
+    },
+  }));
+
+  root.appendChild(grid);
+}
+
+/* ── NFT ──────────────────────────────────────────────── */
+function buildNFTUI(root) {
+  const grid = document.createElement('div');
+  grid.className = 'action-grid';
+
+  // Mint NFT — uses safeMint(address to, string memory uri)
+  grid.appendChild(makeCard({
+    title: '🎨 Mint an NFT', color: 'green', icon: '🎨',
+    desc: 'Create a new NFT from this collection and send it to your wallet. Enter your wallet address and a metadata URI (or leave as a dash).',
+    inputs: [
+      { label: 'Your Wallet Address (recipient)', placeholder: '0x...' },
+      { label: 'Metadata URI (or leave as "-")', placeholder: 'https://... or -' },
+    ],
+    btnText: '✨ Mint My NFT',
+    writeAction: async ([to, uri], result) => {
+      if (!to || !ethers.isAddress(to)) throw new Error('Please enter a valid wallet address (your own) starting with 0x.');
+      const price = await safeRead('mintPrice').catch(() => 0n);
+      const metaUri = uri || '-';
+      await sendTx('safeMint', [to, metaUri], price > 0n ? { value: price } : {}, result,
+        `Your NFT has been minted and sent to ${fmtAddr(to)}! 🖼️`);
+    },
+  }));
+
+  // Check NFT Owner
+  grid.appendChild(makeCard({
+    title: '🔍 Who Owns NFT #?', color: 'blue', icon: '🔍',
+    desc: 'Enter an NFT number to find out who currently owns it.',
+    inputs: [{ label: 'NFT Number (Token ID)', placeholder: 'e.g. 1', type: 'number' }],
+    btnText: '🔍 Find Owner',
+    readAction: async ([id], result) => {
+      if (!id || isNaN(id) || Number(id) < 0) throw new Error('Please enter a valid NFT number (e.g. 1).');
+      const owner = await safeRead('ownerOf', BigInt(Math.floor(Number(id))));
+      showResult(result, `👤 NFT #${id} is owned by:\n${owner}`, 'success');
+    },
+  }));
+
+  // How many do I own?
+  grid.appendChild(makeCard({
+    title: '👜 How Many Do I Own?', color: 'amber', icon: '👜',
+    desc: 'Check how many NFTs from this collection a wallet address holds.',
+    inputs: [{ label: 'Wallet Address', placeholder: '0x...' }],
+    btnText: '🔢 Check Count',
+    readAction: async ([addr], result) => {
+      if (!addr || !ethers.isAddress(addr)) throw new Error('Please enter a valid wallet address starting with 0x.');
+      const count = await safeRead('balanceOf', addr);
+      showResult(result, `🖼️ This wallet owns ${count.toString()} NFT(s) from this collection.`, 'success');
+    },
+  }));
+
+  // Collection Info — uses totalMinted() not totalSupply()
+  grid.appendChild(makeCard({
+    title: '📋 Collection Info', color: 'blue', icon: '📋',
+    desc: 'View the name, symbol, and supply details of this NFT collection.',
+    inputs: [], btnText: '📊 Load Info',
+    readAction: async (_, result) => {
+      const [name, sym, minted, maxSup, price] = await Promise.allSettled([
+        safeRead('name'), safeRead('symbol'), safeRead('totalMinted'), safeRead('maxSupply'), safeRead('mintPrice'),
+      ]);
+      const n  = name.status   === 'fulfilled' ? name.value            : '—';
+      const s  = sym.status    === 'fulfilled' ? sym.value             : '—';
+      const t  = minted.status === 'fulfilled' ? minted.value.toString() : '—';
+      const m  = maxSup.status === 'fulfilled' ? maxSup.value.toString() : '—';
+      const p  = price.status  === 'fulfilled' ? fmtWei(price.value)  : '—';
+      showResult(result, `📌 Name: ${n}\n🔤 Symbol: ${s}\n📦 Minted: ${t} / ${m}\n💰 Mint Price: ${p}`, 'success');
+    },
+  }));
+
+  root.appendChild(grid);
+}
+
+/* ── AUCTION ──────────────────────────────────────────── */
+function buildAuctionUI(root) {
+  const grid = document.createElement('div');
+  grid.className = 'action-grid';
+
+  // Auction Status — uses itemName(), itemDescription(), auctionEndTime(), NOT item()/endAt()
+  grid.appendChild(makeCard({
+    title: '📊 Auction Status', color: 'blue', icon: '📊', full: true,
+    desc: 'See the current state of this auction — what is being sold, who is winning, and when it ends.',
+    inputs: [], btnText: '🔄 Refresh Status',
+    readAction: async (_, result) => {
+      const [itemN, itemD, hBid, hBidder, minBid, endTime, isEnded] = await Promise.allSettled([
+        safeRead('itemName'), safeRead('itemDescription'),
+        safeRead('highestBid'), safeRead('highestBidder'),
+        safeRead('minimumBid'), safeRead('auctionEndTime'), safeRead('ended'),
+      ]);
+      const name     = itemN.status   === 'fulfilled' ? itemN.value   : '—';
+      const desc2    = itemD.status   === 'fulfilled' ? itemD.value   : '—';
+      const bidStr   = hBid.status    === 'fulfilled' ? fmtWei(hBid.value) : '—';
+      const bidder   = hBidder.status === 'fulfilled' && hBidder.value !== ethers.ZeroAddress
+                         ? fmtAddr(hBidder.value) : 'No bids yet';
+      const minStr   = minBid.status  === 'fulfilled' ? fmtWei(minBid.value) : '—';
+      const endsAt   = endTime.status === 'fulfilled'
+        ? new Date(Number(endTime.value) * 1000).toLocaleString() : '—';
+      const statusStr = isEnded.status === 'fulfilled'
+        ? (isEnded.value ? '🔴 Ended' : '🟢 Active') : '—';
+      showResult(result,
+        `🏷️ Item: ${name}\n📝 Description: ${desc2}\n💰 Highest Bid: ${bidStr}\n🔻 Minimum Bid: ${minStr}\n👤 Leading Bidder: ${bidder}\n📅 Ends: ${endsAt}\n⚡ Status: ${statusStr}`,
+        'success');
+    },
+  }));
+
+  // Place a Bid
+  grid.appendChild(makeCard({
+    title: '💸 Place a Bid', color: 'amber', icon: '💸',
+    desc: 'Enter the amount of ETH you want to bid. It must be higher than the current top bid.',
+    inputs: [{ label: 'Your Bid (in ETH)', placeholder: 'e.g. 0.05', type: 'number' }],
+    btnText: '🔨 Place Bid',
+    writeAction: async ([amount], result) => {
+      if (!amount || isNaN(amount) || Number(amount) <= 0) throw new Error('Please enter a valid bid amount in ETH (e.g. 0.05).');
+      const value = ethers.parseEther(String(amount));
+      await sendTx('bid', [], { value }, result,
+        `Your bid of ${amount} ETH has been placed! You are now the highest bidder. 🏆`);
+    },
+  }));
+
+  // Withdraw (if outbid)
+  grid.appendChild(makeCard({
+    title: '↩️ Withdraw if Outbid', color: 'green', icon: '↩️',
+    desc: 'If someone outbid you, you can get your ETH back here.',
+    inputs: [], btnText: '↩️ Get My ETH Back',
+    writeAction: async (_, result) => {
+      await sendTx('withdraw', [], {}, result, 'Your ETH has been returned to your wallet! ✅');
+    },
+  }));
+
+  // End Auction — correct function name is endAuction() not end()
+  grid.appendChild(makeCard({
+    title: '🏁 End Auction', color: 'red', icon: '🏁',
+    desc: 'If you are the seller and the auction time has passed, click here to finalise it and send funds to the seller.',
+    inputs: [], btnText: '🏁 End Auction',
+    writeAction: async (_, result) => {
+      await sendTx('endAuction', [], {}, result, 'The auction has been ended and funds sent to the seller! ✅');
+    },
+  }));
+
+  root.appendChild(grid);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION HEADERS + RENDER
+═══════════════════════════════════════════════════════════ */
+function addSection(root, label) {
+  const h = document.createElement('div');
+  h.className = 'section-hdr';
+  h.textContent = label;
+  root.appendChild(h);
+}
+
+function render() {
+  const root = document.getElementById('actionsRoot');
+
+  if (CONTRACT_CATEGORY === 'token') {
+    addSection(root, '💼 What would you like to do?');
+    buildTokenUI(root);
+  } else if (CONTRACT_CATEGORY === 'nft') {
+    addSection(root, '🎨 NFT Actions');
+    buildNFTUI(root);
+  } else if (CONTRACT_CATEGORY === 'auction') {
+    addSection(root, '🔨 Auction Actions');
+    buildAuctionUI(root);
+  } else {
+    root.innerHTML = '<p style="color:var(--t3);font-size:13px;padding:12px 0">Unknown contract type.</p>';
+  }
+}
+
+render();
+</script>
 </body>
 </html>

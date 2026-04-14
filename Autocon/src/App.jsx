@@ -44,7 +44,6 @@ function AnimatedRoutes() {
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (isLoading) {
@@ -63,22 +62,33 @@ function AppContent() {
     return <LandingPage onLoginClick={() => setShowLogin(true)} />;
   }
 
-  // Main App Layout using standard React Router
+  // Main App Layout
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg)', color: 'var(--on-surface)' }}>
-        <Sidebar 
-          isExpanded={isSidebarExpanded} 
-          setIsExpanded={setIsSidebarExpanded} 
-          isMobileOpen={isMobileMenuOpen} 
-          setIsMobileOpen={setIsMobileMenuOpen} 
+      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#070e0a', color: '#e2ede6' }}>
+        {/* Fixed sidebar */}
+        <Sidebar
+          isMobileOpen={isMobileMenuOpen}
+          setIsMobileOpen={setIsMobileMenuOpen}
         />
-        <main className={`flex-1 flex flex-col h-screen overflow-y-auto overflow-x-hidden transition-all duration-300 ml-0 ${isSidebarExpanded ? 'md:ml-[252px]' : 'md:ml-[72px]'}`}>
+
+        {/* Scrollable main column — offset by sidebar width */}
+        <div style={{
+          flex: 1,
+          marginLeft: '218px',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+          overflowX: 'hidden',
+        }}>
+          {/* Fixed topbar */}
           <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
-          <div className="container mx-auto px-4 md:px-8 pb-8 flex-1">
+
+          {/* Page content — padded below the fixed topbar */}
+          <div style={{ flex: 1, paddingTop: '54px', overflowY: 'auto' }}>
             <AnimatedRoutes />
           </div>
-        </main>
+        </div>
       </div>
     </BrowserRouter>
   );

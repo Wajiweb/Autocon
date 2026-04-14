@@ -14,7 +14,7 @@ export const Footer = ({
 }) => {
   return (
     <section className={cn("relative w-full mt-0 overflow-hidden", className)}>
-      <footer className="border-t bg-background mt-20 relative">
+      <footer className="bg-background mt-20 relative">
         <div className="max-w-7xl flex flex-col justify-between mx-auto min-h-[25rem] sm:min-h-[28rem] md:min-h-[32rem] relative p-4 py-8">
           <div className="flex flex-col mb-12 sm:mb-20 md:mb-0 w-full">
             <div className="w-full flex flex-col items-center">

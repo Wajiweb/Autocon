@@ -1,122 +1,52 @@
 import { useAuth } from '../../context/AuthContext';
-import { useNetwork } from '../../context/NetworkContext';
-import { Menu } from 'lucide-react';
+import NetworkSwitcher from './NetworkSwitcher';
+import GasWidget from './GasWidget';
+import './styles/dashboard.css';
 
-export default function Navbar({ activeTab, onMenuClick }) {
+export default function Navbar({ onMenuClick }) {
   const { user, logout } = useAuth();
-  const { network } = useNetwork();
-
-  const titles = {
-    dashboard: 'Dashboard',
-    templates: 'Template Library',
-    token: 'Token Generator',
-    nft: 'NFT Generator',
-    auction: 'Auction Generator',
-    audit: 'Security Audit',
-    chatbot: 'AI Assistant',
-    profile: 'My Profile'
-  };
 
   const shortAddr = user?.walletAddress
     ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
     : '';
 
-  const titleWords = (titles[activeTab] || '').split(' ');
-  const firstWord = titleWords[0];
-  const rest = titleWords.slice(1).join(' ');
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+  });
 
   return (
-    <header style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 var(--space-4)', height: '64px',
-      background: 'var(--surface-high)',
-      backdropFilter: 'blur(24px) saturate(200%)',
-      WebkitBackdropFilter: 'blur(24px) saturate(200%)',
-      borderBottom: '1px solid var(--outline-variant)',
-      boxShadow: 'var(--shadow-xs)',
-      position: 'sticky', top: 0, zIndex: 50,
-      marginBottom: '24px',
-    }}>
-      {/* Left Side: Mobile Menu + Page Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <button 
-            onClick={onMenuClick}
-            className="md:hidden flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-        >
-            <Menu className="w-6 h-6" />
-        </button>
-        <div>
-          <h2 style={{
-            fontSize: 'max(1rem, 1.1vw)', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--on-surface)'
-          }}>
-            {firstWord}{rest ? <> <span className="gradient-text">{rest}</span></> : ''}
-          </h2>
-          <p className="hidden sm:block" style={{ fontSize: '0.72rem', color: 'var(--outline)', marginTop: '1px' }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-          </p>
-        </div>
-      </div>
+    <header className="db-topbar">
+      {/* Mobile menu button */}
+      <button
+        onClick={onMenuClick}
+        style={{ display: 'none', background: 'none', border: 'none', color: 'var(--db-t2)', fontSize: 20, cursor: 'pointer', padding: '4px 8px' }}
+        className="db-mobile-menu-btn"
+        aria-label="Open menu"
+      >
+        ☰
+      </button>
 
-      {/* Right Side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* Network Badge - Hidden on very small screens */}
-        <div className="hidden sm:flex" style={{
-          alignItems: 'center', gap: '6px',
-          padding: '5px 12px', borderRadius: '99px',
-          background: `${network.color}12`,
-          border: `1px solid ${network.color}28`,
-          fontSize: '0.7rem', fontWeight: 700, color: network.color,
-          letterSpacing: '0.04em'
-        }}>
-          <div style={{
-            width: '5px', height: '5px', borderRadius: '50%',
-            background: network.color, boxShadow: `0 0 6px ${network.color}`,
-            animation: 'pulse-glow 2.5s ease-in-out infinite'
-          }} />
-          {network.name}
-        </div>
+      <span className="db-topbar-date">{dateStr}</span>
+      <div className="db-tb-gap" />
 
-        {/* Wallet Address */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          padding: '6px 14px', borderRadius: '99px',
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          fontSize: '0.78rem', fontWeight: 600, color: 'var(--on-surface-variant)',
-          fontFamily: 'monospace', letterSpacing: '0.02em'
-        }}>
-          <div style={{
-            width: '20px', height: '20px', borderRadius: '50%',
-            background: 'linear-gradient(135deg,#f59e0b,#ef4444)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '10px', boxShadow: '0 2px 8px rgba(245,158,11,0.3)'
-          }}>🦊</div>
-          {shortAddr}
-        </div>
+      {/* Live Gas Widget */}
+      <GasWidget />
 
-        {/* Logout */}
-        <button
-          onClick={logout}
-          title="Sign Out"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '6px 14px', borderRadius: '99px',
-            border: '1px solid rgba(239,68,68,0.18)',
-            background: 'rgba(239,68,68,0.06)',
-            color: '#f87171', cursor: 'pointer',
-            transition: 'all 0.2s ease', fontSize: '0.75rem', fontWeight: 600
-          }}
-          onMouseOver={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.35)'; }}
-          onMouseOut={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.18)'; }}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          <span className="hidden sm:inline">Sign Out</span>
-        </button>
-      </div>
+      {/* Network switcher */}
+      <NetworkSwitcher />
+
+      {/* Wallet */}
+      {shortAddr && (
+        <div className="db-tb-chip muted" style={{ fontFamily: 'var(--db-mono)', fontSize: 11 }}>
+          ⬡ {shortAddr}
+        </div>
+      )}
+
+      {/* Sign out */}
+      <button className="db-tb-signout" onClick={logout}>
+        ↪ Sign Out
+      </button>
     </header>
   );
 }
+

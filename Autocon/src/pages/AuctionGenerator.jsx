@@ -44,7 +44,7 @@ export default function AuctionGenerator() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
                     <div style={{
                         width: '44px', height: '44px',
-                        background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                        background: 'var(--primary-gradient)',
                         borderRadius: '14px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '22px', boxShadow: 'var(--shadow-ambient)'
@@ -53,12 +53,7 @@ export default function AuctionGenerator() {
                         fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
                         color: 'var(--on-surface)'
                     }}>
-                        Auction <span style={{
-                            background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text'
-                        }}>Generator</span>
+                        Auction <span className="gradient-text">Generator</span>
                     </h1>
                 </div>
                 <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
@@ -70,9 +65,9 @@ export default function AuctionGenerator() {
                         <span key={f} style={{
                             padding: '5px 12px', borderRadius: '50px',
                             fontSize: '0.68rem', fontWeight: 700,
-                            background: 'rgba(245,158,11,0.08)',
-                            color: '#f59e0b',
-                            border: '1px solid rgba(245,158,11,0.15)'
+                            background: 'var(--accent-glow)',
+                            color: 'var(--primary)',
+                            border: '1px solid var(--border-color)'
                         }}>{f}</span>
                     ))}
                 </div>
@@ -182,17 +177,17 @@ export default function AuctionGenerator() {
                                 placeholder="Connect your wallet →" />
                             <button type="button" onClick={connectWallet} style={{
                                 padding: '14px 24px', borderRadius: '14px', border: 'none',
-                                background: 'linear-gradient(135deg, #f6851b, #e2761b)',
+                                background: 'var(--primary-gradient)',
                                 color: 'white', fontWeight: 700, fontSize: '0.9rem',
                                 cursor: 'pointer', whiteSpace: 'nowrap',
-                                boxShadow: '0 4px 20px rgba(246,133,27,0.3)'
+                                boxShadow: 'var(--shadow-primary)'
                             }}>🦊 Connect</button>
                         </div>
                     </div>
 
                     <button type="submit" className="btn-primary" style={{
                         width: '100%', padding: '16px',
-                        background: 'linear-gradient(135deg, #f59e0b, #ef4444)'
+                        background: 'var(--primary-gradient)'
                     }}>
                         🔨 Generate Auction Contract
                     </button>
@@ -274,7 +269,7 @@ export default function AuctionGenerator() {
                         style={{
                             width: '100%', padding: '18px', fontSize: '1.05rem',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                            background: isDeploying ? 'var(--surface-highest)' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                            background: isDeploying ? 'var(--surface-highest)' : 'var(--primary-gradient)',
                             color: isDeploying ? 'var(--outline)' : 'white',
                             cursor: isDeploying ? 'not-allowed' : 'pointer'
                         }}>
@@ -283,7 +278,7 @@ export default function AuctionGenerator() {
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
                                 <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                             </svg>DEPLOYING AUCTION...</>
-                        ) : ' Deploy Auction to Sepolia'}
+                        ) : `🚀 Deploy Auction to ${network.name}`}
                     </button>
                 </div>
             )}
@@ -317,7 +312,7 @@ export default function AuctionGenerator() {
             address={deployedAddress || ''}
             network={network.name}
             contractType="Auction"
-            explorerUrl={network.explorerUrl || 'https://sepolia.etherscan.io'}
+            explorerUrl={network.explorer || 'https://sepolia.etherscan.io'}
             abi={contractData?.abi}
             contractName={formData.name || 'Auction'}
             receipt={deploymentReceipt}

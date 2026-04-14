@@ -16,7 +16,7 @@ export default function Skeleton({ className = '' }) {
 /** Pre-built skeleton for a stat card */
 export function StatCardSkeleton() {
     return (
-        <div className="bg-[#161d2b] border border-white/5 rounded-2xl p-6 space-y-4">
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 space-y-4">
             <div className="flex justify-between items-start">
                 <Skeleton className="h-3 w-24" />
                 <Skeleton className="h-9 w-9 rounded-xl" />

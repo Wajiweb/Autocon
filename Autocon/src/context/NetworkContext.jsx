@@ -1,97 +1,175 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-const NETWORKS = {
+/* ═══════════════════════════════════════════════════════════
+   NETWORK REGISTRY — all supported networks
+═══════════════════════════════════════════════════════════ */
+export const NETWORKS = {
     sepolia: {
-        name: 'Sepolia',
-        chainId: '0xaa36a7',
+        key:            'sepolia',
+        name:           'Sepolia',
+        chainId:        '0xaa36a7',
         chainIdDecimal: 11155111,
-        rpcUrl: 'https://rpc.sepolia.org',
-        explorer: 'https://sepolia.etherscan.io',
-        currency: 'ETH',
-        icon: '🔵',
-        color: '#6366f1'
-    },
-    goerli: {
-        name: 'Goerli',
-        chainId: '0x5',
-        chainIdDecimal: 5,
-        rpcUrl: 'https://rpc.ankr.com/eth_goerli',
-        explorer: 'https://goerli.etherscan.io',
-        currency: 'ETH',
-        icon: '🟡',
-        color: '#eab308'
-    },
-    mumbai: {
-        name: 'Polygon Mumbai',
-        chainId: '0x13881',
-        chainIdDecimal: 80001,
-        rpcUrl: 'https://rpc.ankr.com/polygon_mumbai',
-        explorer: 'https://mumbai.polygonscan.com',
-        currency: 'MATIC',
-        icon: '🟣',
-        color: '#8b5cf6'
+        rpcUrl:         'https://rpc.sepolia.org',
+        explorer:       'https://sepolia.etherscan.io',
+        currency:       'ETH',
+        currencySymbol: 'ETH',
+        icon:           '🔵',
+        color:          '#6366f1',
+        faucet:         'https://sepoliafaucet.com',
+        layer:          'L1 Testnet',
     },
     amoy: {
-        name: 'Polygon Amoy',
-        chainId: '0x13882',
+        key:            'amoy',
+        name:           'Polygon Amoy',
+        chainId:        '0x13882',
         chainIdDecimal: 80002,
-        rpcUrl: 'https://rpc-amoy.polygon.technology',
-        explorer: 'https://amoy.polygonscan.com',
-        currency: 'MATIC',
-        icon: '🟣',
-        color: '#8b5cf6'
-    }
+        rpcUrl:         'https://rpc-amoy.polygon.technology',
+        explorer:       'https://amoy.polygonscan.com',
+        currency:       'MATIC',
+        currencySymbol: 'MATIC',
+        icon:           '🟣',
+        color:          '#8b5cf6',
+        faucet:         'https://faucet.polygon.technology',
+        layer:          'L2 Testnet',
+    },
+    bnbTestnet: {
+        key:            'bnbTestnet',
+        name:           'BNB Testnet',
+        chainId:        '0x61',
+        chainIdDecimal: 97,
+        rpcUrl:         'https://data-seed-prebsc-1-s1.binance.org:8545',
+        explorer:       'https://testnet.bscscan.com',
+        currency:       'tBNB',
+        currencySymbol: 'tBNB',
+        icon:           '🟡',
+        color:          '#f3ba2f',
+        faucet:         'https://testnet.bnbchain.org/faucet-smart',
+        layer:          'L1 Testnet',
+    },
 };
 
+/* ── Helpers ──────────────────────────────────────────── */
+const STORAGE_KEY = 'autocon_selected_network';
+
+/** Given a MetaMask chainId hex string, return matching NETWORKS key or null */
+function keyFromChainId(hexChainId) {
+    const id = hexChainId?.toLowerCase();
+    return Object.keys(NETWORKS).find(k => NETWORKS[k].chainId.toLowerCase() === id) ?? null;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTEXT
+═══════════════════════════════════════════════════════════ */
 const NetworkContext = createContext();
 
 export function NetworkProvider({ children }) {
-    const [selectedNetwork, setSelectedNetwork] = useState('sepolia');
+    /* ── Initial state: prefer MetaMask's real chain → localStorage → sepolia ── */
+    const [selectedNetwork, setSelectedNetworkState] = useState(() => {
+        // Try to read MetaMask's current chain synchronously via cached value
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return (saved && NETWORKS[saved]) ? saved : 'sepolia';
+    });
 
     const network = NETWORKS[selectedNetwork];
 
-    const switchNetwork = async (networkKey) => {
+    /* ── Sync from MetaMask on first mount ──────────────────
+       After mount we can do async calls to read the live chain. */
+    useEffect(() => {
+        if (!window.ethereum) return;
+
+        const syncFromMetaMask = async () => {
+            try {
+                const hexChain = await window.ethereum.request({ method: 'eth_chainId' });
+                const key = keyFromChainId(hexChain);
+                if (key && key !== selectedNetwork) {
+                    setSelectedNetworkState(key);
+                    localStorage.setItem(STORAGE_KEY, key);
+                }
+            } catch (_) {}
+        };
+
+        syncFromMetaMask();
+
+        /* ── Listen for MetaMask chain changes (user switches in extension) ── */
+        const onChainChanged = (hexChain) => {
+            const key = keyFromChainId(hexChain);
+            if (key) {
+                // Known network — sync app state
+                setSelectedNetworkState(key);
+                localStorage.setItem(STORAGE_KEY, key);
+            } else {
+                // Unknown network — keep app state but warn in console
+                console.warn('[NetworkContext] Connected to unsupported chain:', hexChain);
+            }
+        };
+
+        window.ethereum.on('chainChanged', onChainChanged);
+        return () => window.ethereum.removeListener('chainChanged', onChainChanged);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    /* ── switchNetwork — called by UI, pushes to MetaMask ── */
+    const switchNetwork = useCallback(async (networkKey) => {
         if (!NETWORKS[networkKey]) return;
 
-        setSelectedNetwork(networkKey);
+        // Optimistic update for instant UI responsiveness
+        setSelectedNetworkState(networkKey);
+        localStorage.setItem(STORAGE_KEY, networkKey);
 
-        // Try to switch MetaMask's network
-        if (window.ethereum) {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: NETWORKS[networkKey].chainId }],
-                });
-            } catch (switchError) {
-                // If the chain hasn't been added to MetaMask
-                if (switchError.code === 4902) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{
-                                chainId: NETWORKS[networkKey].chainId,
-                                chainName: NETWORKS[networkKey].name,
-                                rpcUrls: [NETWORKS[networkKey].rpcUrl],
-                                blockExplorerUrls: [NETWORKS[networkKey].explorer],
-                                nativeCurrency: {
-                                    name: NETWORKS[networkKey].currency,
-                                    symbol: NETWORKS[networkKey].currency,
-                                    decimals: 18
-                                }
-                            }],
-                        });
-                    } catch (addError) {
-                        console.error('Failed to add network:', addError);
-                    }
+        if (!window.ethereum) return; // no wallet — just update UI label
+
+        const target = NETWORKS[networkKey];
+        try {
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: target.chainId }],
+            });
+            // chainChanged event will fire and confirm the state
+        } catch (switchError) {
+            if (switchError.code === 4902) {
+                // Chain not added to MetaMask yet — add it automatically
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId:           target.chainId,
+                            chainName:         target.name,
+                            rpcUrls:           [target.rpcUrl],
+                            blockExplorerUrls: [target.explorer],
+                            nativeCurrency: {
+                                name:     target.currency,
+                                symbol:   target.currencySymbol,
+                                decimals: 18,
+                            },
+                        }],
+                    });
+                    // After add, MetaMask auto-switches and fires chainChanged
+                } catch (addError) {
+                    console.error('[NetworkContext] Failed to add network:', addError);
+                    // Revert optimistic update — MetaMask rejected the add
+                    const prev = localStorage.getItem(STORAGE_KEY) || 'sepolia';
+                    setSelectedNetworkState(prev);
+                    localStorage.setItem(STORAGE_KEY, prev);
                 }
+            } else if (switchError.code === 4001) {
+                // User rejected switch in MetaMask — revert optimistic update
+                try {
+                    const hexChain = await window.ethereum.request({ method: 'eth_chainId' });
+                    const key = keyFromChainId(hexChain) || 'sepolia';
+                    setSelectedNetworkState(key);
+                    localStorage.setItem(STORAGE_KEY, key);
+                } catch (_) {}
             }
         }
-    };
+    }, []);
 
     return (
         <NetworkContext.Provider value={{
-            selectedNetwork, setSelectedNetwork: switchNetwork,
-            network, networks: NETWORKS, allNetworkKeys: Object.keys(NETWORKS)
+            selectedNetwork,
+            setSelectedNetwork: switchNetwork,
+            network,
+            networks: NETWORKS,
+            allNetworkKeys: Object.keys(NETWORKS),
         }}>
             {children}
         </NetworkContext.Provider>
