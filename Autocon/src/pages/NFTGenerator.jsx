@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNFT } from '../hooks/useNFT';
 import toast from 'react-hot-toast';
 import { useNetwork } from '../context/NetworkContext';
+import { API_BASE } from '../config';
 import CodeExportTools from '../components/dashboard/CodeExportTools';
 import DeploymentTimeline from '../components/deploy/DeploymentTimeline';
 import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
@@ -35,7 +36,7 @@ export default function NFTGenerator() {
             formDataObj.append('file', file);
 
             const token = localStorage.getItem('autocon_token');
-            const res = await fetch('http://localhost:5000/api/ipfs/upload', {
+            const res = await fetch(`${API_BASE}/api/ipfs/upload`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: formDataObj
@@ -44,7 +45,7 @@ export default function NFTGenerator() {
 
             if (data.success) {
                 setUploadedFile(data.file);
-                const uri = data.file.ipfsUrl || `http://localhost:5000${data.file.localUrl}`;
+                const uri = data.file.ipfsUrl || `${API_BASE}${data.file.localUrl}`;
                 setFormData(prev => ({ ...prev, baseURI: uri }));
                 toast.success(data.file.ipfsHash ? 'Pinned to IPFS! 📌' : 'Image uploaded!', { id: uploadToast });
             } else {

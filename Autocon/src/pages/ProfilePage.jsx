@@ -75,7 +75,7 @@ export default function ProfilePage() {
         borderTop: '2px solid var(--db-acc)', marginBottom: 16 }}>
         {/* Gradient banner */}
         <div style={{ height: 110,
-          background: 'linear-gradient(135deg, #0d2818, #16401e, #0f2d18)',
+          background: 'linear-gradient(135deg, #1a4226, #2c6540, #1e4a2b)',
           borderBottom: '.5px solid var(--db-br)', position: 'relative' }}>
           {/* Avatar */}
           <div style={{ position: 'absolute', bottom: -28, left: 28,
@@ -94,7 +94,7 @@ export default function ProfilePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontFamily: 'var(--db-mono)', fontSize: 12, color: 'var(--db-t2)',
                 background: 'var(--db-acc-d)', padding: '4px 12px', borderRadius: 8,
-                border: '.5px solid rgba(34,197,94,.2)' }}>{shortAddr || 'Not connected'}</span>
+                border: '.5px solid rgba(143,185,0,.25)' }}>{shortAddr || 'Not connected'}</span>
               <button onClick={() => { navigator.clipboard.writeText(user?.walletAddress || ''); toast.success('Address copied!'); }}
                 className="pg-btn pg-btn-outline" style={{ padding: '4px 10px', fontSize: 11 }}>
                 📋 Copy

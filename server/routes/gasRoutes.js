@@ -4,7 +4,11 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-const SEPOLIA_RPC = process.env.SEPOLIA_RPC_URL || 'https://rpc.sepolia.org';
+const RPC_URLS = {
+    sepolia: process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
+    amoy: process.env.AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology',
+    bnbTestnet: process.env.BNB_TESTNET_RPC_URL || 'https://data-seed-prebsc-1-s1.binance.org:8545'
+};
 
 /**
  * POST /api/estimate-gas
@@ -16,7 +20,7 @@ const SEPOLIA_RPC = process.env.SEPOLIA_RPC_URL || 'https://rpc.sepolia.org';
  */
 router.post('/estimate-gas', authMiddleware, async (req, res) => {
     try {
-        const { abi, bytecode, ownerAddress, constructorArgs, supply } = req.body;
+        const { abi, bytecode, ownerAddress, constructorArgs, supply, network } = req.body;
 
         if (!abi || !bytecode || !ownerAddress) {
             return res.status(400).json({
@@ -25,7 +29,16 @@ router.post('/estimate-gas', authMiddleware, async (req, res) => {
             });
         }
 
-        const provider = new ethers.JsonRpcProvider(SEPOLIA_RPC);
+        if (!ethers.isAddress(ownerAddress)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid owner address format.'
+            });
+        }
+
+        const networkKey = network || 'sepolia';
+        const rpcUrl = RPC_URLS[networkKey] || RPC_URLS.sepolia;
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
 
         // Determine constructor arguments
         // If constructorArgs is provided, use it directly (for NFT/Auction)
@@ -67,9 +80,19 @@ router.post('/estimate-gas', authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error('Gas Estimation Error:', error);
+        
+        let errorMessage = 'Failed to estimate gas. Contract might revert or RPC is unavailable.';
+        if (error.code === 'UNSUPPORTED_OPERATION' && error.operation === 'resolveName') {
+            errorMessage = 'Invalid Ethereum address used in constructor arguments.';
+        } else if (error.info && error.info.error && error.info.error.message) {
+            errorMessage = 'Estimation reverted: ' + error.info.error.message;
+        } else if (error.shortMessage) {
+            errorMessage = error.shortMessage;
+        }
+        
         res.status(500).json({
             success: false,
-            error: 'Failed to estimate gas. The RPC might be unavailable.',
+            error: errorMessage,
             details: error.message
         });
     }

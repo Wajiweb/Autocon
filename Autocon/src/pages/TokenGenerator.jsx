@@ -62,8 +62,8 @@ export default function TokenGenerator() {
                   style={{ fontFamily: 'var(--db-mono)', fontSize: 12 }}
                   readOnly placeholder="Connect your wallet →" />
                 <button type="button" onClick={connectWallet} className="pg-btn"
-                  style={{ background: 'linear-gradient(135deg,#f6851b,#e2761b)', color: '#fff',
-                    whiteSpace: 'nowrap', borderRadius: 'var(--db-r-sm)', boxShadow: '0 4px 16px rgba(246,133,27,.3)' }}>
+                  style={{ background: 'linear-gradient(135deg,#8FB900,#A5C900)', color: '#0c1a0f',
+                    whiteSpace: 'nowrap', borderRadius: 'var(--db-r-sm)', boxShadow: '0 4px 16px rgba(143,185,0,.35)' }}>
                   🦊 Connect
                 </button>
               </div>

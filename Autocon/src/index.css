@@ -4,19 +4,19 @@
 
 /* ─── Kinetic Ether v2 — Stripe/Vercel/ChainGPT Design System ─── */
 @theme {
-  --color-bg: #030500;
-  --color-surface: #080B04;
-  --color-surface-high: #0C1007;
+  --color-bg: #264a32;
+  --color-surface: #0c2316;
+  --color-surface-high: #0d2818;
   --color-primary: #8FB900;
   --color-accent: #A5C900;
   --color-tertiary: #6B9100;
 
   /* Shadcn Compatibility Variables */
-  --color-background: #030500;
+  --color-background: #264a32;
   --color-foreground: #ffffff;
-  --color-border: rgba(143, 185, 0, 0.15);
-  --color-muted: #080B04;
-  --color-muted-foreground: rgba(255,255,255,0.45);
+  --color-border: rgba(255, 255, 255, 0.15);
+  --color-muted: #0c2316;
+  --color-muted-foreground: rgba(255, 255, 255, 0.65);
 
   --font-inter: "Inter", sans-serif;
   --font-space: "Space Grotesk", sans-serif;
@@ -37,13 +37,14 @@
 :root {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* ── Core Palette (Forest Green Theme) ── */
-  --bg:              #030500;
-  --surface-low:     #060A03;
-  --surface:         #080B04;
-  --surface-high:    #0C1007;
-  --surface-highest: #101507;
-  --surface-bright:  #1A200A;
+  /* ── Core Palette — Medium Forest Green ── */
+  /* ── Core Palette — Medium Forest Green ── */
+  --bg:              #264a32;
+  --surface-low:     #0c2316;
+  --surface:         #0d2818;
+  --surface-high:    #11331e;
+  --surface-highest: #164024;
+  --surface-bright:  #1d522f;
 
   /* ── Brand Gradient (Forest Green) ── */
   --primary:           #8FB900;
@@ -55,11 +56,12 @@
   --accent-glow:       rgba(143, 185, 0, 0.15);
 
   /* ── Text ── */
+  /* ── Text ── */
   --on-surface:          #ffffff;
-  --on-surface-variant:  #a1b3a5;
+  --on-surface-variant:  #bce0c3;
 
   /* ── Borders ── */
-  --outline:         #2A3518;
+  --outline:         #3d7a4a;
   --outline-variant: rgba(143, 185, 0, 0.15);
   --outline-glow:    rgba(143, 185, 0, 0.25);
 
@@ -86,12 +88,12 @@
   --radius-2xl:28px;
 
   /* ── Shadows ── */
-  --shadow-xs:      0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
-  --shadow-sm:      0 4px 12px rgba(0,0,0,0.6);
-  --shadow-md:      0 8px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
-  --shadow-lg:      0 16px 48px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.5);
-  --shadow-ambient: 0 0 0 1px rgba(143, 185, 0, 0.05), 0 4px 24px rgba(0,0,0,0.6);
-  --shadow-glow:    0 0 30px rgba(143, 185, 0, 0.15), 0 0 60px rgba(143, 185, 0, 0.08);
+  --shadow-xs:      0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm:      0 4px 12px rgba(0,0,0,0.5);
+  --shadow-md:      0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-lg:      0 16px 48px rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-ambient: 0 0 0 1px rgba(143, 185, 0, 0.06), 0 4px 24px rgba(0,0,0,0.5);
+  --shadow-glow:    0 0 30px rgba(143, 185, 0, 0.18), 0 0 60px rgba(143, 185, 0, 0.09);
   --shadow-primary: 0 4px 20px rgba(143, 185, 0, 0.35), 0 8px 40px rgba(143, 185, 0, 0.15);
 
   --bg-primary:   var(--bg);
@@ -220,11 +222,10 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Layered background for visual depth */
   background-image:
-    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(198,241,0,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(198,241,0,0.03) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(198,241,0,0.02) 0%, transparent 60%);
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(143,185,0,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(143,185,0,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(143,185,0,0.03) 0%, transparent 60%);
   background-attachment: fixed;
   min-height: 100vh;
 }
@@ -270,33 +271,33 @@ label, .label-text {
 
 /* ─── Glassmorphism (Liquid Glass) ─── */
 .glass {
-  background: rgba(13, 17, 26, 0.25);
+  background: rgba(12, 35, 22, 0.80); /* Dark Live Assets Green */
   backdrop-filter: blur(40px) saturate(200%);
   -webkit-backdrop-filter: blur(40px) saturate(200%);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-top: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 0 32px rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 0 32px rgba(255,255,255,0.02);
 }
 
 .glass-strong {
-  background: rgba(13, 17, 26, 0.4);
+  background: rgba(12, 35, 22, 0.95);
   backdrop-filter: blur(60px) saturate(250%);
   -webkit-backdrop-filter: blur(60px) saturate(250%);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-top: 1px solid rgba(255,255,255,0.2);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.4), inset 0 0 40px rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45), inset 0 0 40px rgba(255,255,255,0.02);
 }
 
 /* ─── Cards (Liquid Glass) ─── */
 .card {
-  background: linear-gradient(135deg, rgba(22,32,12,0.5) 0%, rgba(16,25,8,0.3) 100%);
+  background: linear-gradient(135deg, rgba(12,35,22,0.85) 0%, rgba(13,40,24,0.65) 100%);
   backdrop-filter: blur(48px) saturate(150%);
   -webkit-backdrop-filter: blur(48px) saturate(150%);
-  border: 1px solid rgba(198, 241, 0, 0.1);
-  border-top: 1px solid rgba(198, 241, 0, 0.25);
-  border-left: 1px solid rgba(198, 241, 0, 0.15);
+  border: 1px solid rgba(143, 185, 0, 0.15);
+  border-top: 1px solid rgba(143, 185, 0, 0.28);
+  border-left: 1px solid rgba(143, 185, 0, 0.20);
   border-radius: var(--radius-xl);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(198, 241, 0, 0.05), inset 0 0 32px rgba(198, 241, 0, 0.02);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(143, 185, 0, 0.05), inset 0 0 32px rgba(143, 185, 0, 0.02);
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   overflow: hidden;
   position: relative;

@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { NetworkProvider } from './context/NetworkContext';
+import { WalletProvider } from './hooks/useWallet';
 import Sidebar from './components/dashboard/Sidebar';
 import Navbar from './components/dashboard/Navbar';
 import LoginPage from './pages/LoginPage';
@@ -64,70 +65,72 @@ function AppContent() {
 
   // Main App Layout
   return (
-    <BrowserRouter>
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#070e0a', color: '#e2ede6' }}>
-        {/* Fixed sidebar */}
-        <Sidebar
-          isMobileOpen={isMobileMenuOpen}
-          setIsMobileOpen={setIsMobileMenuOpen}
-        />
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)', color: 'var(--on-surface)' }}>
+      {/* Fixed sidebar */}
+      <Sidebar
+        isMobileOpen={isMobileMenuOpen}
+        setIsMobileOpen={setIsMobileMenuOpen}
+      />
 
-        {/* Scrollable main column — offset by sidebar width */}
-        <div style={{
-          flex: 1,
-          marginLeft: '218px',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '100vh',
-          overflowX: 'hidden',
-        }}>
-          {/* Fixed topbar */}
-          <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
+      {/* Scrollable main column — offset by sidebar width */}
+      <div style={{
+        flex: 1,
+        marginLeft: '218px',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        overflowX: 'hidden',
+      }}>
+        {/* Fixed topbar */}
+        <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
 
-          {/* Page content — padded below the fixed topbar */}
-          <div style={{ flex: 1, paddingTop: '54px', overflowY: 'auto' }}>
-            <AnimatedRoutes />
-          </div>
+        {/* Page content — padded below the fixed topbar */}
+        <div style={{ flex: 1, paddingTop: '54px', overflowY: 'auto' }}>
+          <AnimatedRoutes />
         </div>
       </div>
-    </BrowserRouter>
+    </div>
   );
 }
 
 function App() {
   return (
-    <ThemeProvider>
-      <NetworkProvider>
-        <AuthProvider>
-          {/* Single global Toaster — dark mode, Kinetic Ether themed */}
-          <Toaster
-            position="bottom-right"
-            reverseOrder={false}
-            toastOptions={{
-              style: {
-                background: '#161d2b',
-                color: '#f1f5f9',
-                border: '1px solid rgba(255,255,255,0.08)',
-                fontFamily: '"Inter", sans-serif',
-                fontSize: '0.875rem',
-                borderRadius: '12px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-              },
-              success: {
-                iconTheme: { primary: '#10b981', secondary: '#161d2b' },
-              },
-              error: {
-                iconTheme: { primary: '#ef4444', secondary: '#161d2b' },
-              },
-              loading: {
-                iconTheme: { primary: '#a78bfa', secondary: '#161d2b' },
-              },
-            }}
-          />
-          <AppContent />
-        </AuthProvider>
-      </NetworkProvider>
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider>
+        <NetworkProvider>
+          <WalletProvider>
+            <AuthProvider>
+              {/* Single global Toaster — dark mode, Kinetic Ether themed */}
+              <Toaster
+                position="bottom-right"
+                reverseOrder={false}
+                toastOptions={{
+                  style: {
+                    background: 'var(--surface)',
+                    color: 'var(--on-surface)',
+                    border: '1px solid var(--border, rgba(255,255,255,0.15))',
+                    fontFamily: '"Inter", sans-serif',
+                    fontSize: '0.875rem',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                  },
+                  success: {
+                    iconTheme: { primary: '#10b981', secondary: '#161d2b' },
+                  },
+                  error: {
+                    iconTheme: { primary: '#ef4444', secondary: '#161d2b' },
+                  },
+                  loading: {
+                    iconTheme: { primary: '#a78bfa', secondary: '#161d2b' },
+                  },
+                }}
+              />
+              <AppContent />
+            </AuthProvider>
+          </WalletProvider>
+        </NetworkProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }
 

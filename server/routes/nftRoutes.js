@@ -14,7 +14,7 @@ const router = express.Router();
 function findImports(importPath) {
     try {
         if (importPath.startsWith('@openzeppelin/')) {
-            const actualPath = path.resolve(__dirname, '..', 'node_modules', importPath);
+            const actualPath = require.resolve(importPath, { paths: [__dirname] });
             return { contents: fs.readFileSync(actualPath, 'utf8') };
         }
         return { error: 'File not found' };
@@ -51,7 +51,9 @@ router.post('/generate', strictLimiter, authMiddleware, (req, res) => {
     try {
         const templatePath = path.join(__dirname, '..', 'templates', 'ERC721Template.txt');
         let contractCode = fs.readFileSync(templatePath, 'utf8');
-        const className = safeName.replace(/\s+/g, '');
+        let className = safeName.replace(/\s+/g, '');
+        if (!className) className = 'NFTContract';
+        if (/^[0-9]/.test(className)) className = '_' + className;
 
         let finalCode = contractCode
             .replace(/{{CONTRACT_NAME}}/g, className)
@@ -74,7 +76,7 @@ router.post('/generate', strictLimiter, authMiddleware, (req, res) => {
                 console.error("NFT COMPILATION ERRORS:", errors);
                 return res.status(500).json({
                     success: false,
-                    error: "Solidity Compilation Failed",
+                    error: "Compile Error: " + errors[0].message,
                     details: errors.map(e => e.formattedMessage)
                 });
             }

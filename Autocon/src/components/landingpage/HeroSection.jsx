@@ -166,7 +166,7 @@ const OrbitingCoin = ({ coin, angle, duration, reverse = false }) => (
         width: 44, height: 44, left: '50%', top: 0,
         boxShadow: `0 8px 25px ${coin.color}50`,
         border: `1.5px solid ${coin.color}80`,
-        background: '#060a03',
+        background: '#1e4a2b',
         overflow: 'hidden',
       }}
     >
@@ -178,10 +178,10 @@ const OrbitingCoin = ({ coin, angle, duration, reverse = false }) => (
 const OrbitalBackground = () => (
   <div className="absolute inset-0 overflow-hidden z-0 flex items-center justify-center pointer-events-none"
     role="img" aria-label="Animated orbital rings with cryptocurrency logos">
-    {/* Deep background */}
-    <div className="absolute inset-0 bg-gradient-to-b from-[#070e0a] via-[#050803] to-[#030500]" />
+    {/* Lighter green background */}
+    <div className="absolute inset-0 bg-gradient-to-b from-[#3c7d52] via-[#264a32] to-[#20422c]" />
     <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[800px] h-[800px]"
-      style={{ background: 'radial-gradient(circle at center,rgba(34,197,94,0.07) 0%,transparent 55%)', filter: 'blur(80px)' }}
+      style={{ background: 'radial-gradient(circle at center,rgba(143,185,0,0.12) 0%,transparent 55%)', filter: 'blur(80px)' }}
       aria-hidden="true" />
 
     {/* Inner ring (400px) — BTC + ETH */}
@@ -319,7 +319,7 @@ const DashboardMockup = () => {
       className="w-full max-w-[950px] mx-auto mt-8 relative z-10 pointer-events-none"
     >
       <div className="w-full rounded-[20px] border shadow-[0_40px_100px_-10px_rgba(0,0,0,0.8)] overflow-hidden"
-        style={{ background: 'linear-gradient(180deg,#0d1812 0%,#070e0a 100%)', borderColor: 'rgba(34,197,94,0.14)' }}>
+        style={{ background: 'linear-gradient(180deg,#245534 0%,#163a20 100%)', borderColor: 'rgba(143,185,0,0.18)', boxShadow: '0 20px 60px rgba(0,0,0,0.35)' }}>
 
         {/* Header */}
         <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(34,197,94,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -438,7 +438,7 @@ const DashboardMockup = () => {
       <motion.div
         animate={{ y: [0, -6, 0] }}
         transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-        style={{ position: 'absolute', right: -18, bottom: 20, background: '#0d1812', padding: '11px 14px',
+        style={{ position: 'absolute', right: -18, bottom: 20, background: '#245534', padding: '11px 14px',
           borderRadius: 12, border: '1px solid rgba(34,197,94,0.25)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
           width: 190, display: 'flex', alignItems: 'center', gap: 11, zIndex: 30 }}
       >
@@ -497,9 +497,9 @@ export default function HeroSection({ onGetStarted }) {
           className="flex flex-row gap-4 justify-center items-center">
           <button onClick={onGetStarted}
             className="group flex items-center justify-between gap-3 px-5 py-3 md:px-7 md:py-3.5 rounded-[14px] font-bold text-sm md:text-base transition-all hover:-translate-y-0.5"
-            style={{ background: '#22c55e', color: '#070e0a', boxShadow: '0 0 24px rgba(34,197,94,0.3)' }}>
+            style={{ background: '#8FB900', color: '#0a1508', boxShadow: '0 0 24px rgba(143,185,0,0.35)' }}>
             <span>Get Started</span>
-            <div className="bg-[#070e0a] text-[#22c55e] rounded-full p-1 group-hover:translate-x-1 transition-transform">
+            <div className="bg-[#112d18] text-[#8FB900] rounded-full p-1 group-hover:translate-x-1 transition-transform">
               <ChevronRight size={16} strokeWidth={3} />
             </div>
           </button>

@@ -3,7 +3,6 @@ import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
-import { API_BASE } from '../config';
 import { fireConfetti } from '../utils/confetti';
 import { classifyError, deployWithTimeout } from '../utils/classifyError';
 import { useWallet } from './useWallet';

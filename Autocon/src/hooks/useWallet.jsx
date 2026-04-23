@@ -1,12 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, createContext, useContext } from 'react';
 import toast from 'react-hot-toast';
 
-/**
- * Shared wallet connection hook — eliminates duplicated connectWallet
- * logic across useWeb3, useNFT, and useAuction.
- * Also listens for wallet account changes from MetaMask.
- */
-export const useWallet = () => {
+const WalletContext = createContext();
+
+export const WalletProvider = ({ children }) => {
     const [walletAddress, setWalletAddress] = useState('');
 
     const connectWallet = useCallback(async () => {
@@ -29,6 +26,15 @@ export const useWallet = () => {
     useEffect(() => {
         if (!window.ethereum) return;
 
+        // Automatically fetch already connected account on page load
+        window.ethereum.request({ method: 'eth_accounts' })
+            .then(accounts => {
+                if (accounts && accounts.length > 0) {
+                    setWalletAddress(accounts[0]);
+                }
+            })
+            .catch(console.error);
+
         const handleAccountsChanged = (accounts) => {
             if (accounts.length === 0) {
                 setWalletAddress('');
@@ -46,6 +52,19 @@ export const useWallet = () => {
         };
     }, []);
 
-    return { walletAddress, setWalletAddress, connectWallet };
+    return (
+        <WalletContext.Provider value={{ walletAddress, setWalletAddress, connectWallet }}>
+            {children}
+        </WalletContext.Provider>
+    );
+};
+
+export const useWallet = () => {
+    const context = useContext(WalletContext);
+    if (!context) {
+        console.warn('useWallet must be used within a WalletProvider');
+        return { walletAddress: '', setWalletAddress: () => {}, connectWallet: async () => null };
+    }
+    return context;
 };
 

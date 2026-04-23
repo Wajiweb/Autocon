@@ -1,5 +1,8 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { authMiddleware } = require('../middleware/auth');
+const AuditReport = require('../models/AuditReport');
+const Contract = require('../models/Contract');
 
 const router = express.Router();
 
@@ -176,26 +179,94 @@ router.post('/audit-contract', authMiddleware, async (req, res) => {
         else if (score < 60) riskLevel = 'HIGH';
         else if (score < 80) riskLevel = 'MEDIUM';
 
+        const summary = {
+            critical: uniqueFindings.filter(f => f.severity === 'CRITICAL').length,
+            high:     uniqueFindings.filter(f => f.severity === 'HIGH').length,
+            medium:   uniqueFindings.filter(f => f.severity === 'MEDIUM').length,
+            low:      uniqueFindings.filter(f => f.severity === 'LOW').length,
+        };
+
+        const auditResult = {
+            score,
+            riskLevel,
+            totalFindings: uniqueFindings.length,
+            findings: uniqueFindings,
+            summary,
+            scannedAt: new Date().toISOString(),
+        };
+
+        // ── Persist the audit report to MongoDB ─────────────────────────────
+        // contractId and contractAddress are optional — audit can run on
+        // undeployed code too. We do a best-effort lookup by contractAddress.
+        let savedReportId = null;
+        try {
+            const { contractAddress } = req.body;
+            let contractId = null;
+
+            if (contractAddress) {
+                const contract = await Contract.findOne({
+                    contractAddress: contractAddress.toLowerCase(),
+                    ownerAddress: req.user.walletAddress,
+                });
+                contractId = contract?._id || null;
+            }
+
+            if (contractId) {
+                const report = await AuditReport.create({
+                    contractId,
+                    contractAddress: contractAddress?.toLowerCase() || null,
+                    ownerAddress: req.user.walletAddress,
+                    score,
+                    riskLevel,
+                    totalFindings: uniqueFindings.length,
+                    findings: uniqueFindings,
+                    summary,
+                    engineVersion: 'v1',
+                });
+                savedReportId = report._id;
+                console.log(`💾 Audit report saved: ${report._id}`);
+            }
+        } catch (saveErr) {
+            // Non-fatal: still return the audit result even if save fails
+            console.warn('Audit save warning:', saveErr.message);
+        }
+
         res.json({
             success: true,
-            audit: {
-                score,
-                riskLevel,
-                totalFindings: uniqueFindings.length,
-                findings: uniqueFindings,
-                summary: {
-                    critical: uniqueFindings.filter(f => f.severity === 'CRITICAL').length,
-                    high: uniqueFindings.filter(f => f.severity === 'HIGH').length,
-                    medium: uniqueFindings.filter(f => f.severity === 'MEDIUM').length,
-                    low: uniqueFindings.filter(f => f.severity === 'LOW').length
-                },
-                scannedAt: new Date().toISOString()
-            }
+            reportId: savedReportId,
+            audit: auditResult,
         });
 
     } catch (error) {
         console.error('Audit Error:', error);
         res.status(500).json({ success: false, error: 'Failed to run security audit.' });
+    }
+});
+
+/**
+ * GET /api/audit-history/:contractId
+ * Returns all saved audit reports for a specific contract.
+ */
+router.get('/audit-history/:contractId', authMiddleware, async (req, res) => {
+    try {
+        const { contractId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(contractId)) {
+            return res.status(400).json({ success: false, error: 'Invalid contract ID.' });
+        }
+
+        const reports = await AuditReport.find({
+            contractId,
+            ownerAddress: req.user.walletAddress,
+        })
+            .sort({ createdAt: -1 })
+            .select('-findings') // omit full findings for list view
+            .lean();
+
+        res.json({ success: true, reports });
+    } catch (error) {
+        console.error('Audit History Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch audit history.' });
     }
 });
 

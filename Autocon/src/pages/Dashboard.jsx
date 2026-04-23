@@ -1,6 +1,8 @@
 import { useState, useEffect, memo, lazy, Suspense, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useNetwork } from '../context/NetworkContext';
+import { API_BASE } from '../config';
 import AssetGrid from '../components/dashboard/AssetGrid';
 import ChartModal from '../components/dashboard/ChartModal';
 import AnalyticsCharts from '../components/dashboard/AnalyticsCharts';
@@ -145,7 +147,7 @@ const DeploymentTable = memo(function DeploymentTable({
                         </button>
                         <button className="db-act" title="View site"
                           onClick={() => {
-                            window.open(`http://localhost:5000/api/site/view?contractAddress=${item.contractAddress}&network=${item.network}&name=${encodeURIComponent(item.name)}&type=${item._type}`, '_blank');
+                            window.open(`${API_BASE}/api/site/view?contractAddress=${item.contractAddress}&network=${item.network}&name=${encodeURIComponent(item.name)}&type=${item._type}`, '_blank');
                             toast.success('Minting Site Opened! 🌐');
                           }}>
                           ◈
@@ -207,6 +209,7 @@ function useCounter(target, delay = 300) {
 /* ─── Main Dashboard ────────────────────────────────── */
 export default function Dashboard() {
   const { user, authFetch } = useAuth();
+  const { network } = useNetwork();
   const [deployments, setDeployments] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -331,7 +334,7 @@ export default function Dashboard() {
         <div className="db-page-head db-enter db-enter-1">
           <div>
             <div className="db-ph-title">Executive <em>Overview</em></div>
-            <div className="db-ph-sub">Real-time monitoring of your blockchain assets · Sepolia network</div>
+            <div className="db-ph-sub">Real-time monitoring of your blockchain assets · {network.name}</div>
           </div>
           <div className="db-ph-actions">
             <button className="db-btn" onClick={exportCSV}>↓ CSV</button>

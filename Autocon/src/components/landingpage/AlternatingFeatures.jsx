@@ -4,7 +4,7 @@ import { ChevronRight, FileCode2, ShieldAlert, Cpu } from 'lucide-react';
 import { Reveal } from './Shared';
 
 /* ══════════════════════════════════════════════════════
-   ALTERNATING FEATURES — Coinx Crypto Style Mockups
+   ALTERNATING FEATURES 
 ══════════════════════════════════════════════════════ */
 
 const CryptoMockupOne = () => (
@@ -19,10 +19,10 @@ const CryptoMockupOne = () => (
          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f' }} />
       </div>
       <div style={{ color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-        <span style={{ color: 'var(--primary)' }}>$</span> npm run deploy<br />
+        <span style={{ color: 'var(--primary)' }}></span> npm run deploy<br />
         <span style={{ color: 'var(--text-primary)' }}>Compiling smart contracts...</span><br />
-        <span style={{ color: 'var(--primary)' }}>✓ Target:</span> Ethereum Mainnet<br />
-        <span style={{ color: 'var(--primary)' }}>✓ Status:</span> Deployed Successfully!
+        <span style={{ color: 'var(--primary)' }}>Target:</span> Ethereum Mainnet<br />
+        <span style={{ color: 'var(--primary)' }}>Status:</span> Deployed Successfully!
       </div>
     </div>
   </div>

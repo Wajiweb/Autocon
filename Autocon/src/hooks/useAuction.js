@@ -3,7 +3,6 @@ import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
-import { API_BASE } from '../config';
 import { fireConfetti } from '../utils/confetti';
 import { useWallet } from './useWallet';
 
@@ -69,6 +68,7 @@ export const useAuction = () => {
             const res = await authFetch('/api/estimate-gas', {
                 method: 'POST',
                 body: JSON.stringify({
+                    network: network.key,
                     abi: contractData.abi,
                     bytecode: contractData.bytecode,
                     ownerAddress: formData.ownerAddress,

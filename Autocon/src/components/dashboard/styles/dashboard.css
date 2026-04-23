@@ -7,22 +7,22 @@
 
 /* ─── CSS Tokens ─────────────────────────────────────── */
 :root {
-  --db-bg:      #070e0a;
-  --db-s1:      #0d1812;
-  --db-s2:      #111f16;
-  --db-s3:      #16261b;
-  --db-acc:     #22c55e;
-  --db-acc-d:   rgba(34,197,94,.12);
-  --db-acc-dd:  rgba(34,197,94,.06);
+  --db-bg:      #264a32;
+  --db-s1:      #0c2316; /* Dark Live Assets Card Color */
+  --db-s2:      #0d2818;
+  --db-s3:      #11331e;
+  --db-acc:     #8FB900;
+  --db-acc-d:   rgba(143,185,0,.16);
+  --db-acc-dd:  rgba(143,185,0,.08);
   --db-red:     #ef4444;
   --db-red-d:   rgba(239,68,68,.12);
   --db-amber:   #f59e0b;
   --db-blue:    #60a5fa;
-  --db-t1:      #e2ede6;
-  --db-t2:      #7a9e85;
-  --db-t3:      #3d5f47;
-  --db-br:      rgba(34,197,94,.10);
-  --db-br2:     rgba(34,197,94,.20);
+  --db-t1:      #ffffff;
+  --db-t2:      #bce0c3;
+  --db-t3:      #86b890;
+  --db-br:      rgba(255,255,255,.15);
+  --db-br2:     rgba(255,255,255,.25);
   --db-r:       10px;
   --db-r-sm:    7px;
   --db-sidebar: 218px;

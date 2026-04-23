@@ -4,6 +4,7 @@
  */
 import { useState } from 'react';
 import { ethers } from 'ethers';
+import { API_BASE } from '../config';
 
 export function useVerification() {
   const [status,  setStatus]  = useState('idle'); // idle | submitting | pass | fail | timeout
@@ -30,8 +31,9 @@ export function useVerification() {
         encodedArgs   = encoded.startsWith('0x') ? encoded.slice(2) : encoded;
       }
 
-      const token = localStorage.getItem('token'); // AuthContext JWT
-      const res   = await fetch('/api/verify', {
+      // Use the correct token key that AuthContext stores
+      const token = localStorage.getItem('autocon_token');
+      const res   = await fetch(`${API_BASE}/api/verify`, {
         method:  'POST',
         headers: {
           'Content-Type': 'application/json',

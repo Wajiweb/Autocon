@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useWallet } from '../../hooks/useWallet';
+import { useNetwork } from '../../context/NetworkContext';
 import toast from 'react-hot-toast';
 import './styles/dashboard.css';
 
@@ -28,6 +29,7 @@ const NAV_GROUPS = [
 export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
   const { theme, toggleTheme } = useTheme();
   const { walletAddress } = useWallet();
+  const { network } = useNetwork();
   const [blockNum, setBlockNum] = useState(8241036);
 
   useEffect(() => {
@@ -103,8 +105,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
               </button>
             </div>
             <div className="db-net-row">
-              <div className="db-net-dot" />
-              <span className="db-net-name">Sepolia Testnet</span>
+              <div className="db-net-dot" style={{ background: network?.color || '#22c55e', boxShadow: `0 0 6px ${network?.color || '#22c55e'}` }} />
+              <span className="db-net-name">{network?.name || 'Sepolia Testnet'}</span>
               <span className="db-net-block">#{blockNum.toLocaleString()}</span>
             </div>
           </div>

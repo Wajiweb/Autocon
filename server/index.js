@@ -6,7 +6,10 @@ const helmet = require('helmet');
 const fs = require('fs');
 const mongoose = require('mongoose');
 const { ethers } = require('ethers');
+// Legacy models (kept for backward compatibility during migration)
 const Token = require('./models/Token');
+// New unified models
+const Contract = require('./models/Contract');
 const { authMiddleware } = require('./middleware/auth');
 const { generalLimiter, strictLimiter, authLimiter } = require('./middleware/rateLimiter');
 const authRoutes = require('./routes/authRoutes');
@@ -70,7 +73,8 @@ app.use('/api/auth', authLimiter, authRoutes);
 // ─── TOKEN ROUTES ───
 app.use('/api/token', tokenRoutes);
 
-// ─── GET SINGLE DEPLOYMENT (Token, NFT, or Auction) by ID for Contract X-Ray ───
+// ─── GET SINGLE DEPLOYMENT by ID for Contract X-Ray ───
+// Updated: uses unified Contract model first, falls back to legacy models
 const NFT = require('./models/NFT');
 const Auction = require('./models/Auction');
 
@@ -80,18 +84,21 @@ app.get('/api/deployments/:id', authMiddleware, async (req, res) => {
         return res.status(400).json({ success: false, error: 'Invalid ID format.' });
     }
     try {
-        // Search across all three models
-        let doc = await Token.findById(id);
-        let docType = 'ERC-20';
-        if (!doc) { doc = await NFT.findById(id); docType = 'ERC-721'; }
-        if (!doc) { doc = await Auction.findById(id); docType = 'Auction'; }
+        // Primary: check unified Contract collection
+        let doc = await Contract.findById(id).lean();
+        let docType = doc?.contractType || null;
+
+        // Fallback to legacy collections during migration period
+        if (!doc) { doc = await Token.findById(id).lean(); docType = 'ERC-20'; }
+        if (!doc) { doc = await NFT.findById(id).lean(); docType = 'ERC-721'; }
+        if (!doc) { doc = await Auction.findById(id).lean(); docType = 'Auction'; }
 
         if (!doc) {
             return res.status(404).json({ success: false, error: 'Deployment not found.' });
         }
 
-        // Ownership check
-        if (req.user.walletAddress !== doc.ownerAddress.toLowerCase()) {
+        const ownerAddr = doc.ownerAddress || doc.ownerAddress;
+        if (req.user.walletAddress !== ownerAddr.toLowerCase()) {
             return res.status(403).json({ success: false, error: 'Unauthorized.' });
         }
 
@@ -102,7 +109,9 @@ app.get('/api/deployments/:id', authMiddleware, async (req, res) => {
                 name: doc.name,
                 contractAddress: doc.contractAddress,
                 type: docType,
-                abi: doc.abi || null
+                network: doc.network,
+                verified: doc.verified || false,
+                abi: doc.abi || null,
             }
         });
     } catch (err) {
