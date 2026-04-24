@@ -7,7 +7,7 @@ const { validate, schemas } = require('../middleware/validationSchemas');
 const { generateAuction, saveAuction, getMyAuctions, deleteAuction } = require('../controllers/auctionController');
 
 router.post  ('/generate',                  strictLimiter, authMiddleware, validate(schemas.generateAuction), generateAuction);
-router.post  ('/save',                      authMiddleware, saveAuction);
+router.post  ('/save',                      authMiddleware, validate(schemas.saveAuction), saveAuction);
 router.get   ('/my-auctions/:walletAddress', authMiddleware, getMyAuctions);
 router.delete('/delete/:id',                authMiddleware, deleteAuction);
 

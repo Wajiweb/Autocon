@@ -1,5 +1,6 @@
 'use strict';
 const { compileContract } = require('../services/compilerService');
+const { AppError } = require('../middleware/errorHandler');
 
 /**
  * POST /api/compile
@@ -10,6 +11,12 @@ async function compileCustomContract(req, res) {
 
     if (!sourceCode || !contractName) {
         return res.status(400).json({ success: false, error: 'sourceCode and contractName are required.' });
+    }
+
+    // Additional validation: reject empty or whitespace-only code
+    const trimmedCode = sourceCode.trim();
+    if (!trimmedCode || trimmedCode.length < 10) {
+        throw new AppError('Contract code is too short or empty. Minimum 10 characters required.', 400, 'INVALID_CODE');
     }
 
     try {

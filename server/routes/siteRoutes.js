@@ -4,6 +4,15 @@ const path = require('path');
 
 const router = express.Router();
 
+// 1. Load HTML Template at startup (cache)
+const templatePath = path.join(__dirname, '../templates/MiniSiteTemplate.html');
+let SITE_TEMPLATE = '';
+if (fs.existsSync(templatePath)) {
+    SITE_TEMPLATE = fs.readFileSync(templatePath, 'utf8');
+} else {
+    console.error('❌ Mini-Site template not found on server at:', templatePath);
+}
+
 /**
  * GET /api/site/view
  * Serves a beginner-friendly interactive mini-site for a deployed smart contract.
@@ -23,12 +32,10 @@ router.get('/view', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Invalid contract type for site generation.' });
         }
 
-        // 1. Load HTML Template
-        const templatePath = path.join(__dirname, '../templates/MiniSiteTemplate.html');
-        if (!fs.existsSync(templatePath)) {
+        if (!SITE_TEMPLATE) {
             return res.status(500).json({ success: false, error: 'Mini-Site template not found on server.' });
         }
-        let htmlContent = fs.readFileSync(templatePath, 'utf8');
+        let htmlContent = SITE_TEMPLATE;
 
         // 2. Normalise type & build minimal ABI + friendly metadata per type
         let normalizedType = type;

@@ -1,5 +1,6 @@
 'use strict';
 const { ethers } = require('ethers');
+const { AppError } = require('../middleware/errorHandler');
 
 const RPC_URLS = {
     sepolia:    process.env.SEPOLIA_RPC_URL    || 'https://ethereum-sepolia-rpc.publicnode.com',
@@ -7,14 +8,56 @@ const RPC_URLS = {
     bnbTestnet: process.env.BNB_TESTNET_RPC_URL || 'https://data-seed-prebsc-1-s1.binance.org:8545',
 };
 
+// Fallback RPC endpoints for redundancy
+const FALLBACK_RPC_URLS = {
+    sepolia: [
+        'https://ethereum-sepolia-rpc.publicnode.com',
+        'https://rpc.sepolia.org',
+        'https://eth-sepolia.g.alchemy.com/v2/demo'
+    ],
+    amoy: [
+        'https://rpc-amoy.polygon.technology',
+        'https://polygon-amoy-rpc.g.alchemy.com/v2/demo'
+    ],
+    bnbTestnet: [
+        'https://data-seed-prebsc-1-s1.binance.org:8545',
+        'https://bsc-testnet-rpc.publicnode.com'
+    ]
+};
+
+let currentRpcIndex = {};
+
 /**
- * Returns an ethers JsonRpcProvider for the given network key.
+ * Returns an ethers JsonRpcProvider for the given network key with automatic fallback.
  * @param {string} networkKey - 'sepolia' | 'amoy' | 'bnbTestnet'
  * @returns {ethers.JsonRpcProvider}
  */
 function getProvider(networkKey = 'sepolia') {
     const rpcUrl = RPC_URLS[networkKey] || RPC_URLS.sepolia;
     return new ethers.JsonRpcProvider(rpcUrl);
+}
+
+/**
+ * Tries multiple RPC endpoints with fallback on failure.
+ * @param {string} networkKey - Network key
+ * @param {Function} fn - Async function to execute with provider
+ * @returns {Promise<any>}
+ */
+async function withRpcFallback(networkKey, fn) {
+    const fallbacks = [RPC_URLS[networkKey], ...(FALLBACK_RPC_URLS[networkKey] || [])];
+    let lastError = null;
+    
+    for (const rpcUrl of fallbacks) {
+        try {
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
+            return await fn(provider);
+        } catch (error) {
+            console.warn(`[BlockchainService] RPC ${rpcUrl} failed:`, error.message);
+            lastError = error;
+        }
+    }
+    
+    throw new AppError('All RPC endpoints failed. Network may be experiencing issues.', 502, 'RPC_ALL_FAILED');
 }
 
 /**

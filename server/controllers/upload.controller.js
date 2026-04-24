@@ -2,6 +2,8 @@
 const fs = require('fs');
 const { pinFileToIPFS, pinJSONToIPFS } = require('../services/ipfs.service');
 
+const MAX_METADATA_SIZE = 10 * 1024; // 10KB max metadata JSON
+
 /**
  * PHASE 1: Uploads a physical asset (image) to IPFS.
  * Route: POST /api/ipfs/upload-file
@@ -37,6 +39,23 @@ async function uploadMetadata(req, res) {
     const { metadata } = req.body;
     if (!metadata) {
         return res.status(400).json({ success: false, error: 'No metadata JSON provided.' });
+    }
+
+    // Validate metadata structure and size
+    if (typeof metadata !== 'object' || metadata === null) {
+        return res.status(400).json({ success: false, error: 'Metadata must be a valid JSON object.' });
+    }
+
+    const metadataString = JSON.stringify(metadata);
+    if (metadataString.length > MAX_METADATA_SIZE) {
+        return res.status(400).json({ success: false, error: `Metadata too large. Maximum ${MAX_METADATA_SIZE / 1024}KB allowed.` });
+    }
+
+    // Prevent prototype pollution
+    if (Object.prototype.hasOwnProperty.call(metadata, '__proto__') || 
+        Object.prototype.hasOwnProperty.call(metadata, 'constructor') ||
+        Object.prototype.hasOwnProperty.call(metadata, 'prototype')) {
+        return res.status(400).json({ success: false, error: 'Invalid metadata: reserved properties not allowed.' });
     }
 
     try {

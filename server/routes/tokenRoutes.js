@@ -7,7 +7,7 @@ const { validate, schemas }                  = require('../middleware/validation
 const { generateToken, saveToken, getMyTokens, deleteToken } = require('../controllers/tokenController');
 
 router.post('/generate-token', strictLimiter, authMiddleware, validate(schemas.generateToken), generateToken);
-router.post('/save-token',     authMiddleware, saveToken);
+router.post('/save-token',     authMiddleware, validate(schemas.saveToken), saveToken);
 router.get ('/my-tokens/:walletAddress', authMiddleware, getMyTokens);
 router.delete('/delete-token/:id',       authMiddleware, deleteToken);
 

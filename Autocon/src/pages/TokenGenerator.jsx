@@ -10,9 +10,12 @@ import DeploymentStatusBar from '../components/deploy/DeploymentStatusBar';
 import { useNetwork } from '../context/NetworkContext';
 import { useAISuggestion } from '../hooks/useAISuggestion';
 import AIChatPanel from '../components/dashboard/AIChatPanel';
+import DeveloperToggle from '../components/dashboard/DeveloperToggle';
 import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
 import { useContractStore } from '../store/useContractStore';
-import '../components/dashboard/styles/dashboard.css';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Card } from '../components/ui/Card';
 
 export default function TokenGenerator() {
   const navigate = useNavigate();
@@ -41,107 +44,161 @@ export default function TokenGenerator() {
   };
 
   return (
-    <div className="pg-wrap">
+    <div className="container pt-3">
 
       {/* Header */}
-      <div className="pg-head db-enter db-enter-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <div className="pg-title">ERC-20 <em>Token Generator</em></div>
-          <div className="pg-sub">Design and deploy custom tokens in minutes — no Solidity required.</div>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input 
-            type="text" 
-            placeholder="Describe your token idea..." 
-            value={aiIntent} 
-            onChange={(e) => setAiIntent(e.target.value)}
-            className="pg-input" 
-            style={{ width: '200px', fontSize: '13px', padding: '8px 12px' }}
-            onKeyDown={(e) => { if(e.key === 'Enter') generateSuggestions('Token', setFormData, aiIntent) }}
-          />
-          <button 
-            onClick={() => generateSuggestions('Token', setFormData, aiIntent)}
-            disabled={isSuggesting}
-            className="pg-btn" 
-            style={{ background: 'var(--db-s2)', border: '1px solid var(--db-br)', color: 'var(--db-acc)', fontSize: 13, padding: '8px 16px', borderRadius: '50px', cursor: isSuggesting ? 'wait' : 'pointer' }}
-          >
-            {isSuggesting ? '⏳...' : '✨ Auto-Fill'}
-          </button>
-          <button 
-            onClick={() => setIsChatOpen(true)}
-            className="pg-btn" 
-            style={{ background: 'var(--db-acc)', border: 'none', color: '#000', fontSize: 13, padding: '8px 16px', borderRadius: '50px', cursor: 'pointer', fontWeight: 600 }}
-          >
-            💬 AI Chat
-          </button>
-        </div>
+      <div className="animate-fade-in-up mb-8">
+          <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 bg-[var(--primary-gradient)] rounded-xl flex items-center justify-center text-[22px] shadow-[var(--shadow-ambient)]">🪙</div>
+                  <h1 className="text-3xl font-black tracking-tight text-[var(--on-surface)]">
+                      ERC-20 <span className="text-transparent bg-clip-text bg-[var(--primary-gradient)]">Generator</span>
+                  </h1>
+              </div>
+              <div className="flex gap-2">
+                  <input 
+                      type="text" 
+                      placeholder="Describe your token idea..." 
+                      value={aiIntent} 
+                      onChange={(e) => setAiIntent(e.target.value)}
+                      className="w-[200px] text-[13px] px-3 py-2 bg-[var(--surface)] border border-[var(--outline-variant)] rounded-full text-[var(--on-surface)] outline-none focus:border-[#7C3AED]"
+                      onKeyDown={(e) => { if(e.key === 'Enter') generateSuggestions('Token', setFormData, aiIntent) }}
+                  />
+                  <Button 
+                      variant="secondary"
+                      onClick={() => generateSuggestions('Token', setFormData, aiIntent)}
+                      isLoading={isSuggesting}
+                      className="rounded-full !py-2 !px-4"
+                  >
+                      ✨ Auto-Fill
+                  </Button>
+                  <Button 
+                      variant="primary"
+                      onClick={() => setIsChatOpen(true)}
+                      className="rounded-full !py-2 !px-4 bg-[var(--db-acc)] text-black"
+                  >
+                      💬 AI Chat
+                  </Button>
+              </div>
+          </div>
+          <p className="text-[var(--on-surface-variant)] text-[0.95rem]">
+              Design and deploy custom ERC-20 tokens in minutes — no Solidity required.
+          </p>
+          <div className="flex gap-2 mt-3.5 flex-wrap">
+              {['Standard ERC-20', 'Mintable', 'Burnable', 'Pausable'].map(f => (
+                  <span key={f} className="px-3 py-1 rounded-full text-[0.68rem] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      {f}
+                  </span>
+              ))}
+          </div>
       </div>
 
       {/* Content Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: generatedCode ? '1fr 1fr' : '1fr', gap: 16, alignItems: 'start' }}>
+      <div className={`grid grid-cols-1 ${generatedCode ? 'lg:grid-cols-2' : ''} gap-8 items-start`}>
 
         {/* Form */}
-        <div className="pg-card accent-top db-enter db-enter-2">
+        <Card variant="glass" className="animate-fade-in-up delay-100">
           <form onSubmit={generateContract}>
+            
+            <Input
+              label="Token Name"
+              name="name"
+              value={formData?.name || ''}
+              placeholder="e.g. AutoCon Token"
+              onChange={handleChange}
+              required
+            />
 
-            <div style={{ marginBottom: 18 }}>
-              <label className="pg-label">Token Name</label>
-              <input name="name" value={formData?.name || ''} placeholder="e.g. AutoCon Token" className="pg-input" onChange={handleChange} required />
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <Input
+                  label="Symbol"
+                  name="symbol"
+                  value={formData?.symbol || ''}
+                  placeholder="e.g. ACT"
+                  onChange={handleChange}
+                  wrapperClassName="flex-1 !mb-0"
+                  required
+              />
+              <Input
+                  label="Initial Supply"
+                  name="supply"
+                  type="number"
+                  placeholder="1000000"
+                  onChange={handleChange}
+                  value={formData?.supply || ''}
+                  wrapperClassName="flex-1 !mb-0"
+                  helperText={Number(formData?.supply) > 1000000000 ? '⚠️ High supply may dilute individual token value.' : ''}
+                  required
+              />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
-              <div>
-                <label className="pg-label">Symbol</label>
-                <input name="symbol" value={formData?.symbol || ''} placeholder="e.g. ACT" className="pg-input" onChange={handleChange} required />
-              </div>
-              <div>
-                <label className="pg-label">Initial Supply</label>
-                <input name="supply" type="number" placeholder="1000000" className="pg-input"
-                  onChange={handleChange} value={formData?.supply || ''} required />
-                {Number(formData?.supply) > 1000000000 && (
-                   <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '6px' }}>⚠️ High supply may dilute individual token value.</div>
-                )}
-              </div>
+            <div className="mb-8">
+                <label className="block text-xs font-bold text-[var(--outline)] uppercase tracking-wider mb-2">Owner Address</label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                        name="ownerAddress"
+                        value={formData?.ownerAddress || ''}
+                        className="w-full bg-[var(--surface)] border border-[var(--outline-variant)] rounded-xl px-4 py-3 text-sm outline-none font-mono text-[0.85rem]"
+                        readOnly
+                        placeholder="Connect your wallet →"
+                    />
+                    <Button
+                        type="button"
+                        onClick={connectWallet}
+                        className="whitespace-nowrap"
+                    >
+                        🦊 Connect
+                    </Button>
+                </div>
             </div>
 
-            <div style={{ marginBottom: 22 }}>
-              <label className="pg-label">Owner Address</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input name="ownerAddress" value={formData?.ownerAddress || ''} className="pg-input"
-                  style={{ fontFamily: 'var(--db-mono)', fontSize: 12 }}
-                  readOnly placeholder="Connect your wallet →" />
-                <button type="button" onClick={connectWallet} className="pg-btn"
-                  style={{ background: 'var(--primary)', color: '#fff',
-                    whiteSpace: 'nowrap', borderRadius: 'var(--db-r-sm)', boxShadow: '0 4px 16px rgba(93,169,233,.30)' }}>
-                  🦊 Connect
-                </button>
-              </div>
-            </div>
-
-            <button type="submit" className="pg-btn pg-btn-primary" style={{ width: '100%', padding: '12px 0' }}>
+            <Button type="submit" size="lg" className="w-full">
               ⚡ Generate Smart Contract
-            </button>
+            </Button>
           </form>
-        </div>
+        </Card>
 
         {/* Right column: gas + code */}
         {generatedCode && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }} className="db-enter db-enter-3">
+          <div className="flex flex-col gap-6 animate-fade-in-up delay-200">
+
+            {/* Info Card */}
+            <Card>
+                <h3 className="text-[0.9rem] font-extrabold text-[var(--on-surface)] mb-3.5">
+                    📘 What Your Token Contract Includes
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                    {[
+                        { icon: '🪙', title: 'ERC-20 Standard', desc: 'Full OpenZeppelin token implementation' },
+                        { icon: '⚖️', title: 'Decimals', desc: 'Standard 18 decimal places for divisibility' },
+                        { icon: '🏦', title: 'Initial Supply', desc: 'Mints total supply to owner at deployment' },
+                        { icon: '🔒', title: 'Security', desc: 'Inherits battle-tested OZ contracts' },
+                    ].map(item => (
+                        <div key={item.title} className="p-3.5 rounded-xl bg-[var(--surface-highest)] border border-[var(--outline-variant)] flex gap-2.5 items-start">
+                            <span className="text-xl">{item.icon}</span>
+                            <div>
+                                <p className="text-[0.82rem] font-bold text-[var(--on-surface)] mb-0.5">{item.title}</p>
+                                <p className="text-[0.72rem] text-[var(--outline)] leading-relaxed">{item.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Card>
 
             {/* Gas Estimator */}
             {estimatedCost && (
-              <div className="pg-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 22 }}>⛽</span>
+              <Card className="flex items-center justify-between p-4 bg-sky-500/10 border-sky-500/20">
+                <div className="flex items-center gap-3">
+                  <span className="text-[22px]">⛽</span>
                   <div>
-                    <div className="pg-label" style={{ marginBottom: 2 }}>Estimated Network Fee</div>
-                    <div style={{ fontSize: 12, color: 'var(--db-t2)' }}>Live {network.name} Gas Price</div>
+                    <div className="text-[0.65rem] font-bold text-[var(--outline)] uppercase tracking-wider mb-0.5">Estimated Network Fee</div>
+                    <div className="text-[0.7rem] text-[var(--outline)]">Live {network.name} Gas Price</div>
                   </div>
                 </div>
-                <div style={{ fontFamily: 'var(--db-mono)', fontSize: 18, fontWeight: 600, color: 'var(--db-acc)' }}>
+                <div className="font-mono text-lg font-bold text-sky-400">
                   {estimatedCost} {network.currencySymbol || 'ETH'}
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Security Scanner */}
@@ -151,44 +208,44 @@ export default function TokenGenerator() {
             />
 
             {/* Deploy */}
-            <div style={{ marginBottom: 16 }}><DeploymentStatusBar /></div>
-            {isDeploying && deployStep >= 0 ? (
-              <div className="pg-card">
-                <DeploymentTimeline
-                  currentStep={deployStep}
-                  errorStep={errorStep}
-                  errorMessage={errorMessage}
-                />
-              </div>
-            ) : (
-              <button type="button" onClick={deployContract} 
-                disabled={!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing}
-                className="pg-btn pg-btn-primary" style={{ width: '100%', padding: '13px 0', fontSize: 14 }}>
-                {auditStatus.isAuditing ? '⏳ Auditing Contract...' : `🚀 Deploy to ${network.name}`}
-              </button>
-            )}
+            <div>
+              <div className="mb-4"><DeploymentStatusBar /></div>
+              {isDeploying && deployStep >= 0 ? (
+                <Card variant="glass" className="mb-4">
+                  <DeploymentTimeline currentStep={deployStep} errorStep={errorStep} errorMessage={errorMessage} />
+                </Card>
+              ) : (
+                <Button 
+                  size="lg"
+                  onClick={deployContract} 
+                  disabled={!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing}
+                  className={`w-full ${(!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing) ? '!bg-[var(--surface-highest)] !text-[var(--outline)]' : ''}`}
+                >
+                  {auditStatus.isAuditing ? '⏳ Auditing Contract...' : `🚀 Deploy to ${network.name}`}
+                </Button>
+              )}
+            </div>
 
             {/* Code Preview */}
-            <div className="pg-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 13, color: 'var(--db-t2)', fontFamily: 'var(--db-font)', fontWeight: 600 }}>
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-[var(--on-surface)]">
                     📄 Generated Solidity
                   </span>
-                  <span className="pg-badge green">Compiled ✓</span>
+                  <span className="px-3 py-1 rounded-full text-[0.7rem] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">Compiled ✓</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div className="flex items-center gap-2">
                   <DeveloperToggle />
                   <ExportCenter contractName={formData.name || 'Token'} abi={contractData?.abi} />
                   {ast && (
-                    <button onClick={() => navigate('/ast', { state: { ast } })}
-                      className="pg-btn pg-btn-outline" style={{ padding: '4px 10px', fontSize: 11 }}>
+                    <Button variant="secondary" size="sm" onClick={() => navigate('/ast', { state: { ast } })}>
                       🌳 AST
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
-              <div className="pg-code-block" style={{ padding: 0 }}>
+              <div className="rounded-xl overflow-hidden border border-[var(--outline-variant)]">
                 <CodeViewer />
               </div>
             </div>

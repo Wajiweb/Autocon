@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { authMiddleware } = require('../middleware/auth');
+const { strictLimiter } = require('../middleware/rateLimiter');
 const { uploadFile, uploadMetadata } = require('../controllers/upload.controller');
 
 // Configure multer for local temp storage
@@ -37,13 +38,13 @@ const upload = multer({
  * POST /api/ipfs/upload-file
  * Uploads a physical file to Pinata IPFS and returns the CID/URL.
  */
-router.post('/upload-file', authMiddleware, upload.single('file'), uploadFile);
+router.post('/upload-file', strictLimiter, authMiddleware, upload.single('file'), uploadFile);
 
 /**
  * POST /api/ipfs/upload-metadata
  * Uploads metadata JSON to Pinata IPFS and returns the tokenURI.
  */
-router.post('/upload-metadata', authMiddleware, uploadMetadata);
+router.post('/upload-metadata', strictLimiter, authMiddleware, uploadMetadata);
 
 // Multer error handler
 router.use((err, req, res, next) => {

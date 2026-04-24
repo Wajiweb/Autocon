@@ -5,25 +5,29 @@
  * Implements the AI Contract Assistant using Gemini API.
  */
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-// Enforce strict JSON output
-const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash", 
-    generationConfig: { responseMimeType: "application/json" } 
-});
+const asyncHandler = require('../utils/asyncHandler');
+const { AppError } = require('../middleware/errorHandler');
+const { getGeminiModel, isGeminiAvailable } = require('../services/geminiService');
 
 /**
  * POST /api/ai/suggest
  * AI Auto-configuration based on user intent
  */
-async function suggestConfig(req, res, next) {
-    try {
-        const { contractType, userDescription, partialInputs } = req.body;
-        
-        const prompt = `You are an expert Web3 smart contract architect.
+const MAX_CONTRACT_SIZE = 50000; // 50KB max contract code
+
+const suggestConfig = asyncHandler(async (req, res) => {
+    if (!isGeminiAvailable()) {
+        throw new AppError('AI integration is not configured on the server.', 503, 'AI_UNAVAILABLE');
+    }
+
+    const { contractType, userDescription, partialInputs } = req.body;
+    
+    // Validate and truncate contract code if too large
+    const codeToProcess = (partialInputs?.sourceCode || '').slice(0, MAX_CONTRACT_SIZE);
+    
+    const model = getGeminiModel('gemini-1.5-flash');
+
+    const prompt = `You are an expert Web3 smart contract architect.
 The user wants to configure a ${contractType} contract.
 Their description of what they want: "${userDescription}"
 Current inputs they have already filled (if any): ${JSON.stringify(partialInputs || {})}
@@ -46,31 +50,38 @@ Return ONLY a valid JSON object matching this schema exactly. Only include prope
   "reasoning": "A concise 1-2 sentence explanation of why you chose these parameters."
 }`;
 
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-        
-        let jsonResponse;
-        try {
-            jsonResponse = JSON.parse(responseText);
-        } catch (e) {
-            throw new Error("AI returned malformed JSON");
-        }
-
-        return res.json({ success: true, data: jsonResponse });
-    } catch (error) {
-        next(error);
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    
+    let jsonResponse;
+    try {
+        jsonResponse = JSON.parse(responseText);
+    } catch (e) {
+        throw new AppError("AI returned malformed JSON", 502, 'AI_PARSE_ERROR');
     }
-}
+
+    return res.json({ success: true, data: jsonResponse });
+});
 
 /**
  * POST /api/ai/audit-explain
  * Translates technical Slither results into plain English
  */
-async function explainAudit(req, res, next) {
-    try {
-        const { vulnerabilities, contractCode } = req.body;
-        
-        const prompt = `You are an expert Web3 security auditor.
+const AUDIT_MAX_CONTRACT_SIZE = 100000; // 100KB max contract code for audit
+
+const explainAudit = asyncHandler(async (req, res) => {
+    if (!isGeminiAvailable()) {
+        throw new AppError('AI integration is not configured on the server.', 503, 'AI_UNAVAILABLE');
+    }
+
+    const { vulnerabilities, contractCode } = req.body;
+    
+    // Validate and truncate contract code
+    const truncatedCode = (contractCode || '').slice(0, AUDIT_MAX_CONTRACT_SIZE);
+    
+    const model = getGeminiModel('gemini-1.5-flash');
+
+    const prompt = `You are an expert Web3 security auditor.
 I have a smart contract and its raw technical audit results (e.g. from Slither).
 DO NOT override or hide any risks. Your job is ONLY to translate the technical jargon into plain English.
 
@@ -78,7 +89,7 @@ Technical Vulnerabilities:
 ${JSON.stringify(vulnerabilities)}
 
 Contract Code Snippet (first 1500 chars to provide context):
-${contractCode.substring(0, 1500)}
+${truncatedCode.substring(0, 1500)}
 
 Return ONLY a valid JSON object matching this schema exactly:
 {
@@ -87,20 +98,17 @@ Return ONLY a valid JSON object matching this schema exactly:
   "recommendations": ["Actionable step to fix risk 1", "Actionable step to fix risk 2"]
 }`;
 
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-        
-        let jsonResponse;
-        try {
-            jsonResponse = JSON.parse(responseText);
-        } catch (e) {
-            throw new Error("AI returned malformed JSON");
-        }
-
-        return res.json({ success: true, data: jsonResponse });
-    } catch (error) {
-        next(error);
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    
+    let jsonResponse;
+    try {
+        jsonResponse = JSON.parse(responseText);
+    } catch (e) {
+        throw new AppError("AI returned malformed JSON", 502, 'AI_PARSE_ERROR');
     }
-}
+
+    return res.json({ success: true, data: jsonResponse });
+});
 
 module.exports = { suggestConfig, explainAudit };

@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Sentry from '@sentry/react';
 
 /**
  * ErrorBoundary
@@ -22,7 +23,8 @@ export default class ErrorBoundary extends React.Component {
     }
 
     componentDidCatch(error, errorInfo) {
-        // In production this should send to an error tracking service (e.g. Sentry)
+        // Send to Sentry in production
+        import.meta.env.PROD && Sentry.captureException(error, { extra: errorInfo });
         console.error('[ErrorBoundary] Caught unhandled error:', error, errorInfo);
         this.setState({ errorInfo });
     }

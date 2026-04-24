@@ -19,7 +19,7 @@ import { create } from 'zustand';
  * Data flow:
  *   deployContract() → setStatus/setTxHash → DeploymentStatusBar reads store
  */
-export const useTransactionStore = create((set) => ({
+export const useTransactionStore = create((set, get) => ({
     // ── State ──────────────────────────────────────────────────────────────────
     status:          'idle',  // 'idle' | 'pending' | 'submitted' | 'confirmed' | 'failed'
     step:            -1,      // -1, 0, 1, 2, 3, 4
@@ -31,6 +31,7 @@ export const useTransactionStore = create((set) => ({
     provider:        null,    // ethers provider instance used for deployment
     network:         null,    // network name string (for building explorer URL)
     error:           null,    // human-readable error string
+    deployStartTime: null,    // timestamp when deployment started (for timeout tracking)
 
     // ── Actions ────────────────────────────────────────────────────────────────
 
@@ -70,8 +71,26 @@ export const useTransactionStore = create((set) => ({
         receipt:         null,
         provider:        null,
         error:           null,
+        deployStartTime: null,
         // Keep network — user hasn't changed it
     }),
+
+    /** Start deployment tracking (call at beginning of deploy) */
+    startDeployment: () => set({
+        status: 'pending',
+        step: 0,
+        deployStartTime: Date.now()
+    }),
+
+    /** Check if deployment has timed out */
+    isDeploymentStale: () => {
+        const state = get();
+        if (!state.deployStartTime || state.status === 'confirmed' || state.status === 'failed') {
+            return false;
+        }
+        const elapsed = Date.now() - state.deployStartTime;
+        return elapsed > 180000; // 3 minutes = 180000ms
+    },
 }));
 
 // ── Selector Helpers (use these in components for perf) ───────────────────────

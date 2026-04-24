@@ -85,8 +85,8 @@ export const useWeb3 = () => {
   };
 
   const deployContract = async () => {
-    if (!contractData.abi || !contractData.bytecode) return toast.error("Generate code first!");
-    if (!generatedCode) return toast.error("Contract code is empty. Generate first.");
+    if (!contractData?.abi || !contractData?.bytecode) return toast.error("Generate code first!");
+    if (!generatedCode || !generatedCode.trim()) return toast.error("Contract code is empty. Generate first.");
     if (txInFlight) return; // Prevent duplicate deploy clicks
 
     // Reset tx store before every new deploy

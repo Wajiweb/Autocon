@@ -105,8 +105,8 @@ export const useNFT = () => {
     };
 
     const deployNFT = async () => {
-        if (!contractData.abi || !contractData.bytecode) return toast.error("Generate NFT code first!");
-        if (!generatedCode) return toast.error("Contract code is empty.");
+        if (!contractData?.abi || !contractData?.bytecode) return toast.error("Generate NFT code first!");
+        if (!generatedCode || !generatedCode.trim()) return toast.error("Contract code is empty.");
         if (!formData.baseURI || !formData.baseURI.startsWith('ipfs://')) return toast.error("Valid IPFS Token URI is required before deployment. Please upload an image first.");
         if (txInFlight) return;
 
@@ -171,7 +171,7 @@ export const useNFT = () => {
                 ["address", "uint256", "string", "uint256"], 
                 [formData.ownerAddress, formData.maxSupply, formData.baseURI || '', mintPriceWei]
             );
-            setContractData(prev => ({ ...prev, constructorArgs: encodedArgs }));
+            setContractData({ constructorArgs: encodedArgs });
 
             setStep(2); // Broadcasting
             const deployToast = toast.loading(`Deploying NFT to ${network.name}...`);

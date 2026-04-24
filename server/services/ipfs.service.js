@@ -3,8 +3,29 @@ const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
 const { withRetry } = require('../utils/retry');
+const { AppError } = require('../middleware/errorHandler');
 
 const PINATA_JWT = process.env.PINATA_JWT;
+
+// Circuit breaker state
+let circuitOpen = false;
+let circuitOpenedAt = 0;
+const CIRCUIT_TIMEOUT_MS = 30000; // 30 seconds
+
+function checkCircuitBreaker() {
+    if (circuitOpen) {
+        if (Date.now() - circuitOpenedAt > CIRCUIT_TIMEOUT_MS) {
+            circuitOpen = false;
+        } else {
+            throw new AppError('IPFS service temporarily unavailable. Please try again later.', 503, 'IPFS_CIRCUIT_OPEN');
+        }
+    }
+}
+
+function tripCircuitBreaker() {
+    circuitOpen = true;
+    circuitOpenedAt = Date.now();
+}
 
 /**
  * Uploads a physical file stream to Pinata IPFS.
@@ -14,6 +35,8 @@ const PINATA_JWT = process.env.PINATA_JWT;
  */
 async function pinFileToIPFS(filePath, originalName) {
     if (!PINATA_JWT) throw new Error('PINATA_JWT is not configured in the backend.');
+
+    checkCircuitBreaker();
 
     const formData = new FormData();
     formData.append('file', fs.createReadStream(filePath));
@@ -30,13 +53,15 @@ async function pinFileToIPFS(filePath, originalName) {
                 headers: {
                     'Content-Type': `multipart/form-data; boundary=${formData._boundary}`,
                     'Authorization': `Bearer ${PINATA_JWT}`
-                }
+                },
+                timeout: 30000 // 30 second timeout
             });
         }, 3, 1000);
         return res.data.IpfsHash;
     } catch (error) {
         console.error('[IPFSService] pinFileToIPFS Error:', error.response?.data || error.message);
-        throw new Error('Failed to upload file to IPFS.');
+        tripCircuitBreaker();
+        throw new AppError('Failed to upload file to IPFS. Network may be unstable.', 503, 'IPFS_UPLOAD_FAILED');
     }
 }
 
@@ -49,6 +74,8 @@ async function pinFileToIPFS(filePath, originalName) {
 async function pinJSONToIPFS(jsonBody, metadataName = 'metadata.json') {
     if (!PINATA_JWT) throw new Error('PINATA_JWT is not configured in the backend.');
 
+    checkCircuitBreaker();
+
     const payload = {
         pinataMetadata: { name: metadataName },
         pinataContent: jsonBody
@@ -60,13 +87,15 @@ async function pinJSONToIPFS(jsonBody, metadataName = 'metadata.json') {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${PINATA_JWT}`
-                }
+                },
+                timeout: 30000 // 30 second timeout
             });
         }, 3, 1000);
         return res.data.IpfsHash;
     } catch (error) {
         console.error('[IPFSService] pinJSONToIPFS Error:', error.response?.data || error.message);
-        throw new Error('Failed to upload metadata to IPFS.');
+        tripCircuitBreaker();
+        throw new AppError('Failed to upload metadata to IPFS. Network may be unstable.', 503, 'IPFS_UPLOAD_FAILED');
     }
 }
 

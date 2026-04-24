@@ -26,8 +26,23 @@ const compileRoutes = require('./routes/compileRoutes');
 const jobRoutes     = require('./routes/jobRoutes');
 const userRoutes    = require('./routes/userRoutes');
 const aiRoutes      = require('./routes/aiRoutes');
+const Sentry        = require('@sentry/node');
+const { nodeProfilingIntegration } = require('@sentry/profiling-node');
+
 const app = express();
 
+// Initialize Sentry before any routes or middleware
+Sentry.init({
+    dsn: process.env.SENTRY_DSN || "",
+    integrations: [
+        nodeProfilingIntegration(),
+    ],
+    tracesSampleRate: 1.0, 
+    profilesSampleRate: 1.0, 
+});
+
+// Sentry Request Handler (must be the first middleware)
+Sentry.setupExpressErrorHandler(app);
 // ─── SECURITY: Helmet (HTTP security headers) ───
 app.use(helmet());
 
@@ -156,6 +171,21 @@ app.use('/api/admin', userRoutes); // Admin sub-routes live inside userRoutes
 
 // ─── Global error handler (centralized — must be last) ───
 app.use(errorHandler);
+
+// ─── Unhandled Promise Rejection Handler ───
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[UnhandledPromiseRejection]', reason);
+    // In production, could alert via Sentry
+    if (process.env.NODE_ENV === 'production') {
+        const Sentry = require('@sentry/node');
+        Sentry.captureException(reason);
+    }
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('[UncaughtException]', err.message);
+    process.exit(1);
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(` Server running on port ${PORT}`));

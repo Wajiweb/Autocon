@@ -96,8 +96,8 @@ export const useAuction = () => {
     };
 
     const deployAuction = async () => {
-        if (!contractData.abi || !contractData.bytecode) return toast.error("Generate auction first!");
-        if (!generatedCode) return toast.error("Contract code is empty.");
+        if (!contractData?.abi || !contractData?.bytecode) return toast.error("Generate auction first!");
+        if (!generatedCode || !generatedCode.trim()) return toast.error("Contract code is empty.");
         if (txInFlight) return;
 
         resetTransaction();

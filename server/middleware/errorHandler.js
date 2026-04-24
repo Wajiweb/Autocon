@@ -60,6 +60,12 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
         stack:     process.env.NODE_ENV !== 'production' ? err.stack : undefined,
     }));
 
+    // Send to Sentry (excluding 4xx client errors like validation and bad ID)
+    if (process.env.NODE_ENV === 'production' && !['ValidationError', 'CastError'].includes(err.name) && err.message !== 'Not allowed by CORS') {
+        const Sentry = require('@sentry/node');
+        Sentry.captureException(err);
+    }
+
     // ── CORS ────────────────────────────────────────────────────────────────
     if (err.message === 'Not allowed by CORS') {
         return res.status(403).json(buildErrorResponse(
@@ -116,6 +122,15 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
             err.code,
             err.message,
             err.details
+        ));
+    }
+
+    // ── Circuit Breaker / Service Unavailable ──────────────────────────
+    if (err.code === 'IPFS_CIRCUIT_OPEN' || err.code === 'IPFS_UPLOAD_FAILED' || err.code === 'AI_UNAVAILABLE') {
+        return res.status(503).json(buildErrorResponse(
+            'SERVICE_UNAVAILABLE',
+            err.message,
+            null
         ));
     }
 

@@ -30,6 +30,9 @@ const eth = {
         .messages({ 'any.only': '{{#label}} must be a supported network (sepolia, mainnet, amoy, bnb testnet)' }),
 
     solidity: Joi.string().min(10).max(200000),
+    
+    // Large payload validation for AI and verification endpoints
+    largeSolidity: Joi.string().min(10).max(500000), // 500KB max for large contracts
 };
 
 const name  = Joi.string().min(1).max(64).trim();
@@ -108,8 +111,8 @@ const schemas = {
 
     // ── AI Chat ───────────────────────────────────────────────────────────────
     chatMessage: Joi.object({
-        message: Joi.string().min(1).max(2000).trim().required(),
-        context: Joi.string().valid('ERC20', 'ERC721', 'AUCTION', 'general').default('general'),
+        contractCode: eth.solidity.required(),
+        question: Joi.string().min(1).max(2000).trim().required(),
     }),
 
     // ── AI Assistant ──────────────────────────────────────────────────────────
@@ -129,6 +132,71 @@ const schemas = {
         limit:  Joi.number().integer().min(1).max(50).default(10),
         type:   Joi.string().valid('verification', 'audit').optional(),
         status: Joi.string().valid('pending', 'processing', 'completed', 'failed').optional(),
+    }),
+
+    // ── Save Deployments (previously unvalidated) ─────────────────────────────
+    saveToken: Joi.object({
+        name:            name.required(),
+        symbol:          symbol.required(),
+        contractAddress: eth.address.required(),
+        ownerAddress:    eth.address.required(),
+        network:         eth.network.optional().default('sepolia'),
+        abi:             Joi.array().optional(),
+    }),
+
+    saveNFT: Joi.object({
+        name:            name.required(),
+        symbol:          symbol.required(),
+        contractAddress: eth.address.required(),
+        ownerAddress:    eth.address.required(),
+        network:         eth.network.optional().default('sepolia'),
+        maxSupply:       Joi.number().integer().positive().optional(),
+        mintPrice:       Joi.string().pattern(/^\d+(\.\d+)?$/).optional(),
+        baseURI:         Joi.string().optional().allow(''),
+        abi:             Joi.array().optional(),
+    }),
+
+    saveAuction: Joi.object({
+        name:            name.required(),
+        itemName:        name.optional().allow(''),
+        itemDescription: Joi.string().max(500).optional().allow(''),
+        contractAddress: eth.address.required(),
+        ownerAddress:    eth.address.required(),
+        network:         eth.network.optional().default('sepolia'),
+        duration:        Joi.number().integer().optional(),
+        minimumBid:      Joi.string().pattern(/^\d+(\.\d+)?$/).optional(),
+    }),
+
+    // ── Etherscan Verification ────────────────────────────────────────────────
+    verifyContract: Joi.object({
+        contractAddress:       eth.address.required(),
+        sourceCode:            eth.solidity.required(),
+        contractName:          name.required(),
+        compilerVersion:       Joi.string().required(),
+        network:               eth.network.required(),
+        constructorArguements: Joi.string().optional().allow('', null),
+    }),
+
+    // ── Gas Estimation ────────────────────────────────────────────────────────
+    estimateGas: Joi.object({
+        abi:             Joi.array().required(),
+        bytecode:        Joi.string().min(2).required(),
+        ownerAddress:    eth.address.required(),
+        constructorArgs: Joi.array().optional(),
+        supply:          Joi.alternatives().try(Joi.string(), Joi.number()).optional(),
+        network:         eth.network.optional().default('sepolia'),
+    }),
+
+    // ── Custom Compile (Monaco editor) ───────────────────────────────────────
+    compileCustom: Joi.object({
+        sourceCode:   eth.solidity.required(),
+        contractName: name.required(),
+    }),
+
+    // ── Large Contract Compile (for verification) ────────────────────────
+    compileLarge: Joi.object({
+        sourceCode:   eth.largeSolidity.required(),
+        contractName: name.required(),
     }),
 };
 

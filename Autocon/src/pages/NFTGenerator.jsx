@@ -13,20 +13,27 @@ import { useAISuggestion } from '../hooks/useAISuggestion';
 import AIChatPanel from '../components/dashboard/AIChatPanel';
 import DeveloperToggle from '../components/dashboard/DeveloperToggle';
 import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
+import { useContractStore } from '../store/useContractStore';
+import IPFSUploader from '../components/ui/IPFSUploader';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Card } from '../components/ui/Card';
 
 export default function NFTGenerator() {
     const {
         formData, setFormData, generatedCode,
         connectWallet, generateNFT, deployNFT,
         estimateGas, gasEstimate, isEstimating,
-        showSuccessModal, setShowSuccessModal,
-        contractData, deploymentReceipt, providerInstance
+        showSuccessModal, setShowSuccessModal
     } = useNFT();
+    const contractData = useContractStore(s => s.contractData);
     const isDeploying = useTransactionStore(selectIsDeploying);
     const deployStep = useTransactionStore(s => s.step);
     const errorStep = useTransactionStore(s => s.errorStep);
     const errorMessage = useTransactionStore(s => s.errorMessage);
     const deployedAddress = useTransactionStore(s => s.contractAddress);
+    const deploymentReceipt = useTransactionStore(s => s.receipt);
+    const providerInstance = useTransactionStore(s => s.provider);
     const { network } = useNetwork();
     const { isSuggesting, generateSuggestions } = useAISuggestion();
     const [auditStatus, setAuditStatus] = useState({ canDeploy: false, isAuditing: false });
@@ -48,6 +55,20 @@ export default function NFTGenerator() {
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        // Client-side validation
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        
+        if (file.size > MAX_FILE_SIZE) {
+            setMetadataState(prev => ({ ...prev, status: 'error', error: 'File too large. Maximum 10MB allowed.' }));
+            return toast.error('File too large. Maximum 10MB allowed.');
+        }
+        
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            setMetadataState(prev => ({ ...prev, status: 'error', error: 'Invalid file type. Only JPG, PNG, GIF, WebP allowed.' }));
+            return toast.error('Invalid file type. Only JPG, PNG, GIF, WebP allowed.');
+        }
 
         setMetadataState(prev => ({ ...prev, status: 'uploading', error: '' }));
         const uploadToast = toast.loading('Uploading image to IPFS...');
@@ -140,471 +161,309 @@ export default function NFTGenerator() {
     };
 
     return (
-        <div className="container" style={{ paddingTop: '12px' }}>
-
-
+        <div className="container pt-3">
             {/* Header */}
-            <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{
-                            width: '44px', height: '44px',
-                            background: 'var(--primary-gradient)',
-                            borderRadius: '14px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '22px', boxShadow: 'var(--shadow-ambient)'
-                        }}>🎨</div>
-                        <h1 style={{
-                            fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-                            color: 'var(--on-surface)'
-                        }}>
-                            NFT <span className="gradient-text">Generator</span>
+            <div className="animate-fade-in-up mb-8">
+                <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 bg-[var(--primary-gradient)] rounded-xl flex items-center justify-center text-[22px] shadow-[var(--shadow-ambient)]">🎨</div>
+                        <h1 className="text-3xl font-black tracking-tight text-[var(--on-surface)]">
+                            NFT <span className="text-transparent bg-clip-text bg-[var(--primary-gradient)]">Generator</span>
                         </h1>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="flex gap-2">
                         <input 
                             type="text" 
                             placeholder="Describe your NFT..." 
                             value={aiIntent} 
                             onChange={(e) => setAiIntent(e.target.value)}
-                            className="pg-input" 
-                            style={{ width: '200px', fontSize: '13px', padding: '8px 12px' }}
+                            className="w-[200px] text-[13px] px-3 py-2 bg-[var(--surface)] border border-[var(--outline-variant)] rounded-full text-[var(--on-surface)] outline-none focus:border-[#7C3AED]"
                             onKeyDown={(e) => { if(e.key === 'Enter') generateSuggestions('NFT', setFormData, aiIntent) }}
                         />
-                        <button 
+                        <Button 
+                            variant="secondary"
                             onClick={() => generateSuggestions('NFT', setFormData, aiIntent)}
-                            disabled={isSuggesting}
-                            className="pg-btn" 
-                            style={{ background: 'var(--db-s2)', border: '1px solid var(--db-br)', color: 'var(--db-acc)', fontSize: 13, padding: '8px 16px', borderRadius: '50px', cursor: isSuggesting ? 'wait' : 'pointer' }}
+                            isLoading={isSuggesting}
+                            className="rounded-full !py-2 !px-4"
                         >
-                            {isSuggesting ? '⏳...' : '✨ Auto-Fill'}
-                        </button>
-                        <button 
+                            ✨ Auto-Fill
+                        </Button>
+                        <Button 
+                            variant="primary"
                             onClick={() => setIsChatOpen(true)}
-                            className="pg-btn" 
-                            style={{ background: 'var(--db-acc)', border: 'none', color: '#000', fontSize: 13, padding: '8px 16px', borderRadius: '50px', cursor: 'pointer', fontWeight: 600 }}
+                            className="rounded-full !py-2 !px-4 bg-[var(--db-acc)] text-black"
                         >
                             💬 AI Chat
-                        </button>
+                        </Button>
                     </div>
                 </div>
-                <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
+                <p className="text-[var(--on-surface-variant)] text-[0.95rem]">
                     Design and deploy custom ERC-721 NFT collections — no Solidity required.
                 </p>
 
                 {/* Feature badges */}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
+                <div className="flex gap-2 mt-3.5 flex-wrap">
                     {['Max Supply Cap', 'Mint Pricing', 'URI Storage', 'Burn Support', 'IPFS Upload', 'Owner Withdraw'].map(f => (
-                        <span key={f} style={{
-                            padding: '5px 12px', borderRadius: '50px',
-                            fontSize: '0.68rem', fontWeight: 700,
-                            background: 'rgba(139,92,246,0.08)',
-                            color: '#a78bfa',
-                            border: '1px solid rgba(139,92,246,0.15)'
-                        }}>{f}</span>
+                        <span key={f} className="px-3 py-1 rounded-full text-[0.68rem] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            {f}
+                        </span>
                     ))}
                 </div>
             </div>
 
             {/* Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                
                 {/* Left Column: Form */}
-                <div className="card glass animate-fade-in-up delay-100" style={{ padding: '36px' }}>
+                <Card variant="glass" className="animate-fade-in-up delay-100">
                     <form onSubmit={generateNFT}>
-                    {/* Collection Name */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <label style={{
-                            display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--outline)', textTransform: 'uppercase',
-                            letterSpacing: '1px', marginBottom: '10px'
-                        }}>
-                            Collection Name
-                        </label>
-                        <input
+                        
+                        <Input
+                            label="Collection Name"
                             name="name"
                             value={formData?.name || ''}
                             placeholder="e.g. AutoCon Genesis"
-                            className="input"
                             onChange={handleChange}
                             required
                         />
-                    </div>
 
-                    {/* Symbol + Max Supply */}
-                    <div className="flex flex-col md:flex-row gap-4 mb-6">
-                        <div style={{ flex: 1 }}>
-                            <label style={{
-                                display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                                color: 'var(--outline)', textTransform: 'uppercase',
-                                letterSpacing: '1px', marginBottom: '10px'
-                            }}>Symbol</label>
-                            <input
+                        <div className="flex flex-col md:flex-row gap-4 mb-6">
+                            <Input
+                                label="Symbol"
                                 name="symbol"
                                 value={formData?.symbol || ''}
                                 placeholder="e.g. ACG"
-                                className="input"
                                 onChange={handleChange}
+                                wrapperClassName="flex-1 !mb-0"
                                 required
                             />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <label style={{
-                                display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                                color: 'var(--outline)', textTransform: 'uppercase',
-                                letterSpacing: '1px', marginBottom: '10px'
-                            }}>Max Supply</label>
-                            <input
+                            <Input
+                                label="Max Supply"
                                 name="maxSupply"
                                 type="number"
                                 placeholder="10000"
-                                className="input"
                                 onChange={handleChange}
                                 value={formData?.maxSupply || ''}
+                                wrapperClassName="flex-1 !mb-0"
+                                helperText={Number(formData?.maxSupply) > 100000 ? '⚠️ A huge supply may lower rarity and floor price.' : ''}
                                 required
                             />
-                            {Number(formData?.maxSupply) > 100000 && (
-                                <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '6px' }}>⚠️ A huge supply may lower rarity and floor price.</div>
-                            )}
                         </div>
-                    </div>
 
-                    {/* Mint Price */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <label style={{
-                            display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--outline)', textTransform: 'uppercase',
-                            letterSpacing: '1px', marginBottom: '10px'
-                        }}>
-                            Mint Price ({network.currencySymbol || 'ETH'})
-                        </label>
-                        <input
+                        <Input
+                            label={`Mint Price (${network.currencySymbol || 'ETH'})`}
                             name="mintPrice"
                             type="number"
                             step="0.001"
                             placeholder="0.01"
-                            className="input"
                             onChange={handleChange}
                             value={formData?.mintPrice || ''}
+                            helperText="Set to 0 for free minting. Owner can always mint for free."
                         />
-                        <p style={{ fontSize: '0.7rem', color: 'var(--outline)', marginTop: '6px' }}>
-                            Set to 0 for free minting. Owner can always mint for free.
-                        </p>
-                    </div>
 
-                    {/* IPFS Image Upload & Metadata UX */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <label style={{
-                            display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--outline)', textTransform: 'uppercase',
-                            letterSpacing: '1px', marginBottom: '10px'
-                        }}>
-                            NFT Asset & Metadata
-                        </label>
-                        
-                        <div style={{
-                            padding: '20px', borderRadius: '14px',
-                            border: `2px dashed ${metadataState.status === 'ready' ? 'rgba(16,185,129,0.3)' : 'var(--outline-variant)'}`,
-                            background: metadataState.status === 'ready' ? 'rgba(16,185,129,0.03)' : 'var(--surface-highest)',
-                            transition: 'all 0.2s ease'
-                        }}>
-                            {metadataState.status === 'idle' || metadataState.status === 'error' ? (
-                                <label style={{ cursor: 'pointer', display: 'block', textAlign: 'center' }}>
-                                    <input type="file" accept="image/png, image/jpeg, image/jpg" onChange={handleFileUpload} style={{ display: 'none' }} />
-                                    <span style={{ fontSize: '2rem', display: 'block', marginBottom: '6px' }}>🖼️</span>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--outline)', fontWeight: 600 }}>Click to upload image</p>
-                                    <p style={{ fontSize: '0.7rem', color: 'var(--outline)' }}>JPG, PNG • Max 10MB</p>
-                                    {metadataState.error && <p style={{ fontSize: '0.75rem', color: 'var(--error)', marginTop: '8px' }}>❌ {metadataState.error}</p>}
-                                </label>
-                            ) : metadataState.status === 'uploading' || metadataState.status === 'generating' ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', textAlign: 'center' }}>
-                                    <svg style={{ animation: 'spin-slow 1s linear infinite', width: 16, height: 16, color: 'var(--tertiary)' }} viewBox="0 0 24 24" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                                        <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                                    </svg>
-                                    <span style={{ fontSize: '0.85rem', color: 'var(--outline)' }}>
-                                        {metadataState.status === 'uploading' ? 'Uploading Image to IPFS...' : 'Auto-generating Metadata...'}
-                                    </span>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                                        <div style={{ width: '80px', height: '80px', borderRadius: '10px', background: 'var(--surface)', overflow: 'hidden', border: '1px solid var(--outline-variant)', flexShrink: 0 }}>
-                                            <img src={`https://gateway.pinata.cloud/ipfs/${metadataState.fileCID}`} alt="NFT Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--success)', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: '4px' }}>Metadata Ready</span>
-                                                <button type="button" onClick={() => { setMetadataState({ status: 'idle', fileCID: '', imageUrl: '', name: '', description: '', error: '' }); setFormData(prev => ({ ...prev, baseURI: '' })); }} style={{ fontSize: '0.7rem', color: 'var(--outline)', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Remove</button>
-                                            </div>
-                                            <input value={metadataState.name} onChange={e => setMetadataState(prev => ({ ...prev, name: e.target.value }))} className="input" style={{ padding: '6px 10px', fontSize: '0.8rem', marginBottom: '6px' }} placeholder="NFT Name" />
-                                            <input value={metadataState.description} onChange={e => setMetadataState(prev => ({ ...prev, description: e.target.value }))} className="input" style={{ padding: '6px 10px', fontSize: '0.8rem' }} placeholder="NFT Description" />
-                                        </div>
-                                    </div>
-                                    <button type="button" onClick={handleUpdateMetadata} disabled={metadataState.status === 'updating'} className="btn-secondary" style={{ width: '100%', padding: '8px', fontSize: '0.8rem', display: 'flex', justifyContent: 'center', gap: '8px' }}>
-                                        {metadataState.status === 'updating' ? 'Updating...' : '💾 Save Metadata Changes'}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                        <IPFSUploader 
+                            metadataState={metadataState}
+                            handleFileUpload={handleFileUpload}
+                            handleUpdateMetadata={handleUpdateMetadata}
+                            setMetadataState={setMetadataState}
+                            setFormData={setFormData}
+                        />
 
-                    {/* Base URI */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <label style={{
-                            display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--outline)', textTransform: 'uppercase',
-                            letterSpacing: '1px', marginBottom: '10px'
-                        }}>
-                            Base URI (Token URI)
-                        </label>
-                        <input
+                        <Input
+                            label="Base URI (Token URI)"
                             name="baseURI"
-                            className="input"
                             value={formData?.baseURI || ''}
                             readOnly
-                            style={{ background: 'var(--surface)', color: 'var(--outline)' }}
                             placeholder="Upload an image above to generate token URI"
+                            helperText={metadataState.status === 'ready' ? '✅ Automatically filled from your IPFS metadata.' : '⚠️ Required for deployment. Upload an image above.'}
+                            className="bg-[var(--surface)] text-[var(--outline)]"
                         />
-                        <p style={{ fontSize: '0.7rem', color: 'var(--outline)', marginTop: '6px' }}>
-                            {metadataState.status === 'ready' ? '✅ Automatically filled from your IPFS metadata.' : '⚠️ Required for deployment. Upload an image above.'}
-                        </p>
-                    </div>
 
-                    {/* Owner Address */}
-                    <div style={{ marginBottom: '32px' }}>
-                        <label style={{
-                            display: 'block', fontSize: '0.8rem', fontWeight: 700,
-                            color: 'var(--outline)', textTransform: 'uppercase',
-                            letterSpacing: '1px', marginBottom: '10px'
-                        }}>Owner Address</label>
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            <input
-                                name="ownerAddress"
-                                value={formData?.ownerAddress || ''}
-                                className="input"
-                                style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
-                                readOnly
-                                placeholder="Connect your wallet →"
-                            />
-                            <button
-                                type="button"
-                                onClick={connectWallet}
-                                style={{
-                                    padding: '14px 24px', borderRadius: '14px', border: 'none',
-                                    background: 'var(--primary-gradient)',
-                                    color: 'white', fontWeight: 700, fontSize: '0.9rem',
-                                    cursor: 'pointer', whiteSpace: 'nowrap',
-                                    transition: 'all 0.2s ease',
-                                    boxShadow: 'var(--shadow-primary)'
-                                }}
-                            >🦊 Connect</button>
+                        <div className="mb-8">
+                            <label className="block text-xs font-bold text-[var(--outline)] uppercase tracking-wider mb-2">Owner Address</label>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <input
+                                    name="ownerAddress"
+                                    value={formData?.ownerAddress || ''}
+                                    className="w-full bg-[var(--surface)] border border-[var(--outline-variant)] rounded-xl px-4 py-3 text-sm outline-none font-mono text-[0.85rem]"
+                                    readOnly
+                                    placeholder="Connect your wallet →"
+                                />
+                                <Button
+                                    type="button"
+                                    onClick={connectWallet}
+                                    className="whitespace-nowrap"
+                                >
+                                    🦊 Connect
+                                </Button>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Generate Button */}
-                    <button type="submit" className="btn-primary" style={{
-                        width: '100%', padding: '16px',
-                        background: 'var(--primary-gradient)'
-                    }}>
-                        🎨 Generate NFT Contract
-                    </button>
-                </form>
-            </div>
+                        <Button type="submit" size="lg" className="w-full">
+                            🎨 Generate NFT Contract
+                        </Button>
+                    </form>
+                </Card>
 
-            {/* Right Column: Info, Gas, Deploy, Code */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                
-                {/* Info Card - Always visible */}
-                <div className="card animate-fade-in-up delay-200" style={{ padding: '24px' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--on-surface)', marginBottom: '14px' }}>
-                        📘 What Your NFT Contract Includes
-                    </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-                        {[
-                            { icon: '🖼️', title: 'ERC-721 Standard', desc: 'Full OpenZeppelin NFT implementation' },
-                            { icon: '📝', title: 'URI Storage', desc: 'Individual token metadata per NFT' },
-                            { icon: '🔥', title: 'Burn Support', desc: 'Token holders can burn their NFTs' },
-                            { icon: '💰', title: 'Paid Minting', desc: 'Set a mint price or make it free' },
-                            { icon: '📦', title: 'Max Supply', desc: 'Hard cap on total NFTs that can exist' },
-                            { icon: '🏦', title: 'Withdraw Funds', desc: 'Owner can withdraw collected mint fees' },
-                        ].map(item => (
-                            <div key={item.title} style={{
-                                padding: '14px', borderRadius: '12px',
-                                background: 'var(--surface-highest)',
-                                border: '1px solid var(--outline-variant)',
-                                display: 'flex', gap: '10px', alignItems: 'flex-start'
-                            }}>
-                                <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
+                {/* Right Column: Info, Gas, Deploy, Code */}
+                <div className="flex flex-col gap-6">
+                    
+                    {/* Info Card */}
+                    <Card className="animate-fade-in-up delay-200">
+                        <h3 className="text-[0.9rem] font-extrabold text-[var(--on-surface)] mb-3.5">
+                            📘 What Your NFT Contract Includes
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {[
+                                { icon: '🖼️', title: 'ERC-721 Standard', desc: 'Full OpenZeppelin NFT implementation' },
+                                { icon: '📝', title: 'URI Storage', desc: 'Individual token metadata per NFT' },
+                                { icon: '🔥', title: 'Burn Support', desc: 'Token holders can burn their NFTs' },
+                                { icon: '💰', title: 'Paid Minting', desc: 'Set a mint price or make it free' },
+                                { icon: '📦', title: 'Max Supply', desc: 'Hard cap on total NFTs that can exist' },
+                                { icon: '🏦', title: 'Withdraw Funds', desc: 'Owner can withdraw collected mint fees' },
+                            ].map(item => (
+                                <div key={item.title} className="p-3.5 rounded-xl bg-[var(--surface-highest)] border border-[var(--outline-variant)] flex gap-2.5 items-start">
+                                    <span className="text-xl">{item.icon}</span>
+                                    <div>
+                                        <p className="text-[0.82rem] font-bold text-[var(--on-surface)] mb-0.5">{item.title}</p>
+                                        <p className="text-[0.72rem] text-[var(--outline)] leading-relaxed">{item.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+
+                    {/* Gas Estimation */}
+                    {generatedCode && (
+                        <Card className="animate-fade-in-up">
+                            <div className={`flex justify-between items-center ${gasEstimate ? 'mb-5' : ''}`}>
                                 <div>
-                                    <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '2px' }}>{item.title}</p>
-                                    <p style={{ fontSize: '0.72rem', color: 'var(--outline)', lineHeight: 1.4 }}>{item.desc}</p>
+                                    <h3 className="text-base font-bold text-[var(--on-surface)] mb-1">
+                                        ⛽ Gas Estimation
+                                    </h3>
+                                    <p className="text-xs text-[var(--outline)]">
+                                        Estimate NFT deployment cost before spending ETH
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="secondary"
+                                    onClick={estimateGas}
+                                    isLoading={isEstimating}
+                                >
+                                    Estimate Gas
+                                </Button>
+                            </div>
+
+                            {gasEstimate && (
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                                        <p className="text-[0.65rem] font-bold text-[var(--outline)] uppercase mb-1.5">Gas Units</p>
+                                        <p className="text-lg font-extrabold text-[var(--tertiary)]">
+                                            {parseInt(gasEstimate.gasUnits).toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-pink-500/10 border border-pink-500/20">
+                                        <p className="text-[0.65rem] font-bold text-[var(--outline)] uppercase mb-1.5">Gas Price</p>
+                                        <p className="text-lg font-extrabold text-pink-500">
+                                            {gasEstimate.gasPriceGwei} Gwei
+                                        </p>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                        <p className="text-[0.65rem] font-bold text-[var(--outline)] uppercase mb-1.5">Est. Cost</p>
+                                        <p className="text-lg font-extrabold text-[var(--success)]">
+                                            {gasEstimate.estimatedCostETH} ETH
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
+                    )}
+
+                    {/* Security Scanner */}
+                    {generatedCode && (
+                        <div className="animate-fade-in-up">
+                            <SecurityScanner 
+                                contractCode={generatedCode} 
+                                onAuditResult={(status) => setAuditStatus(status)} 
+                            />
+                        </div>
+                    )}
+
+                    {/* Deploy Button */}
+                    {generatedCode && (
+                        <div className="animate-fade-in-up">
+                            <div className="mb-4"><DeploymentStatusBar /></div>
+                            {isDeploying && deployStep >= 0 ? (
+                                <Card variant="glass" className="mb-4">
+                                    <DeploymentTimeline currentStep={deployStep} errorStep={errorStep} errorMessage={errorMessage} />
+                                </Card>
+                            ) : (
+                                <Button
+                                    size="lg"
+                                    onClick={deployNFT}
+                                    disabled={!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing}
+                                    className={(!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing) ? '!bg-[var(--surface-highest)] !text-[var(--outline)]' : ''}
+                                >
+                                    {auditStatus.isAuditing ? '⏳ Auditing Contract...' : `🚀 Deploy NFT to ${network.name}`}
+                                </Button>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Generated Code Preview */}
+                    {generatedCode && (
+                        <div className="animate-fade-in-up mt-2">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-bold text-[var(--on-surface)]">
+                                    📄 Generated ERC-721 Contract
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <DeveloperToggle />
+                                    <ExportCenter 
+                                        contractName={formData.name || 'NFTCollection'} 
+                                        abi={contractData?.abi} 
+                                        nftMetadata={{
+                                            name: metadataState.name,
+                                            description: metadataState.description,
+                                            image: metadataState.fileCID ? `ipfs://${metadataState.fileCID}` : ''
+                                        }}
+                                    />
+                                    <span className="px-3 py-1 rounded-full text-[0.7rem] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                        Compiled ✓
+                                    </span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Gas Estimation */}
-                {generatedCode && (
-                    <div className="card animate-fade-in-up" style={{ padding: '28px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: gasEstimate ? '20px' : 0 }}>
-                        <div>
-                            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '4px' }}>
-                                ⛽ Gas Estimation
-                            </h3>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--outline)' }}>
-                                Estimate NFT deployment cost before spending ETH
-                            </p>
-                        </div>
-                        <button
-                            onClick={estimateGas}
-                            disabled={isEstimating}
-                            className="btn-secondary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                        >
-                            {isEstimating ? (
-                                <>
-                                    <svg style={{ animation: 'spin-slow 1s linear infinite', width: 14, height: 14 }} viewBox="0 0 24 24" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                                        <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                                    </svg>
-                                    Estimating...
-                                </>
-                            ) : 'Estimate Gas'}
-                        </button>
-                    </div>
-
-                    {gasEstimate && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-                            <div style={{
-                                padding: '16px', borderRadius: '14px',
-                                background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)'
-                            }}>
-                                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Units</p>
-                                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--tertiary)' }}>
-                                    {parseInt(gasEstimate.gasUnits).toLocaleString()}
-                                </p>
-                            </div>
-                            <div style={{
-                                padding: '16px', borderRadius: '14px',
-                                background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.15)'
-                            }}>
-                                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>Gas Price</p>
-                                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ec4899' }}>
-                                    {gasEstimate.gasPriceGwei} Gwei
-                                </p>
-                            </div>
-                            <div style={{
-                                padding: '16px', borderRadius: '14px',
-                                background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)'
-                            }}>
-                                <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', marginBottom: '6px' }}>Est. Cost</p>
-                                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--success)' }}>
-                                    {gasEstimate.estimatedCostETH} ETH
-                                </p>
+                            <div className="rounded-xl overflow-hidden border border-[var(--outline-variant)]">
+                                <CodeViewer />
                             </div>
                         </div>
                     )}
+                    
                 </div>
-            )}
-
-            {/* Security Scanner */}
-            {generatedCode && (
-                <div className="animate-fade-in-up" style={{ marginBottom: '16px' }}>
-                    <SecurityScanner 
-                        contractCode={generatedCode} 
-                        onAuditResult={(status) => setAuditStatus(status)} 
-                    />
-                </div>
-            )}
-
-            {/* Deploy Button */}
-            {generatedCode && (
-                <div className="animate-fade-in-up">
-                    <div style={{ marginBottom: 16 }}><DeploymentStatusBar /></div>
-                    {isDeploying && deployStep >= 0 ? (
-                        <div className="card glass" style={{ padding: '28px', marginBottom: '16px' }}>
-                            <DeploymentTimeline currentStep={deployStep} errorStep={errorStep} errorMessage={errorMessage} />
-                        </div>
-                    ) : (
-                        <button
-                            onClick={deployNFT}
-                            disabled={!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing}
-                            className="btn-primary"
-                            style={{
-                                width: '100%', padding: '18px', fontSize: '1.05rem',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                                background: (!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing)
-                                    ? 'var(--surface-highest)'
-                                    : 'var(--primary-gradient)',
-                                color: (!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing) ? 'var(--outline)' : 'white',
-                                cursor: (!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing) ? 'not-allowed' : 'pointer'
-                            }}
-                        >
-                            {auditStatus.isAuditing ? '⏳ Auditing Contract...' : `🚀 Deploy NFT to ${network.name}`}
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {/* Generated Code Preview */}
-            {generatedCode && (
-                <div className="animate-fade-in-up">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--on-surface)' }}>
-                            📄 Generated ERC-721 Contract
-                        </h3>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <DeveloperToggle />
-                            <ExportCenter 
-                                contractName={formData.name || 'NFTCollection'} 
-                                abi={contractData?.abi} 
-                                nftMetadata={{
-                                    name: metadataState.name,
-                                    description: metadataState.description,
-                                    image: metadataState.fileCID ? `ipfs://${metadataState.fileCID}` : ''
-                                }}
-                            />
-                            <span style={{
-                                padding: '4px 12px', borderRadius: '50px',
-                                fontSize: '0.7rem', fontWeight: 700,
-                                background: 'rgba(139,92,246,0.1)',
-                                color: '#a78bfa',
-                                border: '1px solid rgba(139,92,246,0.2)'
-                            }}>Compiled ✓</span>
-                        </div>
-                    </div>
-                    <div className="code-block" style={{ padding: 0 }}>
-                        <CodeViewer />
-                    </div>
-                </div>
-            )}
-            
             </div>
-          </div>
 
-        {/* Deploy Success Modal */}
-        <DeploySuccessModal
-            isOpen={showSuccessModal}
-            onClose={() => setShowSuccessModal(false)}
-            address={deployedAddress || ''}
-            network={network.name}
-            contractType="NFT"
-            explorerUrl={network.explorer || 'https://sepolia.etherscan.io'}
-            abi={contractData?.abi}
-            contractName={formData.name || 'NFT'}
-            receipt={deploymentReceipt}
-            provider={providerInstance}
-            sourceCode={generatedCode}
-            compilerVersion={contractData.compilerVersion}
-            constructorArgs={contractData.constructorArgs}
-        />
-        
-        <AIChatPanel 
-            isOpen={isChatOpen} 
-            onClose={() => setIsChatOpen(false)} 
-            contractCode={generatedCode} 
-        />
+            {/* Deploy Success Modal */}
+            <DeploySuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                address={deployedAddress || ''}
+                network={network.name}
+                contractType="NFT"
+                explorerUrl={network.explorer || 'https://sepolia.etherscan.io'}
+                abi={contractData?.abi}
+                contractName={formData.name || 'NFT'}
+                receipt={deploymentReceipt}
+                provider={providerInstance}
+                sourceCode={generatedCode}
+                compilerVersion={contractData.compilerVersion}
+                constructorArgs={contractData.constructorArgs}
+            />
+            
+            <AIChatPanel 
+                isOpen={isChatOpen} 
+                onClose={() => setIsChatOpen(false)} 
+                contractCode={generatedCode} 
+            />
         </div>
     );
 }
