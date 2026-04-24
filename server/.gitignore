@@ -1,2 +1,15 @@
+# Environment — NEVER commit
 .env
+.env.*
+!.env.example
+
+# Dependencies
 node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
