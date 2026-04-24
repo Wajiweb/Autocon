@@ -36,38 +36,38 @@ export default function LoginPage() {
                 position: 'absolute', top: '16px', left: '16px', zIndex: 50,
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '8px 14px', borderRadius: '10px',
-                background: 'rgba(143,185,0,0.06)',
-                border: '1px solid rgba(143,185,0,0.18)',
+                background: 'var(--primary-subtle)',
+                border: '1px solid var(--primary-muted)',
                 backdropFilter: 'blur(10px)',
                 color: 'var(--on-surface-variant)', fontSize: '0.85rem', fontWeight: 600,
                 textDecoration: 'none', transition: 'all 0.2s ease',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
             }}
-            onMouseOver={e => { e.currentTarget.style.color = 'var(--on-surface)'; e.currentTarget.style.background = 'rgba(143,185,0,0.12)'; e.currentTarget.style.borderColor = 'rgba(143,185,0,0.35)'; }}
-            onMouseOut={e => { e.currentTarget.style.color = 'var(--on-surface-variant)'; e.currentTarget.style.background = 'rgba(143,185,0,0.06)'; e.currentTarget.style.borderColor = 'rgba(143,185,0,0.18)'; }}
+            onMouseOver={e => { e.currentTarget.style.color = 'var(--on-surface)'; e.currentTarget.style.background = 'var(--primary-muted)'; }}
+            onMouseOut={e => { e.currentTarget.style.color = 'var(--on-surface-variant)'; e.currentTarget.style.background = 'var(--primary-subtle)'; }}
             >
                 <ArrowLeft size={16} />
                 Back to Home
             </a>
 
-            {/* Background decorative glow orbs — green scheme */}
+            {/* Background glow orbs */}
             <div style={{
                 position: 'absolute', top: '-10%', right: '-10%',
                 width: '150vw', maxWidth: '600px', height: '150vw', maxHeight: '600px',
-                background: 'radial-gradient(circle, rgba(143,185,0,0.12) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(93,169,233,0.10) 0%, transparent 70%)',
                 borderRadius: '50%', pointerEvents: 'none'
             }} />
             <div style={{
                 position: 'absolute', bottom: '-10%', left: '-10%',
                 width: '120vw', maxWidth: '500px', height: '120vw', maxHeight: '500px',
-                background: 'radial-gradient(circle, rgba(34,197,94,0.09) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(182,181,216,0.07) 0%, transparent 70%)',
                 borderRadius: '50%', pointerEvents: 'none'
             }} />
 
             {/* Subtle grid overlay */}
             <div style={{
-                position: 'absolute', inset: 0, opacity: 0.04,
-                backgroundImage: 'linear-gradient(rgba(143,185,0,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(143,185,0,.15) 1px, transparent 1px)',
+                position: 'absolute', inset: 0, opacity: 0.03,
+                backgroundImage: 'linear-gradient(rgba(93,169,233,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(93,169,233,.15) 1px, transparent 1px)',
                 backgroundSize: '60px 60px', pointerEvents: 'none'
             }} />
 
@@ -79,9 +79,9 @@ export default function LoginPage() {
                     borderRadius: '28px',
                     textAlign: 'center',
                     background: 'var(--surface)',
-                    border: '1px solid rgba(143,185,0,0.18)',
-                    borderTop: '1px solid rgba(143,185,0,0.30)',
-                    boxShadow: '0 24px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(143,185,0,0.06)',
+                    border: '1px solid var(--primary-muted)',
+                    borderTop: '1px solid rgba(93,169,233,0.30)',
+                    boxShadow: '0 24px 60px rgba(0,0,0,0.35), 0 0 0 1px var(--primary-subtle)',
                     backdropFilter: 'blur(40px)',
                     padding: '40px 40px',
                 }}>
@@ -90,8 +90,8 @@ export default function LoginPage() {
                         width: '90px', height: '90px',
                         borderRadius: '22px', margin: '0 auto 28px',
                         overflow: 'hidden',
-                        boxShadow: '0 8px 40px rgba(143,185,0,0.30)',
-                        border: '2px solid rgba(143,185,0,0.25)',
+                        boxShadow: '0 8px 40px rgba(93,169,233,0.25)',
+                        border: '2px solid var(--primary-muted)',
                     }}>
                         <img
                             src="/autocon-logo.png"
@@ -124,9 +124,9 @@ export default function LoginPage() {
                             borderRadius: '16px',
                             border: 'none',
                             background: isConnecting
-                                ? 'rgba(143,185,0,0.10)'
-                                : 'linear-gradient(135deg, #8FB900 0%, #A5C900 100%)',
-                            color: '#0c1a0f',
+                                ? 'var(--primary-subtle)'
+                                : 'var(--primary)',
+                            color: '#fff',
                             fontSize: '1rem',
                             fontWeight: 700,
                             cursor: isConnecting ? 'not-allowed' : 'pointer',
@@ -135,7 +135,7 @@ export default function LoginPage() {
                             justifyContent: 'center',
                             gap: '12px',
                             transition: 'all 0.3s ease',
-                            boxShadow: isConnecting ? 'none' : '0 8px 30px rgba(143,185,0,0.35)',
+                            boxShadow: isConnecting ? 'none' : '0 8px 30px rgba(93,169,233,0.30)',
                             opacity: isConnecting ? 0.7 : 1
                         }}
                         onMouseOver={(e) => { if (!isConnecting) e.currentTarget.style.transform = 'translateY(-2px)'; }}
@@ -162,29 +162,23 @@ export default function LoginPage() {
                         display: 'flex', alignItems: 'center', gap: 16,
                         margin: '28px 0 20px', color: 'var(--outline)', fontSize: '0.75rem'
                     }}>
-                        <div style={{ flex: 1, height: 1, background: 'rgba(143,185,0,0.12)' }} />
+                        <div style={{ flex: 1, height: 1, background: 'var(--outline-subtle)' }} />
                         <span>SECURED BY BLOCKCHAIN</span>
-                        <div style={{ flex: 1, height: 1, background: 'rgba(143,185,0,0.12)' }} />
+                        <div style={{ flex: 1, height: 1, background: 'var(--outline-subtle)' }} />
                     </div>
-
-                    {/* Security badges */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                        <span className="badge badge-accent">🔒 JWT Auth</span>
-                        <span className="badge badge-success">🛡️ CORS Protected</span>
-                        <span className="badge badge-warning">⚡ Rate Limited</span>
-                    </div>
-                </div>
-
                 {/* Footer */}
                 <p style={{
                     textAlign: 'center',
                     marginTop: '24px',
+                            marginBottom: '0px',
                     color: 'var(--outline)',
                     fontSize: '0.75rem'
                 }}>
                     No-code smart contract platform • Sepolia Testnet
                 </p>
             </div>
+    ```
+            </div>
         </div>
-    );
-}
+        );
+    }

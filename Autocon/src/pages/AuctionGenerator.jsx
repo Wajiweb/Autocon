@@ -1,18 +1,36 @@
 import { useAuction } from '../hooks/useAuction';
 import { useNetwork } from '../context/NetworkContext';
 
-import CodeExportTools from '../components/dashboard/CodeExportTools';
+import ExportCenter from '../components/dashboard/ExportCenter';
+import DeveloperToggle from '../components/dashboard/DeveloperToggle';
+import CodeViewer from '../components/dashboard/CodeViewer';
+import SecurityScanner from '../components/dashboard/SecurityScanner';
 import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
+import DeploymentStatusBar from '../components/deploy/DeploymentStatusBar';
+import DeploymentTimeline from '../components/deploy/DeploymentTimeline';
+import { useState } from 'react';
+import { useAISuggestion } from '../hooks/useAISuggestion';
+import AIChatPanel from '../components/dashboard/AIChatPanel';
+import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
 
 export default function AuctionGenerator() {
     const {
         formData, setFormData, generatedCode, contractData,
         connectWallet, generateAuction, deployAuction,
-        estimateGas, gasEstimate, isEstimating, isDeploying,
+        estimateGas, gasEstimate, isEstimating,
         showSuccessModal, setShowSuccessModal,
-        deploymentReceipt, providerInstance, deployedAddress
+        deploymentReceipt, providerInstance
     } = useAuction();
+    const isDeploying = useTransactionStore(selectIsDeploying);
+    const deployStep = useTransactionStore(s => s.step);
+    const errorStep = useTransactionStore(s => s.errorStep);
+    const errorMessage = useTransactionStore(s => s.errorMessage);
+    const deployedAddress = useTransactionStore(s => s.contractAddress);
     const { network } = useNetwork();
+    const { isSuggesting, generateSuggestions } = useAISuggestion();
+    const [auditStatus, setAuditStatus] = useState({ canDeploy: false, isAuditing: false });
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [aiIntent, setAiIntent] = useState('');
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,20 +59,48 @@ export default function AuctionGenerator() {
 
             {/* Header */}
             <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
-                    <div style={{
-                        width: '44px', height: '44px',
-                        background: 'var(--primary-gradient)',
-                        borderRadius: '14px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '22px', boxShadow: 'var(--shadow-ambient)'
-                    }}>🔨</div>
-                    <h1 style={{
-                        fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-                        color: 'var(--on-surface)'
-                    }}>
-                        Auction <span className="gradient-text">Generator</span>
-                    </h1>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <div style={{
+                            width: '44px', height: '44px',
+                            background: 'var(--primary-gradient)',
+                            borderRadius: '14px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '22px', boxShadow: 'var(--shadow-ambient)'
+                        }}>🔨</div>
+                        <h1 style={{
+                            fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
+                            color: 'var(--on-surface)'
+                        }}>
+                            Auction <span className="gradient-text">Generator</span>
+                        </h1>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <input 
+                            type="text" 
+                            placeholder="Describe your auction..." 
+                            value={aiIntent} 
+                            onChange={(e) => setAiIntent(e.target.value)}
+                            className="pg-input" 
+                            style={{ width: '200px', fontSize: '13px', padding: '8px 12px' }}
+                            onKeyDown={(e) => { if(e.key === 'Enter') generateSuggestions('Auction', setFormData, aiIntent) }}
+                        />
+                        <button 
+                            onClick={() => generateSuggestions('Auction', setFormData, aiIntent)}
+                            disabled={isSuggesting}
+                            className="pg-btn" 
+                            style={{ background: 'var(--db-s2)', border: '1px solid var(--db-br)', color: 'var(--db-acc)', fontSize: 13, padding: '8px 16px', borderRadius: '50px', cursor: isSuggesting ? 'wait' : 'pointer' }}
+                        >
+                            {isSuggesting ? '⏳...' : '✨ Auto-Fill'}
+                        </button>
+                        <button 
+                            onClick={() => setIsChatOpen(true)}
+                            className="pg-btn" 
+                            style={{ background: 'var(--db-acc)', border: 'none', color: '#000', fontSize: 13, padding: '8px 16px', borderRadius: '50px', cursor: 'pointer', fontWeight: 600 }}
+                        >
+                            💬 AI Chat
+                        </button>
+                    </div>
                 </div>
                 <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
                     Create and deploy decentralized English Auctions — no Solidity required.
@@ -96,7 +142,7 @@ export default function AuctionGenerator() {
                                 color: 'var(--outline)', textTransform: 'uppercase',
                                 letterSpacing: '1px', marginBottom: '10px'
                             }}>Item Name</label>
-                            <input name="itemName" placeholder="e.g. Rare Digital Art #001" className="input" onChange={handleChange} required />
+                            <input name="itemName" value={formData?.itemName || ''} placeholder="e.g. Rare Digital Art #001" className="input" onChange={handleChange} required />
                         </div>
                         <div style={{ flex: 1 }}>
                             <label style={{
@@ -104,7 +150,7 @@ export default function AuctionGenerator() {
                                 color: 'var(--outline)', textTransform: 'uppercase',
                                 letterSpacing: '1px', marginBottom: '10px'
                             }}>Item Description</label>
-                            <input name="itemDescription" placeholder="A brief description of the item..." className="input" onChange={handleChange} />
+                            <input name="itemDescription" value={formData?.itemDescription || ''} placeholder="A brief description of the item..." className="input" onChange={handleChange} />
                         </div>
                     </div>
 
@@ -162,6 +208,9 @@ export default function AuctionGenerator() {
                         <p style={{ fontSize: '0.7rem', color: 'var(--outline)', marginTop: '6px' }}>
                             The smallest bid that will be accepted by the contract.
                         </p>
+                        {Number(formData?.duration) > 2592000 && (
+                            <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '6px' }}>⚠️ A duration over 30 days may reduce bidder urgency.</div>
+                        )}
                     </div>
 
                     {/* Owner Address */}
@@ -261,25 +310,37 @@ export default function AuctionGenerator() {
                 </div>
             )}
 
+            {/* Security Scanner */}
+            {generatedCode && (
+                <div className="animate-fade-in-up" style={{ marginBottom: '16px' }}>
+                    <SecurityScanner 
+                        contractCode={generatedCode} 
+                        onAuditResult={(status) => setAuditStatus(status)} 
+                    />
+                </div>
+            )}
+
             {/* Deploy Button */}
             {generatedCode && (
                 <div className="animate-fade-in-up">
-                    <button onClick={deployAuction} disabled={!generatedCode || isDeploying}
-                        className="btn-primary"
-                        style={{
-                            width: '100%', padding: '18px', fontSize: '1.05rem',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                            background: isDeploying ? 'var(--surface-highest)' : 'var(--primary-gradient)',
-                            color: isDeploying ? 'var(--outline)' : 'white',
-                            cursor: isDeploying ? 'not-allowed' : 'pointer'
-                        }}>
-                        {isDeploying ? (
-                            <><svg style={{ animation: 'spin-slow 1s linear infinite', width: 20, height: 20 }} viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                                <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                            </svg>DEPLOYING AUCTION...</>
-                        ) : `🚀 Deploy Auction to ${network.name}`}
-                    </button>
+                    <div style={{ marginBottom: 16 }}><DeploymentStatusBar /></div>
+                    {isDeploying && deployStep >= 0 ? (
+                        <div className="card glass" style={{ padding: '28px', marginBottom: '16px' }}>
+                            <DeploymentTimeline currentStep={deployStep} errorStep={errorStep} errorMessage={errorMessage} />
+                        </div>
+                    ) : (
+                        <button onClick={deployAuction} disabled={!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing}
+                            className="btn-primary"
+                            style={{
+                                width: '100%', padding: '18px', fontSize: '1.05rem',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                                background: (isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing) ? 'var(--surface-highest)' : 'var(--primary-gradient)',
+                                color: (isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing) ? 'var(--outline)' : 'white',
+                                cursor: (isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing) ? 'not-allowed' : 'pointer'
+                            }}>
+                            {auditStatus.isAuditing ? '⏳ Auditing Contract...' : `🚀 Deploy Auction to ${network.name}`}
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -289,15 +350,16 @@ export default function AuctionGenerator() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                         <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--on-surface)' }}>📄 Generated Auction Contract</h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <CodeExportTools code={generatedCode} contractName={formData.name || 'Auction'} />
+                            <DeveloperToggle />
+                            <ExportCenter contractName={formData.name || 'Auction'} abi={contractData?.abi} />
                             <span style={{
                                 padding: '4px 12px', borderRadius: '50px', fontSize: '0.7rem', fontWeight: 700,
                                 background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)'
                             }}>Compiled ✓</span>
                         </div>
                     </div>
-                    <div className="code-block">
-                        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}><code>{generatedCode}</code></pre>
+                    <div className="code-block" style={{ padding: 0 }}>
+                        <CodeViewer />
                     </div>
                 </div>
             )}
@@ -317,6 +379,12 @@ export default function AuctionGenerator() {
             contractName={formData.name || 'Auction'}
             receipt={deploymentReceipt}
             provider={providerInstance}
+        />
+        
+        <AIChatPanel 
+            isOpen={isChatOpen} 
+            onClose={() => setIsChatOpen(false)} 
+            contractCode={generatedCode} 
         />
         </div>
     );

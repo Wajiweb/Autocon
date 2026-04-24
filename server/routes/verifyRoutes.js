@@ -97,4 +97,48 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/verify/status/:network/:guid
+ * Checks the status of a pending verification on Etherscan V2.
+ */
+router.get('/status/:network/:guid', authMiddleware, async (req, res) => {
+    try {
+        const { network, guid } = req.params;
+        const apiKey = process.env.ETHERSCAN_API_KEY;
+
+        const chainId = NETWORK_CHAIN_IDS[network.toLowerCase()];
+        if (!chainId) {
+            return res.status(400).json({ success: false, error: 'Unsupported network.' });
+        }
+
+        const apiUrl = `https://api.etherscan.io/v2/api?chainid=${chainId}`;
+        
+        const response = await axios.get(apiUrl, {
+            params: {
+                apikey: apiKey,
+                module: 'contract',
+                action: 'checkverifystatus',
+                guid: guid
+            }
+        });
+
+        const data = response.data;
+        const statusMessage = data.result || '';
+
+        const isPending = statusMessage.includes('Pending in queue');
+        const isVerified = statusMessage.includes('Pass - Verified') || statusMessage.includes('Already Verified');
+
+        res.json({
+            success: true,
+            status: statusMessage,
+            isPending,
+            isVerified
+        });
+
+    } catch (error) {
+        console.error('❌ Etherscan Status Check Error:', error.response?.data || error.message);
+        res.status(500).json({ success: false, error: 'Failed to check verification status.' });
+    }
+});
+
 module.exports = router;

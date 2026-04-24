@@ -1,28 +1,31 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { useWallet } from './useWallet';
 import { fireConfetti } from '../utils/confetti';
+import { useContractStore } from '../store/useContractStore';
+import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
 
 export const useNFT = () => {
     const { authFetch } = useAuth();
     const { network } = useNetwork();
+    const location = useLocation();
+    const prefill = location.state?.prefill || {};
     const [formData, setFormData] = useState({
-        name: '', symbol: '', maxSupply: '10000',
-        baseURI: '', mintPrice: '0', ownerAddress: ''
+        name: prefill.name || '', symbol: prefill.symbol || '',
+        maxSupply: prefill.maxSupply || '10000',
+        baseURI: prefill.baseURI || '',
+        mintPrice: prefill.mintPrice ?? '0', ownerAddress: ''
     });
-    const [generatedCode, setGeneratedCode] = useState('');
-    const [contractData, setContractData] = useState({ abi: null, bytecode: null });
-    const [isDeploying, setIsDeploying] = useState(false);
-    const [deployStep, setDeployStep] = useState(-1);
-    const [deployedAddress, setDeployedAddress] = useState(null);
+    const { generatedCode, setGeneratedCode, isEditingEnabled, contractData, setContractData } = useContractStore();
+    const { resetTransaction, setStatus, setTxHash, setConfirmed, setError, setNetwork, setStep, setErrorStep } = useTransactionStore();
+    const txInFlight = useTransactionStore(selectIsDeploying);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [gasEstimate, setGasEstimate] = useState(null);
     const [isEstimating, setIsEstimating] = useState(false);
-    const [deploymentReceipt, setDeploymentReceipt] = useState(null);
-    const [providerInstance, setProviderInstance] = useState(null);
 
     const { connectWallet: baseConnectWallet } = useWallet();
 
@@ -45,15 +48,18 @@ export const useNFT = () => {
             const data = await res.json();
 
             if (data.success) {
-                setGeneratedCode(data.contractCode);
-                setContractData({ abi: data.abi, bytecode: data.bytecode });
+                setGeneratedCode(data.contractCode, 'NFT', { 
+                    abi: data.abi, 
+                    bytecode: data.bytecode, 
+                    compilerVersion: data.compilerVersion || 'v0.8.20+commit.a1b79de6',
+                    constructorArgs: null 
+                });
                 setGasEstimate(null);
                 toast.success("NFT Contract Compiled & Ready! 🎨", { id: loadingToast });
             } else {
                 toast.error(data.error || "Compilation failed.", { id: loadingToast });
             }
         } catch (_err) {
-            console.error("NFT Generation Error:", _err);
             toast.error("Backend error. Make sure server is running.", { id: loadingToast });
         }
     };
@@ -91,8 +97,7 @@ export const useNFT = () => {
             } else {
                 toast.error(data.error || "Failed to estimate gas.");
             }
-        } catch (_err) {
-            console.error("Gas Error:", _err);
+        } catch {
             toast.error("Failed to estimate gas.");
         } finally {
             setIsEstimating(false);
@@ -101,27 +106,51 @@ export const useNFT = () => {
 
     const deployNFT = async () => {
         if (!contractData.abi || !contractData.bytecode) return toast.error("Generate NFT code first!");
+        if (!generatedCode) return toast.error("Contract code is empty.");
+        if (!formData.baseURI || !formData.baseURI.startsWith('ipfs://')) return toast.error("Valid IPFS Token URI is required before deployment. Please upload an image first.");
+        if (txInFlight) return;
 
-        setIsDeploying(true);
-        setDeployStep(0); // Compiling
+        resetTransaction();
+        setNetwork(network.name);
+        setStatus('pending');
+
+        setStep(0);
         let deployed;
+        let finalAbi = contractData.abi;
+        let finalBytecode = contractData.bytecode;
 
         try {
+            if (isEditingEnabled) {
+                toast.loading("Recompiling custom code...", { id: 'recompile' });
+                const compRes = await authFetch('/api/compile', {
+                    method: 'POST',
+                    body: JSON.stringify({ sourceCode: generatedCode, contractName: formData.name.replace(/\s+/g, '') || 'NFTCollection' })
+                });
+                const compData = await compRes.json();
+                if (!compData.success) {
+                    setErrorStep(-1, "Compilation Failed: " + compData.error);
+                    return toast.error("Compilation Failed: " + compData.error, { id: 'recompile' });
+                }
+                finalAbi = compData.abi;
+                finalBytecode = compData.bytecode;
+                setContractData(prev => ({ ...prev, abi: finalAbi, bytecode: finalBytecode }));
+                toast.success("Compiled successfully!", { id: 'recompile' });
+            }
+
             const provider = new ethers.BrowserProvider(window.ethereum);
-            setProviderInstance(provider);
             const currentNetwork = await provider.getNetwork();
 
             if (Number(currentNetwork.chainId) !== network.chainIdDecimal) {
                 toast.error(`Please switch MetaMask to ${network.name}!`);
-                setIsDeploying(false);
-                setDeployStep(-1);
+                setErrorStep(-1, `Wrong network: expected ${network.name}`);
                 return;
             }
 
             const signer = await provider.getSigner();
-            const factory = new ethers.ContractFactory(contractData.abi, contractData.bytecode, signer);
+            const factory = new ethers.ContractFactory(finalAbi, finalBytecode, signer);
 
-            setDeployStep(1); // Awaiting wallet signature
+            setStep(1); // Awaiting wallet signature
+            setStatus('pending');
             toast('Confirm transaction in MetaMask 🦊', { icon: '👆' });
 
             const mintPriceWei = ethers.parseEther(String(formData.mintPrice || '0'));
@@ -132,19 +161,30 @@ export const useNFT = () => {
                 mintPriceWei
             );
 
-            setDeployStep(2); // Broadcasting
+            // Capture tx hash immediately on submit
+            const submittedHash = contract.deploymentTransaction()?.hash;
+            if (submittedHash) setTxHash(submittedHash);
+
+            // Encode args for Etherscan Verification later
+            const abiCoder = new ethers.AbiCoder();
+            const encodedArgs = abiCoder.encode(
+                ["address", "uint256", "string", "uint256"], 
+                [formData.ownerAddress, formData.maxSupply, formData.baseURI || '', mintPriceWei]
+            );
+            setContractData(prev => ({ ...prev, constructorArgs: encodedArgs }));
+
+            setStep(2); // Broadcasting
             const deployToast = toast.loading(`Deploying NFT to ${network.name}...`);
 
-            setDeployStep(3); // Waiting for confirmation
+            setStep(3); // Waiting for confirmation
             await contract.waitForDeployment();
             const receipt = await contract.deploymentTransaction().wait();
-            setDeploymentReceipt(receipt);
             deployed = await contract.getAddress();
 
-            setDeployStep(4); // Success!
+            setStep(4); // Success!
+            setConfirmed(deployed, receipt, provider);
             toast.success(`NFT Collection deployed on ${network.name}! 🎉`, { id: deployToast });
             fireConfetti();
-            setDeployedAddress(deployed);
 
             // Save to database
             try {
@@ -170,56 +210,18 @@ export const useNFT = () => {
                 toast.error("Failed to save to database.");
             }
 
-            // Verify on Etherscan
-            try {
-                const verifyToast = toast.loading('Verifying contract on Etherscan...');
-                
-                // ABI Encode constructor arguments
-                // constructor(address initialOwner, uint256 maxSupply, string memory baseURI, uint256 mintPrice)
-                const abiCoder = new ethers.AbiCoder();
-                const encodedArgs = abiCoder.encode(
-                    ["address", "uint256", "string", "uint256"], 
-                    [formData.ownerAddress, formData.maxSupply, formData.baseURI || '', mintPriceWei]
-                );
-
-                const verifyRes = await authFetch('/api/verify', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        contractAddress: deployed,
-                        sourceCode: generatedCode,
-                        contractName: formData.name.replace(/\s+/g, ''),
-                        compilerVersion: 'v0.8.20+commit.a1b79de6',
-                        network: network.name,
-                        constructorArguements: encodedArgs
-                    })
-                });
-
-                const verifyData = await verifyRes.json();
-                if (verifyData.success) {
-                    toast.success("Etherscan Verification Submitted! ✅", { id: verifyToast });
-                } else {
-                    toast.error("Etherscan verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
-                }
-            } catch (_error) {
-                console.error("Verification error:", _error);
-                toast.error("Failed to request Etherscan verification.");
-            }
-
-            // Reset form after successful deployment
-            setFormData(prev => ({ ...prev, name: '', symbol: '', maxSupply: '10000', baseURI: '', mintPrice: '0' }));
-            setGeneratedCode('');
-            setContractData({ abi: null, bytecode: null });
-            setGasEstimate(null);
 
             setShowSuccessModal(true);
             return deployed;
 
         } catch (_err) {
-            console.error(_err);
-            toast.error("Deployment failed. Do you have enough testnet ETH?");
+            console.error('[useNFT] deploy:', _err.message);
+            const msg = _err?.reason || _err?.message || 'Deployment failed. Do you have enough testnet ETH?';
+            const currentStep = useTransactionStore.getState().step;
+            setErrorStep(currentStep >= 0 ? currentStep : 0, msg);
+            toast.error(msg);
         } finally {
-            setIsDeploying(false);
-            setTimeout(() => setDeployStep(-1), 2000);
+            setTimeout(() => { setStep(-1); setErrorStep(-1, ''); }, 3000);
         }
     };
 
@@ -227,8 +229,6 @@ export const useNFT = () => {
         formData, setFormData, generatedCode, contractData,
         connectWallet, generateNFT, deployNFT,
         estimateGas, gasEstimate, isEstimating,
-        isDeploying, deployStep,
-        deployedAddress, showSuccessModal, setShowSuccessModal,
-        deploymentReceipt, providerInstance
+        showSuccessModal, setShowSuccessModal
     };
 };

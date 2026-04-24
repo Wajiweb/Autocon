@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -6,24 +7,24 @@ import { useNetwork } from '../context/NetworkContext';
 import { fireConfetti } from '../utils/confetti';
 import { classifyError, deployWithTimeout } from '../utils/classifyError';
 import { useWallet } from './useWallet';
+import { useContractStore } from '../store/useContractStore';
+import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
 
 export const useWeb3 = () => {
   const { authFetch } = useAuth();
   const { network } = useNetwork();
+  const location = useLocation();
+  const prefill = location.state?.prefill || {};
   const [formData, setFormData] = useState({
-    name: '', symbol: '', supply: '1000000', ownerAddress: ''
+    name: prefill.name || '', symbol: prefill.symbol || '',
+    supply: prefill.supply || '1000000', ownerAddress: ''
   });
-  const [generatedCode, setGeneratedCode] = useState("");
-  const [contractData, setContractData] = useState({ abi: null, bytecode: null });
+  const { generatedCode, setGeneratedCode, isEditingEnabled, contractData, setContractData } = useContractStore();
+  const { resetTransaction, setStatus, setTxHash, setConfirmed, setError, setNetwork, setStep, setErrorStep } = useTransactionStore();
+  const txInFlight = useTransactionStore(selectIsDeploying);
   const [ast, setAst] = useState(null);
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [deployStep, setDeployStep] = useState(-1);
-  const [deployStepError, setDeployStepError] = useState({ step: -1, message: '' });
-  const [deployedAddress, setDeployedAddress] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [estimatedCost, setEstimatedCost] = useState(null);
-  const [deploymentReceipt, setDeploymentReceipt] = useState(null);
-  const [providerInstance, setProviderInstance] = useState(null);
 
   const { connectWallet: baseConnectWallet } = useWallet();
 
@@ -46,82 +47,110 @@ export const useWeb3 = () => {
       const data = await res.json();
 
       if (data.success) {
-        setGeneratedCode(data.contractCode);
-        setContractData({ abi: data.abi, bytecode: data.bytecode });
+        setGeneratedCode(data.contractCode, 'Token', { abi: data.abi, bytecode: data.bytecode });
         setAst(data.ast ?? null);
         toast.success("Contract Compiled & Ready! 🚀", { id: loadingToast });
-        await calculateGas(); // ⛽ Fetch the live price now!
+        await calculateGas(data.abi, data.bytecode); // ⛽ Fetch dynamic estimate
       } else {
         toast.error(data.error || "Compilation failed.", { id: loadingToast });
       }
     } catch (err) {
-      console.error("Generation Error:", err);
       const msg = err.message || "Backend error. Make sure server is running.";
       toast.error(msg, { id: loadingToast });
     }
   };
 
-  // --- NEW: Live Gas Estimator ---
-  const calculateGas = async () => {
-    if (!window.ethereum) return;
+  // --- NEW: Dynamic Backend Gas Estimator ---
+  const calculateGas = async (abiToUse, bytecodeToUse) => {
+    if (!abiToUse || !bytecodeToUse) return;
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const feeData = await provider.getFeeData();
-      
-      // Standard ERC-20 deployment is roughly 1.5 million gas
-      const estimatedGasLimit = 1500000n; 
-      
-      // Multiply live gas price by the gas limit
-      const costInWei = feeData.gasPrice * estimatedGasLimit;
-      
-      // Convert from tiny Wei to readable ETH and round to 4 decimals
-      const costInEth = ethers.formatEther(costInWei);
-      setEstimatedCost(parseFloat(costInEth).toFixed(4));
-    } catch (error) {
-      console.error("Failed to estimate gas:", error);
+      // We pass the actual constructor arguments needed by the ERC20 template
+      const res = await authFetch('/api/estimate-gas', {
+        method: 'POST',
+        body: JSON.stringify({
+          abi: abiToUse,
+          bytecode: bytecodeToUse,
+          ownerAddress: formData.ownerAddress,
+          constructorArgs: [formData.ownerAddress, formData.supply],
+          network: network.name
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.estimatedCostEth) {
+        setEstimatedCost(parseFloat(data.estimatedCostEth).toFixed(4));
+      }
+    } catch {
+      // Non-critical — gas estimate failure is silently skipped
     }
   };
 
   const deployContract = async () => {
     if (!contractData.abi || !contractData.bytecode) return toast.error("Generate code first!");
+    if (!generatedCode) return toast.error("Contract code is empty. Generate first.");
+    if (txInFlight) return; // Prevent duplicate deploy clicks
 
-    setIsDeploying(true);
-    setDeployStep(0); // Step 0: Compiling
+    // Reset tx store before every new deploy
+    resetTransaction();
+    setNetwork(network.name);
+    setStatus('pending');
+
+    setStep(0);
     let deployed;
+    let finalAbi = contractData.abi;
+    let finalBytecode = contractData.bytecode;
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      setProviderInstance(provider);
-      const currentNetwork = await provider.getNetwork();
+      if (isEditingEnabled) {
+        toast.loading("Recompiling custom code...", { id: 'recompile' });
+        const compRes = await authFetch('/api/compile', {
+          method: 'POST',
+          body: JSON.stringify({ sourceCode: generatedCode, contractName: formData.name.replace(/\s+/g, '') || 'TokenContract' })
+        });
+        const compData = await compRes.json();
+        if (!compData.success) {
+          setErrorStep(-1, "Compilation Failed: " + compData.error);
+          return toast.error("Compilation Failed: " + compData.error, { id: 'recompile' });
+        }
+        finalAbi = compData.abi;
+        finalBytecode = compData.bytecode;
+        setContractData({ abi: finalAbi, bytecode: finalBytecode });
+        toast.success("Compiled successfully!", { id: 'recompile' });
+      }
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const currentNetwork = await provider.getNetwork();
 
       if (Number(currentNetwork.chainId) !== network.chainIdDecimal) {
         toast.error(`Please switch MetaMask to ${network.name}!`);
-        setIsDeploying(false);
-        setDeployStep(-1);
+        setErrorStep(-1, `Wrong network: expected ${network.name}`);
         return;
       }
 
       const signer = await provider.getSigner();
-      const factory = new ethers.ContractFactory(contractData.abi, contractData.bytecode, signer);
+      const factory = new ethers.ContractFactory(finalAbi, finalBytecode, signer);
 
-      setDeployStep(1); // Step 1: Awaiting wallet signature
+      setStep(1); // Step 1: Awaiting wallet signature
+      setStatus('pending');
       toast('Confirm transaction in MetaMask 🦊', { icon: '👆' });
 
       const contract = await deployWithTimeout(() => factory.deploy(formData.ownerAddress, formData.supply));
 
-      setDeployStep(2); // Step 2: Broadcasting transaction
+      // Tx submitted — capture hash immediately
+      const submittedHash = contract.deploymentTransaction()?.hash;
+      if (submittedHash) setTxHash(submittedHash);
+
+      setStep(2); // Step 2: Broadcasting transaction
       const deployToast = toast.loading(`Deploying to ${network.name}...`);
 
-      setDeployStep(3); // Step 3: Waiting for block confirmation
+      setStep(3); // Step 3: Waiting for block confirmation
       await contract.waitForDeployment();
       const receipt = await contract.deploymentTransaction().wait();
-      setDeploymentReceipt(receipt);
       deployed = await contract.getAddress();
 
-      setDeployStep(4); // Step 4: Deployment successful!
+      setStep(4); // Step 4: Deployment successful!
+      setConfirmed(deployed, receipt, provider);
       toast.success(`Token deployed on ${network.name}!`, { id: deployToast });
       fireConfetti();
-      setDeployedAddress(deployed);
 
       // Save to database via authenticated endpoint
       try {
@@ -161,7 +190,7 @@ export const useWeb3 = () => {
             contractName: formData.name.replace(/\s+/g, ''),
             compilerVersion: 'v0.8.20+commit.a1b79de6', // Default compiler version used in AutoCon templates
             network: network.name,
-            constructorArguements: encodedArgs
+            constructorArguments: encodedArgs
           })
         });
 
@@ -171,15 +200,13 @@ export const useWeb3 = () => {
         } else {
           toast.error("Etherscan verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
         }
-      } catch (error) {
-        console.error("Verification error:", error);
+      } catch {
         toast.error("Failed to request Etherscan verification.");
       }
 
       // Reset form after successful deployment
       setFormData(prev => ({ ...prev, name: '', symbol: '', supply: '1000000' }));
       setGeneratedCode('');
-      setContractData({ abi: null, bytecode: null });
       setEstimatedCost(null);
 
       // Show success modal
@@ -188,23 +215,21 @@ export const useWeb3 = () => {
       return deployed;
 
     } catch (err) {
-      console.error(err);
+      console.error('[useWeb3] deploy:', err.message);
       const message = classifyError(err);
-      setDeployStepError({ step: deployStep >= 0 ? deployStep : 0, message });
+      const currentStep = useTransactionStore.getState().step;
+      setErrorStep(currentStep >= 0 ? currentStep : 0, message);
       toast.error(message);
     } finally {
-      setIsDeploying(false);
       // Reset deploy step after a delay so user sees "complete" or error state
-      setTimeout(() => { setDeployStep(-1); setDeployStepError({ step: -1, message: '' }); }, 3000);
+      setTimeout(() => { setStep(-1); setErrorStep(-1, ''); }, 3000);
     }
   };
 
   return {
     formData, setFormData, generatedCode, contractData, ast,
     connectWallet, generateContract, deployContract,
-    isDeploying, deployStep, deployStepError,
     estimatedCost,
-    deployedAddress, showSuccessModal, setShowSuccessModal,
-    deploymentReceipt, providerInstance
+    showSuccessModal, setShowSuccessModal
   };
 };

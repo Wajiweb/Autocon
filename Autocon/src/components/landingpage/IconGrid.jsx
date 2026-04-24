@@ -4,7 +4,7 @@ import { Wallet, Code2, BarChart3, Shield, Cpu, Globe } from 'lucide-react';
 import { Reveal, PillBadge, SectionHeading } from './Shared';
 
 /* ══════════════════════════════════════════════════════
-   ICON GRID
+   ICON GRID — Clean, no hover glow
 ══════════════════════════════════════════════════════ */
 const iconFeatures = [
   { icon: <Wallet size={22} />,    title: 'MetaMask Native',     desc: 'Connect wallets instantly with MetaMask integration.' },
@@ -26,21 +26,23 @@ const IconGrid = () => (
     <div style={{ maxWidth: '1160px', margin: '0 auto' }}>
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '1px', background: 'var(--border-color)',
-        border: '1px solid var(--border-color)', borderRadius: '18px', overflow: 'hidden',
+        gap: '1px', background: 'var(--outline-subtle)',
+        border: '1px solid var(--outline-subtle)', borderRadius: '18px', overflow: 'hidden',
       }} className="icon-grid">
         {iconFeatures.map((f, i) => (
           <Reveal key={f.title} delay={i * 0.07}>
-            <motion.div whileHover={{ background: 'var(--accent-glow)' }}
-              style={{ padding: '40px 36px', background: 'var(--bg)', cursor: 'default', transition: 'background 0.25s ease' }}>
+            <div
+              style={{ padding: '40px 36px', background: 'var(--bg)', cursor: 'default', transition: 'background 0.2s ease' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--surface)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'var(--bg)'; }}>
               <div style={{
                 width: '46px', height: '46px', borderRadius: '12px', marginBottom: '18px',
-                background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)',
+                background: 'var(--primary-subtle)', border: '1px solid var(--outline-subtle)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)',
               }}>{f.icon}</div>
-              <h3 style={{ fontSize: '0.97rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px', letterSpacing: '-0.01em' }}>{f.title}</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.855rem', lineHeight: 1.7 }}>{f.desc}</p>
-            </motion.div>
+              <h3 style={{ fontSize: '0.97rem', fontWeight: 600, color: 'var(--on-surface)', marginBottom: '10px', letterSpacing: '-0.01em' }}>{f.title}</h3>
+              <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.855rem', lineHeight: 1.7 }}>{f.desc}</p>
+            </div>
           </Reveal>
         ))}
       </div>

@@ -10,6 +10,7 @@ import EmptyState from '../components/dashboard/EmptyState';
 import { SkeletonTable } from '../components/dashboard/LoadingSkeleton';
 import useSelectedCoin from '../hooks/useSelectedCoin';
 import '../components/dashboard/styles/dashboard.css';
+import OnboardingTour from '../components/dashboard/OnboardingTour';
 
 const DashboardScene = lazy(() => import('../3d/DashboardScene'));
 
@@ -58,7 +59,7 @@ function SparkSVG({ up, color }) {
 
 /* ─── Deployment Table ──────────────────────────────── */
 const DeploymentTable = memo(function DeploymentTable({
-  filteredDeployments, isLoading, activeFilter, setActiveFilter, shortAddr, handleDelete
+  filteredDeployments, isLoading, activeFilter, setActiveFilter, handleDelete
 }) {
   const [search, setSearch] = useState('');
   const [searchFilter, setSearchFilter] = useState(filteredDeployments);
@@ -314,7 +315,7 @@ export default function Dashboard() {
     if (!deployments.length) return toast.error('No deployments to export.');
     const w = window.open('', '_blank');
     w.document.write(`<!DOCTYPE html><html><head><title>AutoCon Report</title>
-      <style>body{font-family:sans-serif;padding:32px;color:#111}h1{color:#16a34a}table{width:100%;border-collapse:collapse}th,td{padding:10px;border:1px solid #e5e7eb;text-align:left}th{background:#f0fdf4;color:#15803d;font-size:12px}</style></head>
+      <style>body{font-family:sans-serif;padding:32px;color:#e2e8f0;background:#0f172a}h1{color:#5da9e9}table{width:100%;border-collapse:collapse}th,td{padding:10px;border:1px solid #1e293b;text-align:left}th{background:#1e293b;color:#94a3b8;font-size:12px}td{font-size:13px;color:#cbd5e1}</style></head>
       <body><h1>AutoCon Deployment Report</h1><p>Wallet: ${user?.walletAddress}</p><p>Generated: ${new Date().toLocaleString()}</p>
       <table><tr>${['Name','Type','Address','Network','Date'].map(h=>`<th>${h}</th>`).join('')}</tr>
       ${deployments.map(d=>`<tr><td>${d.name}</td><td>${d._type}</td><td style="font-family:monospace;font-size:11px">${d.contractAddress}</td><td>${d.network||'Sepolia'}</td><td>${new Date(d.createdAt).toLocaleDateString()}</td></tr>`).join('')}
@@ -325,6 +326,7 @@ export default function Dashboard() {
 
   return (
     <>
+      <OnboardingTour />
       {/* 3D background */}
       <Suspense fallback={null}><DashboardScene /></Suspense>
 
@@ -415,7 +417,7 @@ export default function Dashboard() {
 
         {/* ── Analytics Charts ── */}
         {!isLoading && deployments.length > 0 && (
-          <AnalyticsCharts deployments={deployments} />
+          <AnalyticsCharts deployments={deployments} networkName={network.name} />
         )}
 
         {/* ── Deployment Table ── */}
@@ -424,7 +426,6 @@ export default function Dashboard() {
           isLoading={isLoading}
           activeFilter={activeFilter}
           setActiveFilter={setActiveFilter}
-          shortAddr={shortAddr}
           handleDelete={handleDelete}
         />
 

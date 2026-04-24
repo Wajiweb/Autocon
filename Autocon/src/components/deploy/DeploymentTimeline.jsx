@@ -25,10 +25,10 @@ export default function DeploymentTimeline({ currentStep = 0, errorStep = -1, er
         const isPending  = !isError && currentStep < idx;
         const isLast     = idx === STEPS.length - 1;
 
-        // Colors per Kinetic Ether palette
-        const primary = '#a78bfa'; // var(--primary)
-        const success = '#10b981'; // var(--success)
-        const mutedLabel = '#9ca3af'; // text-gray-400
+        // Colors per AutoCon palette
+        const primary = 'var(--primary)'; // Electric Blue
+        const success = '#10b981';        // var(--success)
+        const mutedLabel = '#9ca3af';
         const activeLabel = '#ffffff';
 
         return (
@@ -61,7 +61,7 @@ export default function DeploymentTimeline({ currentStep = 0, errorStep = -1, er
                 // glass pane active glow
                 background: isActive ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
                 // pulse border for active
-                border: isActive ? `1px solid rgba(167, 139, 250, 0.3)` : '1px solid transparent',
+                border: isActive ? `1px solid var(--primary-muted)` : '1px solid transparent',
               }}
             >
               {/* Icon Area */}

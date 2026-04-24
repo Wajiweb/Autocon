@@ -74,6 +74,26 @@ const contractSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
+    sourceCode: {
+      type: String,
+      default: null,
+    },
+    compilerVersion: {
+      type: String,
+      default: null,
+    },
+    optimizationUsed: {
+      type: Number,
+      default: 1,
+    },
+    runs: {
+      type: Number,
+      default: 200,
+    },
+    constructorArgs: {
+      type: mongoose.Schema.Types.Mixed,
+      default: [],
+    },
 
     // ─── Verification Status ────────────────────────────────────────────────
     verified: {

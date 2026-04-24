@@ -7,22 +7,25 @@
 
 /* ─── CSS Tokens ─────────────────────────────────────── */
 :root {
-  --db-bg:      #264a32;
-  --db-s1:      #0c2316; /* Dark Live Assets Card Color */
-  --db-s2:      #0d2818;
-  --db-s3:      #11331e;
-  --db-acc:     #8FB900;
-  --db-acc-d:   rgba(143,185,0,.16);
-  --db-acc-dd:  rgba(143,185,0,.08);
-  --db-red:     #ef4444;
-  --db-red-d:   rgba(239,68,68,.12);
-  --db-amber:   #f59e0b;
-  --db-blue:    #60a5fa;
-  --db-t1:      #ffffff;
-  --db-t2:      #bce0c3;
-  --db-t3:      #86b890;
-  --db-br:      rgba(255,255,255,.15);
-  --db-br2:     rgba(255,255,255,.25);
+  --db-bg:      #0E1114;
+  --db-s1:      #111519;
+  --db-s2:      #161B22;
+  --db-s3:      #1C232B;
+  --db-acc:     #5DA9E9;
+  --db-acc-hov: #3F8FD2;
+  --db-acc-d:   rgba(93,169,233,.12);
+  --db-acc-dd:  rgba(93,169,233,.06);
+  --db-lav:     #B6B5D8;
+  --db-lav-d:   rgba(182,181,216,.12);
+  --db-red:     #E05C5C;
+  --db-red-d:   rgba(224,92,92,.12);
+  --db-amber:   #F5A623;
+  --db-blue:    #5DA9E9;
+  --db-t1:      #E6E1DF;
+  --db-t2:      #9B9B9E;
+  --db-t3:      rgba(155,155,158,0.55);
+  --db-br:      rgba(255,255,255,.08);
+  --db-br2:     rgba(255,255,255,.14);
   --db-r:       10px;
   --db-r-sm:    7px;
   --db-sidebar: 218px;
@@ -84,7 +87,7 @@
   border-radius: 9px;
   background: var(--db-acc);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 13px; color: #070e0a;
+  font-weight: 700; font-size: 13px; color: #fff;
   letter-spacing: -.5px; flex-shrink: 0;
 }
 .db-logo-name { font-size: 14px; font-weight: 700; color: var(--db-t1); letter-spacing: -.3px; }
@@ -251,10 +254,9 @@
   font-family: var(--db-font); transition: all .15s; border: none;
 }
 .pg-btn-primary {
-  background: var(--db-acc); color: #070e0a;
-  box-shadow: 0 4px 20px rgba(34,197,94,.25);
+  background: var(--db-acc); color: #fff;
 }
-.pg-btn-primary:hover { background: #16a34a; }
+.pg-btn-primary:hover { background: var(--db-acc-hov); }
 .pg-btn-primary:disabled { background: var(--db-s3); color: var(--db-t3); cursor: not-allowed; box-shadow: none; }
 .pg-btn-outline {
   background: transparent; color: var(--db-t2);
@@ -273,11 +275,11 @@
   font-family: var(--db-mono); font-size: 10px; font-weight: 500;
   padding: 3px 9px; border-radius: 20px;
 }
-.pg-badge.green { background: var(--db-acc-d); color: var(--db-acc); border: .5px solid rgba(34,197,94,.2); }
-.pg-badge.red   { background: var(--db-red-d); color: var(--db-red); border: .5px solid rgba(239,68,68,.2); }
-.pg-badge.amber { background: rgba(245,158,11,.12); color: var(--db-amber); border: .5px solid rgba(245,158,11,.2); }
-.pg-badge.blue  { background: rgba(96,165,250,.12); color: var(--db-blue); border: .5px solid rgba(96,165,250,.2); }
-.pg-badge.purple{ background: rgba(167,139,250,.12); color: #a78bfa; border: .5px solid rgba(167,139,250,.2); }
+.pg-badge.green  { background: var(--db-acc-d);  color: var(--db-acc);  border: .5px solid rgba(93,169,233,.2); }
+.pg-badge.red    { background: var(--db-red-d);  color: var(--db-red);  border: .5px solid rgba(224,92,92,.2); }
+.pg-badge.amber  { background: rgba(245,166,35,.12); color: var(--db-amber); border: .5px solid rgba(245,166,35,.2); }
+.pg-badge.blue   { background: rgba(93,169,233,.12); color: var(--db-blue);  border: .5px solid rgba(93,169,233,.2); }
+.pg-badge.purple { background: rgba(182,181,216,.12); color: var(--db-lav);  border: .5px solid rgba(182,181,216,.2); }
 
 /* Code block */
 .pg-code-block {
@@ -341,8 +343,8 @@
   background: transparent; cursor: pointer; transition: all .15s; font-family: var(--db-font);
 }
 .db-btn:hover { border-color: var(--db-acc); color: var(--db-acc); background: var(--db-acc-d); }
-.db-btn.accent { border-color: rgba(34,197,94,.35); color: var(--db-acc); background: var(--db-acc-d); }
-.db-btn.accent:hover { background: var(--db-acc); color: #070e0a; }
+.db-btn.accent { border-color: rgba(22,163,74,.35); color: var(--db-acc); background: var(--db-acc-d); }
+.db-btn.accent:hover { background: var(--db-acc); color: #fff; }
 
 /* ─── Stat Cards ──────────────────────────────────────── */
 .db-stat-row {

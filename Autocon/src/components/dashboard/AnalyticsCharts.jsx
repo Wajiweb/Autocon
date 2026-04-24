@@ -7,7 +7,7 @@ import './styles/dashboard.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
-export default function AnalyticsCharts({ deployments = [] }) {
+export default function AnalyticsCharts({ deployments = [], networkName = 'Network' }) {
   if (deployments.length === 0) return null;
 
   const tokens   = deployments.filter(d => d._type === 'ERC-20').length;
@@ -66,7 +66,7 @@ export default function AnalyticsCharts({ deployments = [] }) {
       {/* Donut — Asset Distribution */}
       <div className="db-chart-card">
         <div className="db-cc-title">Asset Distribution</div>
-        <div className="db-cc-sub">By contract type · Sepolia</div>
+        <div className="db-cc-sub">By contract type · {networkName}</div>
         <div className="db-cc-body">
           <div className="db-donut-wrap">
             <div className="db-donut-canvas-wrap">

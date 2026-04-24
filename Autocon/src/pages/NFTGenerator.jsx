@@ -3,22 +3,43 @@ import { useNFT } from '../hooks/useNFT';
 import toast from 'react-hot-toast';
 import { useNetwork } from '../context/NetworkContext';
 import { API_BASE } from '../config';
-import CodeExportTools from '../components/dashboard/CodeExportTools';
+import ExportCenter from '../components/dashboard/ExportCenter';
+import CodeViewer from '../components/dashboard/CodeViewer';
+import SecurityScanner from '../components/dashboard/SecurityScanner';
 import DeploymentTimeline from '../components/deploy/DeploymentTimeline';
 import DeploySuccessModal from '../components/deploy/DeploySuccessModal';
+import DeploymentStatusBar from '../components/deploy/DeploymentStatusBar';
+import { useAISuggestion } from '../hooks/useAISuggestion';
+import AIChatPanel from '../components/dashboard/AIChatPanel';
+import DeveloperToggle from '../components/dashboard/DeveloperToggle';
+import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
 
 export default function NFTGenerator() {
     const {
         formData, setFormData, generatedCode,
         connectWallet, generateNFT, deployNFT,
         estimateGas, gasEstimate, isEstimating,
-        isDeploying, deployStep,
-        deployedAddress, showSuccessModal, setShowSuccessModal,
+        showSuccessModal, setShowSuccessModal,
         contractData, deploymentReceipt, providerInstance
     } = useNFT();
+    const isDeploying = useTransactionStore(selectIsDeploying);
+    const deployStep = useTransactionStore(s => s.step);
+    const errorStep = useTransactionStore(s => s.errorStep);
+    const errorMessage = useTransactionStore(s => s.errorMessage);
+    const deployedAddress = useTransactionStore(s => s.contractAddress);
     const { network } = useNetwork();
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadedFile, setUploadedFile] = useState(null);
+    const { isSuggesting, generateSuggestions } = useAISuggestion();
+    const [auditStatus, setAuditStatus] = useState({ canDeploy: false, isAuditing: false });
+    const [metadataState, setMetadataState] = useState({
+        status: 'idle', // idle, uploading, generating, ready, updating, error
+        fileCID: '',
+        imageUrl: '',
+        name: '',
+        description: '',
+        error: ''
+    });
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [aiIntent, setAiIntent] = useState('');
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,34 +49,93 @@ export default function NFTGenerator() {
         const file = e.target.files[0];
         if (!file) return;
 
-        setIsUploading(true);
-        const uploadToast = toast.loading('Uploading image...');
+        setMetadataState(prev => ({ ...prev, status: 'uploading', error: '' }));
+        const uploadToast = toast.loading('Uploading image to IPFS...');
 
         try {
             const formDataObj = new FormData();
             formDataObj.append('file', file);
 
             const token = localStorage.getItem('autocon_token');
-            const res = await fetch(`${API_BASE}/api/ipfs/upload`, {
+            const res = await fetch(`${API_BASE}/api/ipfs/upload-file`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: formDataObj
             });
             const data = await res.json();
 
-            if (data.success) {
-                setUploadedFile(data.file);
-                const uri = data.file.ipfsUrl || `${API_BASE}${data.file.localUrl}`;
-                setFormData(prev => ({ ...prev, baseURI: uri }));
-                toast.success(data.file.ipfsHash ? 'Pinned to IPFS! 📌' : 'Image uploaded!', { id: uploadToast });
-            } else {
-                toast.error(data.error || 'Upload failed', { id: uploadToast });
-            }
+            if (!data.success) throw new Error(data.error);
+
+            toast.loading('Auto-generating metadata...', { id: uploadToast });
+            setMetadataState(prev => ({ ...prev, status: 'generating', fileCID: data.fileCID, imageUrl: data.fileUrl }));
+
+            const defaultName = formData.name || 'AutoCon NFT';
+            const defaultDesc = `NFT Collection for ${defaultName}`;
+
+            const metaRes = await fetch(`${API_BASE}/api/ipfs/upload-metadata`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    metadata: {
+                        name: defaultName,
+                        description: defaultDesc,
+                        image: data.fileUrl
+                    }
+                })
+            });
+            const metaData = await metaRes.json();
+            
+            if (!metaData.success) throw new Error(metaData.error);
+
+            setMetadataState(prev => ({ 
+                ...prev, 
+                status: 'ready', 
+                name: defaultName,
+                description: defaultDesc
+            }));
+            
+            setFormData(prev => ({ ...prev, baseURI: metaData.tokenURI }));
+            toast.success('Metadata pinned to IPFS! 📌', { id: uploadToast });
+
         } catch (err) {
             console.error('Upload error:', err);
-            toast.error('Upload failed.', { id: uploadToast });
-        } finally {
-            setIsUploading(false);
+            setMetadataState(prev => ({ ...prev, status: 'error', error: err.message || 'Upload failed.' }));
+            toast.error(err.message || 'Upload failed.', { id: uploadToast });
+        }
+    };
+
+    const handleUpdateMetadata = async () => {
+        setMetadataState(prev => ({ ...prev, status: 'updating', error: '' }));
+        const updateToast = toast.loading('Updating metadata...');
+        try {
+            const token = localStorage.getItem('autocon_token');
+            const metaRes = await fetch(`${API_BASE}/api/ipfs/upload-metadata`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    metadata: {
+                        name: metadataState.name,
+                        description: metadataState.description,
+                        image: metadataState.imageUrl
+                    }
+                })
+            });
+            const metaData = await metaRes.json();
+            
+            if (!metaData.success) throw new Error(metaData.error);
+
+            setMetadataState(prev => ({ ...prev, status: 'ready' }));
+            setFormData(prev => ({ ...prev, baseURI: metaData.tokenURI }));
+            toast.success('Metadata updated successfully! ✨', { id: updateToast });
+        } catch (err) {
+            setMetadataState(prev => ({ ...prev, status: 'error', error: err.message || 'Update failed.' }));
+            toast.error(err.message || 'Update failed.', { id: updateToast });
         }
     };
 
@@ -65,20 +145,48 @@ export default function NFTGenerator() {
 
             {/* Header */}
             <div className="animate-fade-in-up" style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
-                    <div style={{
-                        width: '44px', height: '44px',
-                        background: 'var(--primary-gradient)',
-                        borderRadius: '14px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '22px', boxShadow: 'var(--shadow-ambient)'
-                    }}>🎨</div>
-                    <h1 style={{
-                        fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
-                        color: 'var(--on-surface)'
-                    }}>
-                        NFT <span className="gradient-text">Generator</span>
-                    </h1>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <div style={{
+                            width: '44px', height: '44px',
+                            background: 'var(--primary-gradient)',
+                            borderRadius: '14px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '22px', boxShadow: 'var(--shadow-ambient)'
+                        }}>🎨</div>
+                        <h1 style={{
+                            fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.5px',
+                            color: 'var(--on-surface)'
+                        }}>
+                            NFT <span className="gradient-text">Generator</span>
+                        </h1>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <input 
+                            type="text" 
+                            placeholder="Describe your NFT..." 
+                            value={aiIntent} 
+                            onChange={(e) => setAiIntent(e.target.value)}
+                            className="pg-input" 
+                            style={{ width: '200px', fontSize: '13px', padding: '8px 12px' }}
+                            onKeyDown={(e) => { if(e.key === 'Enter') generateSuggestions('NFT', setFormData, aiIntent) }}
+                        />
+                        <button 
+                            onClick={() => generateSuggestions('NFT', setFormData, aiIntent)}
+                            disabled={isSuggesting}
+                            className="pg-btn" 
+                            style={{ background: 'var(--db-s2)', border: '1px solid var(--db-br)', color: 'var(--db-acc)', fontSize: 13, padding: '8px 16px', borderRadius: '50px', cursor: isSuggesting ? 'wait' : 'pointer' }}
+                        >
+                            {isSuggesting ? '⏳...' : '✨ Auto-Fill'}
+                        </button>
+                        <button 
+                            onClick={() => setIsChatOpen(true)}
+                            className="pg-btn" 
+                            style={{ background: 'var(--db-acc)', border: 'none', color: '#000', fontSize: 13, padding: '8px 16px', borderRadius: '50px', cursor: 'pointer', fontWeight: 600 }}
+                        >
+                            💬 AI Chat
+                        </button>
+                    </div>
                 </div>
                 <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.95rem' }}>
                     Design and deploy custom ERC-721 NFT collections — no Solidity required.
@@ -114,6 +222,7 @@ export default function NFTGenerator() {
                         </label>
                         <input
                             name="name"
+                            value={formData?.name || ''}
                             placeholder="e.g. AutoCon Genesis"
                             className="input"
                             onChange={handleChange}
@@ -131,6 +240,7 @@ export default function NFTGenerator() {
                             }}>Symbol</label>
                             <input
                                 name="symbol"
+                                value={formData?.symbol || ''}
                                 placeholder="e.g. ACG"
                                 className="input"
                                 onChange={handleChange}
@@ -152,6 +262,9 @@ export default function NFTGenerator() {
                                 value={formData?.maxSupply || ''}
                                 required
                             />
+                            {Number(formData?.maxSupply) > 100000 && (
+                                <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '6px' }}>⚠️ A huge supply may lower rarity and floor price.</div>
+                            )}
                         </div>
                     </div>
 
@@ -178,66 +291,59 @@ export default function NFTGenerator() {
                         </p>
                     </div>
 
-                    {/* IPFS Image Upload */}
+                    {/* IPFS Image Upload & Metadata UX */}
                     <div style={{ marginBottom: '24px' }}>
                         <label style={{
                             display: 'block', fontSize: '0.8rem', fontWeight: 700,
                             color: 'var(--outline)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>
-                            Upload NFT Image (Optional)
+                            NFT Asset & Metadata
                         </label>
+                        
                         <div style={{
                             padding: '20px', borderRadius: '14px',
-                            border: `2px dashed ${uploadedFile ? 'rgba(16,185,129,0.3)' : 'var(--outline-variant)'}`,
-                            background: uploadedFile ? 'rgba(16,185,129,0.03)' : 'var(--surface-highest)',
-                            textAlign: 'center', cursor: 'pointer',
+                            border: `2px dashed ${metadataState.status === 'ready' ? 'rgba(16,185,129,0.3)' : 'var(--outline-variant)'}`,
+                            background: metadataState.status === 'ready' ? 'rgba(16,185,129,0.03)' : 'var(--surface-highest)',
                             transition: 'all 0.2s ease'
                         }}>
-                            {uploadedFile ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
-                                    <span style={{ fontSize: '1.5rem' }}>✅</span>
-                                    <div style={{ textAlign: 'left' }}>
-                                        <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--success)' }}>
-                                            {uploadedFile.ipfsHash ? `IPFS: ${uploadedFile.ipfsHash.substring(0, 12)}...` : 'Uploaded locally'}
-                                        </p>
-                                        <p style={{ fontSize: '0.7rem', color: 'var(--outline)' }}>
-                                            {(uploadedFile.size / 1024).toFixed(1)} KB • {uploadedFile.mimetype}
-                                        </p>
-                                    </div>
-                                    <button type="button" onClick={() => { setUploadedFile(null); setFormData(prev => ({ ...prev, baseURI: '' })); }}
-                                        style={{
-                                            padding: '4px 12px', borderRadius: '8px',
-                                            border: '1px solid var(--outline-variant)',
-                                            background: 'transparent', color: 'var(--outline)',
-                                            fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer',
-                                            fontFamily: 'Inter, sans-serif', marginLeft: 'auto'
-                                        }}>Remove</button>
+                            {metadataState.status === 'idle' || metadataState.status === 'error' ? (
+                                <label style={{ cursor: 'pointer', display: 'block', textAlign: 'center' }}>
+                                    <input type="file" accept="image/png, image/jpeg, image/jpg" onChange={handleFileUpload} style={{ display: 'none' }} />
+                                    <span style={{ fontSize: '2rem', display: 'block', marginBottom: '6px' }}>🖼️</span>
+                                    <p style={{ fontSize: '0.85rem', color: 'var(--outline)', fontWeight: 600 }}>Click to upload image</p>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--outline)' }}>JPG, PNG • Max 10MB</p>
+                                    {metadataState.error && <p style={{ fontSize: '0.75rem', color: 'var(--error)', marginTop: '8px' }}>❌ {metadataState.error}</p>}
+                                </label>
+                            ) : metadataState.status === 'uploading' || metadataState.status === 'generating' ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', textAlign: 'center' }}>
+                                    <svg style={{ animation: 'spin-slow 1s linear infinite', width: 16, height: 16, color: 'var(--tertiary)' }} viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
+                                        <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                                    </svg>
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--outline)' }}>
+                                        {metadataState.status === 'uploading' ? 'Uploading Image to IPFS...' : 'Auto-generating Metadata...'}
+                                    </span>
                                 </div>
                             ) : (
-                                <label style={{ cursor: 'pointer', display: 'block' }}>
-                                    <input type="file" accept="image/*" onChange={handleFileUpload}
-                                        style={{ display: 'none' }} disabled={isUploading} />
-                                    {isUploading ? (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                                            <svg style={{ animation: 'spin-slow 1s linear infinite', width: 16, height: 16, color: 'var(--tertiary)' }} viewBox="0 0 24 24" fill="none">
-                                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                                                <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                                            </svg>
-                                            <span style={{ fontSize: '0.85rem', color: 'var(--outline)' }}>Uploading...</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                                        <div style={{ width: '80px', height: '80px', borderRadius: '10px', background: 'var(--surface)', overflow: 'hidden', border: '1px solid var(--outline-variant)', flexShrink: 0 }}>
+                                            <img src={`https://gateway.pinata.cloud/ipfs/${metadataState.fileCID}`} alt="NFT Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         </div>
-                                    ) : (
-                                        <>
-                                            <span style={{ fontSize: '2rem', display: 'block', marginBottom: '6px' }}>📁</span>
-                                            <p style={{ fontSize: '0.85rem', color: 'var(--outline)', fontWeight: 600 }}>
-                                                Click to upload image
-                                            </p>
-                                            <p style={{ fontSize: '0.7rem', color: 'var(--outline)' }}>
-                                                JPG, PNG, GIF, WebP • Max 10MB
-                                            </p>
-                                        </>
-                                    )}
-                                </label>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--success)', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: '4px' }}>Metadata Ready</span>
+                                                <button type="button" onClick={() => { setMetadataState({ status: 'idle', fileCID: '', imageUrl: '', name: '', description: '', error: '' }); setFormData(prev => ({ ...prev, baseURI: '' })); }} style={{ fontSize: '0.7rem', color: 'var(--outline)', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Remove</button>
+                                            </div>
+                                            <input value={metadataState.name} onChange={e => setMetadataState(prev => ({ ...prev, name: e.target.value }))} className="input" style={{ padding: '6px 10px', fontSize: '0.8rem', marginBottom: '6px' }} placeholder="NFT Name" />
+                                            <input value={metadataState.description} onChange={e => setMetadataState(prev => ({ ...prev, description: e.target.value }))} className="input" style={{ padding: '6px 10px', fontSize: '0.8rem' }} placeholder="NFT Description" />
+                                        </div>
+                                    </div>
+                                    <button type="button" onClick={handleUpdateMetadata} disabled={metadataState.status === 'updating'} className="btn-secondary" style={{ width: '100%', padding: '8px', fontSize: '0.8rem', display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                                        {metadataState.status === 'updating' ? 'Updating...' : '💾 Save Metadata Changes'}
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -249,17 +355,18 @@ export default function NFTGenerator() {
                             color: 'var(--outline)', textTransform: 'uppercase',
                             letterSpacing: '1px', marginBottom: '10px'
                         }}>
-                            Base URI (Metadata)
+                            Base URI (Token URI)
                         </label>
                         <input
                             name="baseURI"
-                            placeholder="ipfs://Qm... or https://..."
                             className="input"
-                            onChange={handleChange}
                             value={formData?.baseURI || ''}
+                            readOnly
+                            style={{ background: 'var(--surface)', color: 'var(--outline)' }}
+                            placeholder="Upload an image above to generate token URI"
                         />
                         <p style={{ fontSize: '0.7rem', color: 'var(--outline)', marginTop: '6px' }}>
-                            {uploadedFile ? '✅ Auto-filled from upload. Edit manually if needed.' : 'IPFS or HTTP URL for your NFT metadata JSON.'}
+                            {metadataState.status === 'ready' ? '✅ Automatically filled from your IPFS metadata.' : '⚠️ Required for deployment. Upload an image above.'}
                         </p>
                     </div>
 
@@ -401,29 +508,40 @@ export default function NFTGenerator() {
                 </div>
             )}
 
+            {/* Security Scanner */}
+            {generatedCode && (
+                <div className="animate-fade-in-up" style={{ marginBottom: '16px' }}>
+                    <SecurityScanner 
+                        contractCode={generatedCode} 
+                        onAuditResult={(status) => setAuditStatus(status)} 
+                    />
+                </div>
+            )}
+
             {/* Deploy Button */}
             {generatedCode && (
                 <div className="animate-fade-in-up">
+                    <div style={{ marginBottom: 16 }}><DeploymentStatusBar /></div>
                     {isDeploying && deployStep >= 0 ? (
                         <div className="card glass" style={{ padding: '28px', marginBottom: '16px' }}>
-                            <DeploymentTimeline currentStep={deployStep} />
+                            <DeploymentTimeline currentStep={deployStep} errorStep={errorStep} errorMessage={errorMessage} />
                         </div>
                     ) : (
                         <button
                             onClick={deployNFT}
-                            disabled={!generatedCode || isDeploying}
+                            disabled={!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing}
                             className="btn-primary"
                             style={{
                                 width: '100%', padding: '18px', fontSize: '1.05rem',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                                background: (!generatedCode || isDeploying)
+                                background: (!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing)
                                     ? 'var(--surface-highest)'
                                     : 'var(--primary-gradient)',
-                                color: (!generatedCode || isDeploying) ? 'var(--outline)' : 'white',
-                                cursor: (!generatedCode || isDeploying) ? 'not-allowed' : 'pointer'
+                                color: (!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing) ? 'var(--outline)' : 'white',
+                                cursor: (!generatedCode || isDeploying || !auditStatus.canDeploy || auditStatus.isAuditing) ? 'not-allowed' : 'pointer'
                             }}
                         >
-                            🚀 Deploy NFT to {network.name}
+                            {auditStatus.isAuditing ? '⏳ Auditing Contract...' : `🚀 Deploy NFT to ${network.name}`}
                         </button>
                     )}
                 </div>
@@ -437,7 +555,16 @@ export default function NFTGenerator() {
                             📄 Generated ERC-721 Contract
                         </h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <CodeExportTools code={generatedCode} contractName={formData.name || 'NFTCollection'} />
+                            <DeveloperToggle />
+                            <ExportCenter 
+                                contractName={formData.name || 'NFTCollection'} 
+                                abi={contractData?.abi} 
+                                nftMetadata={{
+                                    name: metadataState.name,
+                                    description: metadataState.description,
+                                    image: metadataState.fileCID ? `ipfs://${metadataState.fileCID}` : ''
+                                }}
+                            />
                             <span style={{
                                 padding: '4px 12px', borderRadius: '50px',
                                 fontSize: '0.7rem', fontWeight: 700,
@@ -447,10 +574,8 @@ export default function NFTGenerator() {
                             }}>Compiled ✓</span>
                         </div>
                     </div>
-                    <div className="code-block">
-                        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                            <code>{generatedCode}</code>
-                        </pre>
+                    <div className="code-block" style={{ padding: 0 }}>
+                        <CodeViewer />
                     </div>
                 </div>
             )}
@@ -470,6 +595,15 @@ export default function NFTGenerator() {
             contractName={formData.name || 'NFT'}
             receipt={deploymentReceipt}
             provider={providerInstance}
+            sourceCode={generatedCode}
+            compilerVersion={contractData.compilerVersion}
+            constructorArgs={contractData.constructorArgs}
+        />
+        
+        <AIChatPanel 
+            isOpen={isChatOpen} 
+            onClose={() => setIsChatOpen(false)} 
+            contractCode={generatedCode} 
         />
         </div>
     );

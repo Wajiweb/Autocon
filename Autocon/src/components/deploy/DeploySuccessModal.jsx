@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Copy, ExternalLink, X, SearchCode, Download } from 'lucide-react';
+import { CheckCircle2, Copy, ExternalLink, X, SearchCode, Download, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useABIExport } from '../../hooks/useExport';
 import TransactionStoryteller from '../dashboard/TransactionStoryteller';
+import { API_BASE } from '../../config';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 /**
  * DeploySuccessModal
@@ -27,9 +30,49 @@ export default function DeploySuccessModal({
   contractName = '',
   receipt = null,
   provider = null,
+  sourceCode = null,
+  compilerVersion = null,
+  constructorArgs = null,
 }) {
   const [copied, setCopied] = useState(false);
+  const [verifyState, setVerifyState] = useState('idle'); // idle, submitting, polling, verified, error
   const { downloadABI } = useABIExport();
+
+  const pollVerificationStatus = async (net, guid) => {
+    const maxAttempts = 20; // 20 * 4s = 80s timeout
+    let attempts = 0;
+    const token = localStorage.getItem('autocon_token');
+
+    const poll = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`${API_BASE}/api/verify/status/${encodeURIComponent(net)}/${guid}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (data.isVerified) {
+          clearInterval(poll);
+          setVerifyState('verified');
+          toast.success('Contract Verified on Explorer! 🛡️');
+        } else if (!data.isPending) {
+          // If it's not pending and not verified, it failed
+          clearInterval(poll);
+          setVerifyState('error');
+          toast.error(data.status || 'Verification failed on Etherscan.');
+        }
+
+        if (attempts >= maxAttempts) {
+          clearInterval(poll);
+          setVerifyState('error');
+          toast.error('Verification status check timed out. Please check the explorer manually.');
+        }
+      } catch (err) {
+        // Ignore intermittent network errors during polling
+        console.error('Polling error:', err);
+      }
+    }, 4000);
+  };
 
   const copyAddress = () => {
     navigator.clipboard.writeText(address);
@@ -41,6 +84,98 @@ export default function DeploySuccessModal({
   const shortAddr = address
     ? `${address.slice(0, 10)}...${address.slice(-8)}`
     : '';
+
+  const handleVerify = async () => {
+    if (!sourceCode || !compilerVersion) {
+      toast.error('Missing source code or compiler version for verification.');
+      return;
+    }
+
+    try {
+      setVerifyState('submitting');
+      const token = localStorage.getItem('autocon_token');
+
+      const res = await fetch(`${API_BASE}/api/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          contractAddress: address,
+          sourceCode,
+          contractName,
+          compilerVersion,
+          network,
+          constructorArguements: constructorArgs,
+        }),
+      });
+      const data = await res.json();
+
+      if (!data.success) throw new Error(data.error || 'Failed to submit verification request.');
+
+      // Switch to polling UI and start interval
+      setVerifyState('polling');
+      pollVerificationStatus(network, data.guid);
+
+    } catch (err) {
+      console.error('[DeploySuccessModal] Verify error:', err);
+      toast.error(err.message || 'Verification submission failed');
+      setVerifyState('error');
+    }
+  };
+
+  const generatePDFReport = () => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(20);
+      doc.text('AutoCon Deployment Report', 14, 22);
+
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+
+      doc.autoTable({
+        startY: 40,
+        head: [['Property', 'Value']],
+        body: [
+          ['Contract Name', contractName],
+          ['Contract Type', contractType],
+          ['Network', network],
+          ['Contract Address', address],
+          ['Transaction Hash', receipt?.hash || 'N/A']
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] }
+      });
+
+      const finalY = doc.lastAutoTable.finalY || 100;
+
+      // Usage Instructions
+      doc.setFontSize(14);
+      doc.setTextColor(20, 20, 20);
+      doc.text('Usage Instructions', 14, finalY + 15);
+
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      
+      const instructions = [
+        `1. Add your new contract to Web3 platforms (like Etherscan or Remix).`,
+        `2. Use the "Export ABI" feature from the AutoCon Export Center to interact with it using ethers.js or web3.js.`,
+        `3. Save this report for future reference, as it contains your unique deployment hash and contract address.`,
+        `4. If applicable, you can now build a frontend application and pass your Contract Address and ABI to interact with your contract on the ${network} network.`
+      ];
+
+      let currentY = finalY + 25;
+      instructions.forEach(instruction => {
+          const lines = doc.splitTextToSize(instruction, 180);
+          doc.text(lines, 14, currentY);
+          currentY += lines.length * 5 + 2;
+      });
+
+      doc.save(`${contractName}_Report.pdf`);
+      toast.success('PDF Report Downloaded!');
+    } catch (err) {
+      toast.error('Failed to generate PDF');
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -153,9 +288,9 @@ export default function DeploySuccessModal({
                   flex: 1, minWidth: '120px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   padding: '12px', borderRadius: '12px',
-                  background: 'rgba(139,92,246,0.1)',
-                  border: '1px solid rgba(139,92,246,0.25)',
-                  color: '#a78bfa', fontWeight: 600, fontSize: '0.82rem',
+                  background: 'var(--primary-subtle)',
+                  border: '1px solid var(--primary-muted)',
+                  color: 'var(--primary)', fontWeight: 600, fontSize: '0.82rem',
                   textDecoration: 'none', transition: 'all 0.2s',
                 }}
               >
@@ -182,7 +317,49 @@ export default function DeploySuccessModal({
                   Download ABI
                 </button>
               )}
+
+              <button
+                onClick={generatePDFReport}
+                className="hover-lift"
+                style={{
+                  flex: '1 1 100%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  padding: '10px', borderRadius: '12px',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  color: '#10b981', fontWeight: 600, fontSize: '0.82rem',
+                  cursor: 'pointer', transition: 'all 0.2s',
+                }}
+              >
+                <Download size={15} />
+                PDF Report
+              </button>
             </div>
+
+            {/* Verification Button */}
+            {sourceCode && compilerVersion && (
+              <div style={{ marginBottom: '20px' }}>
+                <button
+                  onClick={handleVerify}
+                  disabled={verifyState !== 'idle' && verifyState !== 'error'}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: '12px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    background: verifyState === 'verified' ? 'rgba(16,185,129,0.1)' : 'var(--surface-highest)',
+                    border: `1px solid ${verifyState === 'verified' ? 'rgba(16,185,129,0.3)' : 'var(--outline-variant)'}`,
+                    color: verifyState === 'verified' ? 'var(--success)' : 'var(--on-surface)',
+                    fontWeight: 700, fontSize: '0.85rem', cursor: (verifyState === 'idle' || verifyState === 'error') ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {verifyState === 'idle' && <><ShieldCheck size={16} /> Verify Source Code</>}
+                  {verifyState === 'submitting' && 'Submitting to Etherscan...'}
+                  {verifyState === 'polling' && '⏳ Polling Status (Takes ~20s)...'}
+                  {verifyState === 'verified' && <><CheckCircle2 size={16} /> Verified Successfully</>}
+                  {verifyState === 'error' && '❌ Verification Failed - Retry'}
+                </button>
+              </div>
+            )}
 
             {/* Transaction Storyteller */}
             {receipt && abi && provider && (

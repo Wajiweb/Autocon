@@ -15,11 +15,12 @@ import AuditPage from './pages/AuditPage';
 import NFTGenerator from './pages/NFTGenerator';
 import AuctionGenerator from './pages/AuctionGenerator';
 import TemplateLibrary from './pages/TemplateLibrary';
-import ChatbotPage from './pages/ChatbotPage';
 import ProfilePage from './pages/ProfilePage';
 import LandingPage from './pages/LandingPage';
 import AnimatedPage from './components/dashboard/AnimatedPage';
 import ASTPage from './pages/ASTPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import OnboardingTour from './components/dashboard/OnboardingTour';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -33,10 +34,10 @@ function AnimatedRoutes() {
         <Route path="/nfts" element={<AnimatedPage><NFTGenerator /></AnimatedPage>} />
         <Route path="/auctions" element={<AnimatedPage><AuctionGenerator /></AnimatedPage>} />
         <Route path="/audit" element={<AnimatedPage><AuditPage /></AnimatedPage>} />
-        <Route path="/chatbot" element={<AnimatedPage><ChatbotPage /></AnimatedPage>} />
         <Route path="/profile" element={<AnimatedPage><ProfilePage /></AnimatedPage>} />
         <Route path="/templates" element={<AnimatedPage><TemplateLibrary /></AnimatedPage>} />
         <Route path="/ast" element={<AnimatedPage><ASTPage /></AnimatedPage>} />
+        <Route path="/analytics" element={<AnimatedPage><AnalyticsPage /></AnimatedPage>} />
       </Routes>
     </AnimatePresence>
   );
@@ -50,8 +51,8 @@ function AppContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 rounded-full border-4 border-cyan-500/20 border-t-cyan-500 animate-spin" />
-        <p className="text-slate-400 text-sm">Loading AutoCon...</p>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid var(--primary-subtle)', borderTopColor: 'var(--primary)', animation: 'spin-slow 1s linear infinite' }} />
+        <p className="text-sm" style={{ color: 'var(--on-surface-variant)' }}>Loading AutoCon...</p>
       </div>
     );
   }
@@ -66,6 +67,7 @@ function AppContent() {
   // Main App Layout
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)', color: 'var(--on-surface)' }}>
+      <OnboardingTour />
       {/* Fixed sidebar */}
       <Sidebar
         isMobileOpen={isMobileMenuOpen}

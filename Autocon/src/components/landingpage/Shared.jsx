@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 
 /* ─── Reusable scroll-reveal wrapper ─── */
 export const Reveal = ({ children, delay = 0, y = 30, className = '' }) => {
@@ -20,7 +20,7 @@ export const Reveal = ({ children, delay = 0, y = 30, className = '' }) => {
 export const PillBadge = ({ children }) => (
   <span style={{
     display: 'inline-block', padding: '6px 18px', borderRadius: '99px',
-    background: 'var(--surface-low)', border: '1px solid var(--outline-variant)',
+    background: 'var(--surface)', border: '1px solid var(--outline-subtle)',
     fontSize: '0.82rem', fontWeight: 600, color: 'var(--primary)',
     letterSpacing: '0.01em', marginBottom: '24px',
   }}>{children}</span>
@@ -31,21 +31,18 @@ export const SectionHeading = ({ pre, highlight, after, sub, center = true }) =>
   <div style={{ textAlign: center ? 'center' : 'left' }}>
     <h2 style={{
       fontSize: 'clamp(1.9rem, 4vw, 3.2rem)', fontWeight: 700,
-      color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1.1,
+      color: 'var(--on-surface)', letterSpacing: '-0.03em', lineHeight: 1.1,
       marginBottom: sub ? '20px' : 0,
     }}>
       {pre}{' '}
       {highlight && (
-        <span style={{
-          background: 'var(--primary-gradient)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-        }}>{highlight}</span>
+        <span style={{ color: 'var(--primary)' }}>{highlight}</span>
       )}
       {after && <> {after}</>}
     </h2>
     {sub && (
       <p style={{
-        color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.7,
+        color: 'var(--on-surface-variant)', fontSize: '1rem', lineHeight: 1.7,
         maxWidth: center ? '560px' : '100%', margin: center ? '0 auto' : '0',
       }}>{sub}</p>
     )}

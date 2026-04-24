@@ -5,13 +5,13 @@ const cors = require('cors');
 const helmet = require('helmet');
 const fs = require('fs');
 const mongoose = require('mongoose');
-const { ethers } = require('ethers');
 // Legacy models (kept for backward compatibility during migration)
 const Token = require('./models/Token');
 // New unified models
 const Contract = require('./models/Contract');
 const { authMiddleware } = require('./middleware/auth');
 const { generalLimiter, strictLimiter, authLimiter } = require('./middleware/rateLimiter');
+const { errorHandler } = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const tokenRoutes = require('./routes/tokenRoutes');
 const gasRoutes = require('./routes/gasRoutes');
@@ -21,8 +21,11 @@ const auctionRoutes = require('./routes/auctionRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const ipfsRoutes = require('./routes/ipfsRoutes');
 const verifyRoutes = require('./routes/verifyRoutes');
-const siteRoutes = require('./routes/siteRoutes');
-
+const siteRoutes    = require('./routes/siteRoutes');
+const compileRoutes = require('./routes/compileRoutes');
+const jobRoutes     = require('./routes/jobRoutes');
+const userRoutes    = require('./routes/userRoutes');
+const aiRoutes      = require('./routes/aiRoutes');
 const app = express();
 
 // ─── SECURITY: Helmet (HTTP security headers) ───
@@ -97,7 +100,7 @@ app.get('/api/deployments/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Deployment not found.' });
         }
 
-        const ownerAddr = doc.ownerAddress || doc.ownerAddress;
+        const ownerAddr = doc.ownerAddress;
         if (req.user.walletAddress !== ownerAddr.toLowerCase()) {
             return res.status(403).json({ success: false, error: 'Unauthorized.' });
         }
@@ -121,14 +124,9 @@ app.get('/api/deployments/:id', authMiddleware, async (req, res) => {
 });
 
 // ─── GAS & AUDIT ROUTES ───
-app.use('/api', gasRoutes);
-app.use('/api', auditRoutes);
-
-// ─── NFT ROUTES ───
 app.use('/api/nft', nftRoutes);
-
-// ─── AUCTION ROUTES ───
 app.use('/api/auction', auctionRoutes);
+app.use('/api', auditRoutes);
 
 // ─── CHAT ROUTES ───
 app.use('/api/chat', chatRoutes);
@@ -140,17 +138,24 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ─── VERIFY ROUTES ───
 app.use('/api/verify', verifyRoutes); // Etherscan verification
 
+// ─── AI ASSISTANT ROUTES ───
+app.use('/api/ai', aiRoutes);
+
 // ─── SITE GENERATION ───
 app.use('/api/site', siteRoutes); // Mini-Site generator
 
-// ─── Global error handler ───
-app.use((err, req, res, next) => {
-    if (err.message === 'Not allowed by CORS') {
-        return res.status(403).json({ success: false, error: 'CORS: Origin not allowed.' });
-    }
-    console.error('Unhandled Error:', err);
-    res.status(500).json({ success: false, error: 'Internal server error.' });
-});
+// ─── COMPILE ROUTE ───
+app.use('/api/compile', compileRoutes);
+
+// ─── JOB QUEUE ROUTES ───
+app.use('/api/jobs', jobRoutes);
+
+// ─── USER PROFILE + ADMIN ROUTES ───
+app.use('/api/user',  userRoutes);
+app.use('/api/admin', userRoutes); // Admin sub-routes live inside userRoutes
+
+// ─── Global error handler (centralized — must be last) ───
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(` Server running on port ${PORT}`));

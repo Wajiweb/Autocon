@@ -72,17 +72,15 @@ export default function LandingPage({ onLoginClick }) {
       {/* ── FOOTER with top atmospheric glow ── */}
       <div id="contact" style={{ position: 'relative' }}>
 
-        {/* Top-glow overlay: indigo/purple light beam from the border line downward */}
+        {/* Top-glow overlay */}
         <div style={{
           position: 'absolute',
           top: 0, left: 0, right: 0,
           height: '320px',
           pointerEvents: 'none',
           zIndex: 10,
-          background: 'radial-gradient(ellipse 70% 180px at 50% 0%, var(--accent-glow) 0%, var(--primary-glow) 40%, transparent 100%)',
+          background: 'radial-gradient(ellipse 70% 180px at 50% 0%, rgba(34,197,94,0.15) 0%, rgba(15,61,46,0.4) 40%, transparent 100%)',
         }} />
-
-
 
         {/* Secondary soft haze just below the line */}
         <div style={{
@@ -90,7 +88,7 @@ export default function LandingPage({ onLoginClick }) {
           top: 0, left: '50%',
           transform: 'translateX(-50%)',
           width: '60%', height: '90px',
-          background: 'radial-gradient(ellipse 80% 100% at 50% 0%, var(--accent-glow) 0%, transparent 100%)',
+          background: 'radial-gradient(ellipse 80% 100% at 50% 0%, rgba(34,197,94,0.2) 0%, transparent 100%)',
           pointerEvents: 'none',
           zIndex: 10,
           filter: 'blur(8px)',

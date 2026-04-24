@@ -2,7 +2,7 @@ import React from 'react';
 import { Reveal } from './Shared';
 
 /* ══════════════════════════════════════════════════════
-   STATS BAR
+   STATS BAR — Clean, no gradient backgrounds
 ══════════════════════════════════════════════════════ */
 const StatsSection = () => {
   const stats = [
@@ -20,26 +20,20 @@ const StatsSection = () => {
           {stats.map((s, i) => (
             <div key={s.label} style={{
               padding: '28px 20px', textAlign: 'center',
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--outline-subtle)',
               borderRadius: '16px', position: 'relative',
-              background: 'linear-gradient(145deg, var(--surface-low) 0%, var(--bg) 100%)',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-              transition: 'all 0.3s ease',
+              background: 'var(--surface)',
+              transition: 'transform 0.3s ease, border-color 0.3s ease',
             }}
-              onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
-              onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
+              onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = 'var(--primary-muted)'; }}
+              onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--outline-subtle)'; }}
             >
-              <div style={{
-                position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-                width: '80px', height: '2px',
-                background: 'linear-gradient(90deg, transparent, var(--primary), transparent)', opacity: 0.8,
-              }} />
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{s.label}</p>
+              <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.75rem', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{s.label}</p>
               <div style={{
                 fontSize: 'clamp(2rem, 3vw, 2.5rem)', fontWeight: 800, lineHeight: 1, marginBottom: '8px',
-                color: 'var(--text-primary)'
+                color: 'var(--on-surface)'
               }}>{s.value}</div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{s.sub}</p>
+              <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.8rem' }}>{s.sub}</p>
             </div>
           ))}
         </div>

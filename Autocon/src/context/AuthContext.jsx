@@ -63,6 +63,22 @@ export function AuthProvider({ children }) {
         checkSession();
     }, []);
 
+    // MetaMask accountsChanged — auto-logout if user switches wallet
+    useEffect(() => {
+        if (!window.ethereum) return;
+        const handleAccountsChanged = (accounts) => {
+            if (accounts.length === 0) {
+                // MetaMask locked or disconnected
+                logout();
+            } else if (user && accounts[0].toLowerCase() !== user.walletAddress) {
+                // User switched to a different wallet account
+                logout();
+            }
+        };
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        return () => window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+    }, [user]);
+
     // MetaMask Sign-In Flow
     const login = async () => {
         if (!window.ethereum) {
