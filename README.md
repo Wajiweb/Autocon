@@ -1,253 +1,140 @@
-<div align="center">
-  <img src="Autocon/public/autocon-logo.png" alt="AutoCon Logo" width="120" />
-  <h1>AutoCon</h1>
-  <p><strong>A No-Code Web3 Smart Contract SaaS Platform</strong></p>
-  
-  ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-  ![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite)
-  ![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js)
-  ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb)
-  ![Ethereum](https://img.shields.io/badge/Ethereum-Sepolia-3C3C3D?logo=ethereum)
-</div>
+# AutoCon — Smart Contract Generator Platform
 
+## Overview
+AutoCon is an advanced Web3 SaaS platform designed to simplify and secure the smart contract lifecycle. It provides an intuitive, end-to-end environment for generating, auditing, and deploying smart contracts without requiring deep Solidity expertise. Powered by AI assistance, AutoCon ensures that developers and creators can launch secure, production-ready contracts efficiently.
 
- 1. Project Overview
+## Features
 
-Purpose: 
-AutoCon is an enterprise-grade, No-Code Web3 platform designed to demystify blockchain technology. It allows non-technical users and developers to generate, audit, and deploy Ethereum smart contracts seamlessly without writing a single line of Solidity code.
+### Core
+- **Smart Contract Generation:** Instantly generate ERC20, NFT (ERC721), and English Auction contracts.
+- **Live Code Preview:** View and interact with generated Solidity code in real-time.
+- **Deployment via MetaMask:** Seamlessly deploy contracts directly to testnets and mainnets using MetaMask integration.
 
-Goals:
-(Accessibility): To democratize Web3 development by providing a no-code interface that eliminates the technical barriers of Solidity programming.
+### Security
+- **Hybrid Audit System:** Combines static analysis tools (like Slither) with AI-powered vulnerability explanations to ensure your contracts are secure before deployment.
 
-(Security & Trust): To ensure contract integrity through a secure deployment pipeline featuring AI-driven auditing and automated Etherscan verification.
+### Integrations
+- **IPFS (Pinata):** Built-in decentralized storage integration for NFT metadata.
+- **Contract Verification:** Automated verification workflows for block explorers like Etherscan and Polygonscan.
 
-(Educational Transparency): To bridge the blockchain knowledge gap using interactive visualizers that translate complex smart contract data into human-readable insights.
+### AI Layer
+- **"Suggest for Me":** Auto-configure token and NFT properties based on high-level descriptions.
+- **Audit Explanation:** AI-driven breakdown of complex security vulnerabilities into easily understandable language.
 
-Core Features
-1. Multi-Standard Asset Generators
-Deploy industry-standard contracts in seconds through a guided visual interface:
+### Developer Mode
+- **Monaco Editor:** A fully-featured IDE experience right in the browser.
+- **Export Center:** Download ABI, raw Solidity code, or complete Hardhat project scaffolding in one click.
+- **Contract Reports:** Generate professional PDF reports summarizing your contract's parameters, security posture, and deployment details.
 
-ERC-20 Token Factory: Create fungible tokens with custom supply, decimals, and ownership logic.
+## System Architecture
 
-ERC-721 NFT Collections: Launch NFT projects with integrated IPFS metadata support.
+The AutoCon platform follows a streamlined operational flow:
+`User Configuration → Code Generation → AI Security Audit → Deployment → Blockchain Verification → Dashboard Tracking → Project Export`
 
-Decentralized English Auctions: Deploy time-bound bidding contracts for transparent asset sales.
+## Tech Stack
 
-2.  AI-Powered Security Audit
-Safety-first deployment with an integrated vulnerability scanner:
+### Frontend
+- **Framework:** React
+- **Styling:** Tailwind CSS
+- **State Management:** Zustand
+- **Editor:** Monaco Editor
 
-Automated Scans: Detects reentrancy, overflow risks, and access control flaws before deployment.
+### Backend
+- **Environment:** Node.js
+- **Framework:** Express
 
-PDF Audit Export: Generates professional security reports for every contract—perfect for project documentation.
+### Web3 & Storage
+- **Libraries:** ethers.js, MetaMask
+- **Decentralized Storage:** IPFS via Pinata
 
-3.  One-Click Etherscan Verification
-Build trust instantly by making your code transparent:
+### AI Integration
+- **LLMs:** OpenAI / Gemini API
 
-Automated Verification: Uses the Etherscan API to verify and publish source code with a single click, obtaining the official "Green Checkmark."
+## Installation
 
-4.  Deployment & Management Dashboard
-Contract X-Ray: Provides a detailed breakdown of contract logic and state variables.
+### Prerequisites
+- Node.js (v16+)
+- Git
 
-Live Gas Estimator: Real-time Gwei/ETH cost tracking based on current Sepolia network congestion.
+### Setup Steps
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/autocon.git
+   cd autocon
+   ```
 
-Deployment Timeline: A step-by-step visual tracker that monitors the lifecycle of a transaction from "Pending" to "Confirmed."
+2. **Install dependencies:**
+   ```bash
+   # Install backend dependencies
+   npm install
+   
+   # Install frontend dependencies
+   cd Autocon
+   npm install
+   ```
 
-5.  Modern, Theme-Aware UI
-Built with React 19 and Tailwind CSS 4.
+3. **Setup environment variables:**
+   Create `.env` files in both the root directory and the `Autocon` frontend directory. See the [Environment Variables](#environment-variables-safe) section below for required placeholders.
 
-Dynamic Theming: Uses CSS custom variables (var(--bg), var(--on-surface)) for a consistent, accessible dark/light mode experience.
+4. **Run the application:**
+   ```bash
+   # Run the backend server (from root)
+   npm run server
+   
+   # Run the frontend application (from /Autocon)
+   npm run dev
+   ```
 
-Smooth Motion: Powered by framer-motion for fluid state transitions and feedback.
-2. Installation Guide
+## Environment Variables (Safe)
 
-Follow these steps to set up the project locally on your machine.
-
- Prerequisites
-Node.js (v18.x or higher)
-npm (v9.x or higher)
-A MongoDB Atlas URI (or local MongoDB instance)
-MetaMask browser extension installed
-
- Step-by-Step Setup
-
-1. Clone the repository
-bash
-git clone https://github.com/Wajiweb/Autocon.git
-cd Autocon-fyp
-
-2. Install Backend Dependencies
-```bash
-cd server
-npm install
-```
-
-3. Configure Backend Environment**
-Create a `.env` file inside the `server/` directory:
+**Backend `.env` (Root):**
 ```env
-# server/.env
-
+PORT=5000
+MONGO_URI=YOUR_MONGO_DB_CONNECTION_STRING
+JWT_SECRET=YOUR_JWT_SECRET
+OPENAI_API_KEY=YOUR_API_KEY
+PINATA_API_KEY=YOUR_API_KEY
+PINATA_SECRET_API_KEY=YOUR_API_KEY
 ```
 
-4. Install Frontend Dependencies
-```bash
-cd ../Autocon
-npm install
-```
-
-5. Configure Frontend Environment
-Create a `.env` file inside the `Autocon/` directory:
+**Frontend `.env` (`/Autocon`):**
 ```env
-# Autocon/.env
-VITE_ETHERSCAN_ENABLED=true
-VITE_API_URL=http://127.0.0.1:5000
+VITE_API_URL=http://localhost:5000
+VITE_RPC_URL=YOUR_RPC_URL
+```
+*(Do not commit your `.env` files. Ensure they are listed in your `.gitignore`.)*
+
+## Usage
+
+1. **Generate Contract:** Navigate to the desired generator (Token, NFT, Auction) and fill in the required parameters, or use the "Suggest for Me" AI feature.
+2. **Audit & Review:** Once the code is generated, use the built-in Security Scanner to audit the contract.
+3. **Deploy:** Connect your MetaMask wallet, review the estimated gas costs, and click "Deploy".
+4. **Developer Export:** Toggle Developer Mode to view the raw Solidity code, and use the Export Center to download ABIs or Hardhat setups.
+
+## Project Structure
+
+```
+autocon/
+├── server/            # Node.js Express backend
+│   ├── controllers/   # API route logic
+│   ├── models/        # Database schemas
+│   ├── routes/        # API endpoints
+│   └── services/      # Business logic (AI, IPFS, Audit)
+└── Autocon/           # React frontend
+    ├── src/
+    │   ├── components/# Reusable UI components
+    │   ├── hooks/     # Custom React hooks (Web3, UI logic)
+    │   ├── pages/     # Main route views
+    │   ├── store/     # Zustand state management
+    │   └── utils/     # Shared utility functions
 ```
 
----
+## Future Improvements
 
- 3. Usage Guide
+- **Subscription System:** Premium tiers for advanced audits and high-frequency deployment.
+- **Advanced Analytics:** In-depth dashboard analytics for deployed contract interaction.
+- **Multi-Chain Expansion:** Broader support for various EVM and non-EVM compatible blockchains.
 
- Running the Project Locally
+## License
 
-You will need two terminal windows to run both the frontend and backend servers.
-
-Terminal 1 — Backend:
-```bash
-cd server
-node index.js
-# Output:
-#  Server running on port 5000
-#  Connected to MongoDB Atlas!
-```
-
-Terminal 2 — Frontend:
-```bash
-cd Autocon
-npm run dev
-# Output:
-# ➜  Local:   http://localhost:5173/
-```
-
- Application Workflow Example (Deploying a Token)
-1. Open `http://localhost:5173` in your browser.
-2. Click **Connect Wallet** and sign the MetaMask message to securely authenticate (SIWE protocol).
-3. Navigate to **Token Generator** from your Dashboard.
-4. Fill in token details (Name, Symbol, Initial Supply).
-5. The Live Code Preview will update instantly. View the visual **AST Graph** to understand the contract structure.
-6. Click **Deploy**. The system will estimate gas fees, compile the Solidity code on the server, and prompt MetaMask for deployment.
-7. Upon success, use the **Verify on Etherscan** and **Transaction Storyteller** features in the success modal.
-
----
-
- 4. Architecture & Structure
-
-AutoCon follows a decoupled Client-Server architecture utilizing standard REST APIs and Web3 JSON-RPC communication.
-
-Workflow Architecture
-- **Frontend (Client):** Manages wallet context, UI state, form inputs, and directs MetaMask to broadcast signed transactions directly to the Ethereum network.
-- **Backend (Server):** Handles heavy computation like Solidity compilation (`solc`), AI audits, IPFS uploading, and stores historical deployment metadata securely in MongoDB.
-
- Folder Structure
-```text
-Autocon-fyp/
-├── Autocon/                     # React Frontend (Vite)
-│   ├── src/
-│   │   ├── components/          # Reusable UI (Cards, Modals, VerifyButton)
-│   │   ├── context/             # React Context (Auth, Theme, Network)
-│   │   ├── hooks/               # Custom logic (useWeb3, useWallet, useAuth)
-│   │   ├── pages/               # Main routes (Dashboard, Generators, ASTPage)
-│   │   └── utils/               # Helpers (ABI Detectors, AST Normalizers)
-│   └── .env                     # Frontend configurations
-│
-└── server/                      # Node.js Backend (Express)
-    ├── routes/                  # API endpoints (auth, token, nft, audit, verify)
-    ├── models/                  # Mongoose Schemas (User, Token, Contract)
-    ├── middleware/              # JWT Auth guards, Rate Limiters
-    ├── templates/               # Base Solidity templates (.txt/.sol)
-    ├── index.js                 # Entry point & Express configuration
-    └── .env                     # Backend secrets
-```
-
----
-
-5. Technologies Used
-
-Frontend:
-- **Framework:** React 19 + Vite 7
-- **Styling:** Tailwind CSS 4, Framer Motion (Animations)
-- **Web3 Interaction:** ethers.js v6
-- **Data Visualization:** Chart.js, React-Three-Fiber (3D models)
-
-Backend:
-- **Server:** Node.js, Express 5
-- **Database:** MongoDB Atlas, Mongoose v9
-- **Compilation:** `solc` (Solidity Compiler)
-- **Security:** Helmet, express-rate-limit, cors
-
-Blockchain / DevOps:
-- **Network:** Ethereum Sepolia Testnet
-- **Authentication:** SIWE (Sign-In with Ethereum) utilizing JWTs.
-- **Storage:** IPFS (via Pinata APIs)
-
----
-
-6. API Documentation
-
-Complete interaction with the AutoCon backend requires a Bearer JWT obtained during the MetaMask login flow.
-
-### Setup Base URL
-`http://127.0.0.1:5000/api`
-
- 1. Authentication (SIWE)
-- `GET /auth/nonce/:walletAddress`
-  - **Purpose:** Fetches a cryptographic nonce for signing.
-  - **Response:** `{ "success": true, "message": "Sign this message..." }`
-
-- `POST /auth/verify`
-  - **Purpose:** Verifies the signed message and returns a JWT.
-  - **Body:** `{ "walletAddress": "0x...", "signature": "0x..." }`
-  - **Response:** `{ "success": true, "token": "ey...", "user": {...} }`
-
- 2. Contract Generation & Compilation
-- **`POST /generate-token`** *(Auth required)*
-  - **Purpose:** Injects parameters into the ERC-20 template and compiles via `solc`.
-  - **Body:** `{ "name": "MyToken", "symbol": "MTK", "supply": 1000, "ownerAddress": "0x..." }`
-  - **Response:** 
-    ```json
-    {
-      "success": true,
-      "abi": [...],
-      "bytecode": "0x60806040...",
-      "ast": {...}
-    }
-    ```
-3. Analytics & Saving
-- **`POST /deploy-token`** *(Auth required)*
-  - **Purpose:** Saves the successfully deployed contract data to the user's dashboard.
-  - **Body:** `{ "name": "...", "symbol": "...", "contractAddress": "0x...", "network": "Sepolia" }`
-
----
- 8. Contributing Guidelines
-
-We welcome community contributions! Please follow the steps below if you wish to help improve AutoCon.
-
-1. **Fork the Repository:** Create your own branch from `main`.
-2. **Create a Feature Branch:** 
-   ```bash
-   git checkout -b feature/AmazingFeature
-   ```
-3. **Commit your Changes:** Write clear, concise commit messages.
-   ```bash
-   git commit -m 'Add some AmazingFeature'
-   ```
-4. **Push to the Branch:**
-   ```bash
-   git push origin feature/AmazingFeature
-   ```
-5. **Open a Pull Request:** Navigate to the original repository and submit your PR for review. Ensure your code passes the existing ESLint configurations (`npm run lint`).
-
----
- 9. License
-
-This project is distributed under the **ISC License**. See the `LICENSE` file for more information.
-
-*Built as a Final Year Project constraint for modern Web3 infrastructure automation.*
+This project is licensed under the MIT License - see the LICENSE file for details.
