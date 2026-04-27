@@ -55,7 +55,8 @@ Return ONLY a valid JSON object matching this schema exactly. Only include prope
     
     let jsonResponse;
     try {
-        jsonResponse = JSON.parse(responseText);
+        const cleanText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        jsonResponse = JSON.parse(cleanText);
     } catch (e) {
         throw new AppError("AI returned malformed JSON", 502, 'AI_PARSE_ERROR');
     }
@@ -103,7 +104,8 @@ Return ONLY a valid JSON object matching this schema exactly:
     
     let jsonResponse;
     try {
-        jsonResponse = JSON.parse(responseText);
+        const cleanText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        jsonResponse = JSON.parse(cleanText);
     } catch (e) {
         throw new AppError("AI returned malformed JSON", 502, 'AI_PARSE_ERROR');
     }

@@ -20,7 +20,10 @@ import LandingPage from './pages/LandingPage';
 import AnimatedPage from './components/dashboard/AnimatedPage';
 import ASTPage from './pages/ASTPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import JobsPage from './pages/JobsPage';
+import AIChatPage from './pages/AIChatPage';
 import OnboardingTour from './components/dashboard/OnboardingTour';
+import { dashboardCssVars } from './theme/tokens';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -38,6 +41,8 @@ function AnimatedRoutes() {
         <Route path="/templates" element={<AnimatedPage><TemplateLibrary /></AnimatedPage>} />
         <Route path="/ast" element={<AnimatedPage><ASTPage /></AnimatedPage>} />
         <Route path="/analytics" element={<AnimatedPage><AnalyticsPage /></AnimatedPage>} />
+        <Route path="/jobs"      element={<AnimatedPage><JobsPage /></AnimatedPage>} />
+        <Route path="/ai-chat"   element={<AnimatedPage><AIChatPage /></AnimatedPage>} />
       </Routes>
     </AnimatePresence>
   );
@@ -66,7 +71,7 @@ function AppContent() {
 
   // Main App Layout
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)', color: 'var(--on-surface)' }}>
+    <div className="dashboard-theme dashboard-app" style={dashboardCssVars}>
       <OnboardingTour />
       {/* Fixed sidebar */}
       <Sidebar
@@ -74,22 +79,15 @@ function AppContent() {
         setIsMobileOpen={setIsMobileMenuOpen}
       />
 
-      {/* Scrollable main column — offset by sidebar width */}
-      <div style={{
-        flex: 1,
-        marginLeft: '218px',
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        overflowX: 'hidden',
-      }}>
+      {/* Main column, offset by sidebar width */}
+      <div className="dashboard-main-shell">
         {/* Fixed topbar */}
         <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
 
-        {/* Page content — padded below the fixed topbar */}
-        <div style={{ flex: 1, paddingTop: '54px', overflowY: 'auto' }}>
+        {/* Page content scroll region */}
+        <main className="dashboard-scroll-region">
           <AnimatedRoutes />
-        </div>
+        </main>
       </div>
     </div>
   );

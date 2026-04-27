@@ -29,13 +29,17 @@ const auditQueue = new Queue(QUEUE_NAME, {
             type: 'fixed',
             delay: 8000,                // Wait 8s before retry (LLM throttle)
         },
-        removeOnComplete: { count: 50 },
-        removeOnFail:     { count: 100 },
+        removeOnComplete: true,
+        removeOnFail:     true,
     },
 });
 
+let hasLoggedError = false;
 auditQueue.on('error', (err) => {
-    console.error(`[AuditQueue] Queue error: ${err.message}`);
+    if (!hasLoggedError) {
+        console.error(`[AuditQueue] Queue error: ${err.message} (Subsequent errors suppressed)`);
+        hasLoggedError = true;
+    }
 });
 
 /**

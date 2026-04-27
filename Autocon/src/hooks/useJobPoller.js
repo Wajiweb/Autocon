@@ -64,6 +64,11 @@ export function useJobPoller({
 
             if (!data.success) {
                 console.warn(`[useJobPoller] Server error for job ${id}:`, data.error);
+                if (res.status === 404) {
+                    setStatus('failed');
+                    setError('Job not found or expired.');
+                    stopPolling();
+                }
                 return;
             }
 

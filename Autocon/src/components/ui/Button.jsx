@@ -15,20 +15,21 @@ export const Button = ({
   type = 'button',
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0f] active:scale-95';
+  const baseStyles = 'inline-flex items-center justify-center font-semibold transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--bg)] active:scale-95';
   
   const variants = {
-    primary: 'bg-[var(--primary-gradient)] text-white shadow-[var(--shadow-primary)] hover:shadow-lg hover:-translate-y-0.5 focus:ring-[#7C3AED] border-none',
-    secondary: 'bg-[var(--surface-highest)] text-[var(--on-surface)] border border-[var(--outline-variant)] hover:border-[var(--outline)] hover:bg-[var(--surface-hover)] focus:ring-[var(--outline)]',
-    ghost: 'bg-transparent text-[var(--outline)] hover:text-[var(--on-surface)] hover:bg-[var(--surface)] border-none',
-    danger: 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 focus:ring-red-500'
+    primary: 'bg-[var(--primary)] text-[#022C22] hover:bg-[var(--primary-hover)] hover:-translate-y-0.5 focus:ring-[var(--primary)] border-none shadow-[0_10px_24px_rgba(34,197,94,0.18)]',
+    secondary: 'bg-[var(--card-elevated)] text-[var(--text-primary)] border border-[var(--border-dark)] hover:border-[var(--primary)]/30 hover:bg-[var(--card-hover)] focus:ring-[var(--primary)]',
+    ghost: 'bg-transparent text-[var(--primary)] hover:bg-[rgba(34,197,94,0.08)] border-none',
+    danger: 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 focus:ring-red-500',
+    ai: 'btn-ai hover:bg-[var(--primary-hover)] hover:-translate-y-0.5 focus:ring-[var(--ai-accent)] border-none'
   };
 
   const sizes = {
-    sm: 'text-xs px-3 py-1.5 rounded-lg gap-1.5',
-    md: 'text-sm px-4 py-2.5 rounded-xl gap-2',
-    lg: 'text-[1.05rem] px-6 py-3.5 rounded-[14px] gap-2.5 w-full',
-    icon: 'p-2 rounded-lg'
+    sm: 'text-xs px-3 py-1.5 rounded-[var(--radius-sm)] gap-1.5',
+    md: 'text-sm px-4 py-2.5 rounded-[var(--radius-md)] gap-2',
+    lg: 'text-[1.05rem] px-6 py-3.5 rounded-[var(--radius-lg)] gap-2.5 w-full',
+    icon: 'p-2 rounded-[var(--radius-sm)]'
   };
 
   return (

@@ -1,70 +1,33 @@
 'use strict';
 const mongoose    = require('mongoose');
 const AuditReport = require('../models/AuditReport');
-const Contract    = require('../models/Contract');
-const { runSlitherAnalysis } = require('../services/slitherService');
-const { runLLMAnalysis } = require('../services/llmService');
-const { aggregateAuditResults } = require('../utils/auditAggregator');
-const { incrementAudits } = require('../services/usageService');
-/** POST /api/audit-contract */
+
+/**
+ * runAudit — DEPRECATED
+ *
+ * This controller previously served POST /api/audit-contract.
+ * It has been RETIRED in favour of the async job pipeline:
+ *
+ *   POST /api/jobs/create  { type: 'audit', payload: { contractCode } }
+ *   GET  /api/jobs/:jobId  (polled by useJobPoller.js)
+ *
+ * The worker at server/workers/audit.worker.js now handles:
+ *   1. Slither static analysis  (slitherService.js)
+ *   2. Gemini LLM analysis      (llmService.js)
+ *   3. Result aggregation       (auditAggregator.js)
+ *   4. AuditReport persistence  (models/AuditReport.js)
+ *   5. Job status updates       (models/Job.js)
+ *
+ * This function is intentionally left as a 410 Gone stub so that
+ * any stale client call returns a clear, actionable error rather
+ * than silently failing.
+ */
 async function runAudit(req, res) {
-    try {
-        const { contractCode, contractAddress } = req.body;
-
-        if (!contractCode || typeof contractCode !== 'string') {
-            return res.status(400).json({ success: false, error: 'contractCode (string) is required.' });
-        }
-
-        // 1. Slither Deterministic Analysis
-        const slitherFindings = await runSlitherAnalysis(contractCode);
-
-        // 2. AI Logic Analysis
-        const llmInsights = await runLLMAnalysis(contractCode, slitherFindings);
-
-        // 3. Aggregation & Normalization
-        const auditResult = aggregateAuditResults(slitherFindings, llmInsights);
-
-        // Persist to MongoDB (non-fatal if save fails)
-        let savedReportId = null;
-        try {
-            let contractId = null;
-            if (contractAddress) {
-                const contract = await Contract.findOne({
-                    contractAddress: contractAddress.toLowerCase(),
-                    ownerAddress: req.user.walletAddress,
-                });
-                contractId = contract?._id || null;
-            }
-
-            if (contractId) {
-                const report = await AuditReport.create({
-                    contractId,
-                    contractAddress: contractAddress?.toLowerCase() || null,
-                    ownerAddress: req.user.walletAddress,
-                    score:         auditResult.overallRisk === 'LOW' ? 95 : auditResult.overallRisk === 'MEDIUM' ? 70 : auditResult.overallRisk === 'HIGH' ? 40 : 10,
-                    riskLevel:     auditResult.overallRisk,
-                    totalFindings: auditResult.vulnerabilities.length,
-                    findings:      auditResult.vulnerabilities,
-                    summary:       {
-                        aiSummary: auditResult.aiInsights.summary,
-                        recommendations: auditResult.recommendations
-                    },
-                    engineVersion: 'v2-hybrid',
-                });
-                savedReportId = report._id;
-            }
-        } catch (saveErr) {
-            console.warn('[AuditController] Save warning:', saveErr.message);
-        }
-
-        // Track audit usage (atomic, non-fatal)
-        incrementAudits(req.user.userId);
-
-        res.json({ success: true, reportId: savedReportId, audit: auditResult });
-    } catch (error) {
-        console.error('[AuditController] runAudit:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to run security audit.' });
-    }
+    return res.status(410).json({
+        success: false,
+        error:   'POST /api/audit-contract has been retired. ' +
+                 'Use POST /api/jobs/create with { type: "audit", payload: { contractCode } } instead.',
+    });
 }
 
 /** GET /api/audit-history/:contractId */

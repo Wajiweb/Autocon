@@ -46,11 +46,11 @@ export const useWeb3 = () => {
       });
       const data = await res.json();
 
-      if (data.success) {
-        setGeneratedCode(data.contractCode, 'Token', { abi: data.abi, bytecode: data.bytecode });
-        setAst(data.ast ?? null);
+      if (data.success && data.data) {
+        setGeneratedCode(data.data.contractCode, 'Token', { abi: data.data.abi, bytecode: data.data.bytecode });
+        setAst(data.data.ast ?? null);
         toast.success("Contract Compiled & Ready! 🚀", { id: loadingToast });
-        await calculateGas(data.abi, data.bytecode); // ⛽ Fetch dynamic estimate
+        await calculateGas(data.data.abi, data.data.bytecode); // ⛽ Fetch dynamic estimate
       } else {
         toast.error(data.error || "Compilation failed.", { id: loadingToast });
       }

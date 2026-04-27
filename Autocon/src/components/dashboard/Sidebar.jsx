@@ -20,8 +20,10 @@ const NAV_GROUPS = [
   {
     label: 'Tools',
     items: [
-      { label: 'Analytics',    path: '/analytics', icon: '◑' },
-      { label: 'Profile',      path: '/profile',   icon: '⊙' },
+      { label: 'AI Assistant',     path: '/ai-chat',   icon: '🤖' },
+      { label: 'Activity Monitor', path: '/jobs',      icon: '◎' },
+      { label: 'Analytics',        path: '/analytics', icon: '◑' },
+      { label: 'Profile',          path: '/profile',   icon: '⊙' },
     ],
   },
 ];

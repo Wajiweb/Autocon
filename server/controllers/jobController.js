@@ -55,6 +55,7 @@ async function createJob(req, res) {
 
     try {
         let jobData;
+        const USE_IN_MEMORY_QUEUE = process.env.USE_IN_MEMORY_QUEUE === 'true';
 
         if (type === 'verification') {
             const { contractAddress, sourceCode, contractName, compilerVersion, network } = payload;
@@ -76,8 +77,14 @@ async function createJob(req, res) {
                 maxAttempts:  3,
             });
 
-            // Enqueue into Redis/BullMQ
-            await addVerificationJob(jobData);
+            // Enqueue into Redis/BullMQ or run inline
+            if (USE_IN_MEMORY_QUEUE) {
+                const { processVerificationJob } = require('../workers/verification.worker');
+                const mockBullJob = { data: jobData, updateProgress: async () => {} };
+                processVerificationJob(mockBullJob).catch(err => console.error('[InlineWorker]', err));
+            } else {
+                await addVerificationJob(jobData);
+            }
 
         } else if (type === 'audit') {
             const { contractCode } = payload;
@@ -95,7 +102,13 @@ async function createJob(req, res) {
                 maxAttempts:  2,
             });
 
-            await addAuditJob(jobData);
+            if (USE_IN_MEMORY_QUEUE) {
+                const { processAuditJob } = require('../workers/audit.worker');
+                const mockBullJob = { data: jobData, updateProgress: async () => {} };
+                processAuditJob(mockBullJob).catch(err => console.error('[InlineWorker]', err));
+            } else {
+                await addAuditJob(jobData);
+            }
         }
 
         // 202 Accepted — work is queued but not yet done

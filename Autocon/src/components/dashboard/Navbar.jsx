@@ -1,10 +1,12 @@
 import { useAuth } from '../../context/AuthContext';
+import { useContractStore } from '../../store/useContractStore';
 import NetworkSwitcher from './NetworkSwitcher';
 import GasWidget from './GasWidget';
 import './styles/dashboard.css';
 
 export default function Navbar({ onMenuClick }) {
   const { user, logout } = useAuth();
+  const { isEditingEnabled, generatedCode } = useContractStore();
 
   const shortAddr = user?.walletAddress
     ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
@@ -35,6 +37,12 @@ export default function Navbar({ onMenuClick }) {
       {/* Network switcher */}
       <NetworkSwitcher />
 
+      {generatedCode && isEditingEnabled && (
+        <div className="db-dev-mode-indicator">
+          Developer Mode Active
+        </div>
+      )}
+
       {/* Wallet */}
       {shortAddr && (
         <div className="db-tb-chip muted" style={{ fontFamily: 'var(--db-mono)', fontSize: 11 }}>
@@ -49,4 +57,3 @@ export default function Navbar({ onMenuClick }) {
     </header>
   );
 }
-

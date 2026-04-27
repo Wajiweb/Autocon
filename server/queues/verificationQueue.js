@@ -29,13 +29,17 @@ const verificationQueue = new Queue(QUEUE_NAME, {
             type: 'exponential',
             delay: 5000,                // Start with 5s delay, double each retry
         },
-        removeOnComplete: { count: 50 },// Keep last 50 completed jobs for audit trail
-        removeOnFail:     { count: 100 },
+        removeOnComplete: true,
+        removeOnFail:     true,
     },
 });
 
+let hasLoggedError = false;
 verificationQueue.on('error', (err) => {
-    console.error(`[VerificationQueue] Queue error: ${err.message}`);
+    if (!hasLoggedError) {
+        console.error(`[VerificationQueue] Queue error: ${err.message} (Subsequent errors suppressed)`);
+        hasLoggedError = true;
+    }
 });
 
 /**

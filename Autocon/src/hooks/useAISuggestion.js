@@ -22,7 +22,7 @@ export function useAISuggestion() {
         setFormData(prev => ({ ...prev, ...data.data.suggestions }));
         toast.success(`AI: ${data.data.reasoning}`, { id: toastId, duration: 5000 });
       } else {
-        toast.error(data.error || 'Failed to generate suggestions.', { id: toastId });
+        toast.error(data.message || data.error || 'Failed to generate suggestions.', { id: toastId });
       }
     } catch (error) {
       console.error('AI Suggestion Error:', error);

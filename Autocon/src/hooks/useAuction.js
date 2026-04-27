@@ -49,8 +49,8 @@ export const useAuction = () => {
             });
             const data = await res.json();
 
-            if (data.success) {
-                setGeneratedCode(data.contractCode, 'Auction', { abi: data.abi, bytecode: data.bytecode });
+            if (data.success && data.data) {
+                setGeneratedCode(data.data.contractCode, 'Auction', { abi: data.data.abi, bytecode: data.data.bytecode });
                 setGasEstimate(null);
                 toast.success("Auction Contract Compiled! 🔨", { id: loadingToast });
             } else {

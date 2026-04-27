@@ -16,11 +16,11 @@ export const Input = forwardRef(({
   ...props
 }, ref) => {
   const baseInputStyles = `
-    w-full bg-[var(--surface)] text-[var(--on-surface)] border border-[var(--outline-variant)] 
-    rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200
-    placeholder:text-[var(--outline)]
-    hover:border-[var(--outline)] 
-    focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]
+    w-full bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-dark)] 
+    rounded-[var(--radius-md)] px-4 py-3 text-sm outline-none transition-all duration-200
+    placeholder:text-[var(--text-secondary)]
+    hover:border-[var(--primary)]/40
+    focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]
     disabled:opacity-50 disabled:cursor-not-allowed
   `;
 
@@ -31,7 +31,7 @@ export const Input = forwardRef(({
   return (
     <div className={`flex flex-col gap-2 mb-6 ${wrapperClassName}`}>
       {label && (
-        <label className="text-xs font-bold text-[var(--outline)] uppercase tracking-wider">
+        <label className="text-xs font-bold text-[var(--on-surface-variant)] uppercase tracking-wider">
           {label}
         </label>
       )}
@@ -53,7 +53,7 @@ export const Input = forwardRef(({
       )}
 
       {(error || helperText) && (
-        <p className={`text-xs mt-1 ${error ? 'text-red-500' : 'text-[var(--outline)]'}`}>
+        <p className={`text-xs mt-1 ${error ? 'text-red-500' : 'text-[var(--on-surface-muted)]'}`}>
           {error || helperText}
         </p>
       )}

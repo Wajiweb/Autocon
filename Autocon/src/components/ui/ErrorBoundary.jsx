@@ -93,6 +93,18 @@ export default class ErrorBoundary extends React.Component {
                             🔄 Try Again
                         </button>
                         <button
+                            onClick={() => window.location.href = '/'}
+                            style={{
+                                padding: '12px 28px', borderRadius: '12px',
+                                background: 'rgba(59,130,246,0.15)',
+                                border: '1px solid rgba(59,130,246,0.3)',
+                                color: '#60a5fa', fontWeight: 700, fontSize: '0.9rem',
+                                cursor: 'pointer', transition: 'all 0.2s',
+                            }}
+                        >
+                            🏠 Dashboard
+                        </button>
+                        <button
                             onClick={() => window.location.reload()}
                             style={{
                                 padding: '12px 28px', borderRadius: '12px',

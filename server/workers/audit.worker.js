@@ -24,6 +24,11 @@
  *   result:  null,
  *   error:   null
  * }
+ *
+ * ENTRY POINT:
+ *   This is the ONLY audit engine used by the platform.
+ *   The legacy POST /api/audit-contract endpoint has been retired.
+ *   Frontend triggers via: POST /api/jobs/create { type: 'audit', payload: { contractCode } }
  */
 
 const path = require('path');
@@ -32,13 +37,13 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { Worker }  = require('bullmq');
 const mongoose    = require('mongoose');
 
-const connection            = require('../queues/redisConnection');
-const Job                   = require('../models/Job');
-const AuditReport           = require('../models/AuditReport');
-const Contract              = require('../models/Contract');
-const { runSlitherAnalysis }  = require('../services/slitherService');
-const { runLLMAnalysis }      = require('../services/llmService');
-const { aggregateAuditResults } = require('../utils/auditAggregator');
+const connection                    = require('../queues/redisConnection');
+const Job                           = require('../models/Job');
+const AuditReport                   = require('../models/AuditReport');
+const Contract                      = require('../models/Contract');
+const { runSlitherAnalysis }        = require('../services/slitherService');
+const { runLLMAnalysis }            = require('../services/llmService');
+const { aggregateAuditResults }     = require('../utils/auditAggregator');
 
 // ─── DB Connection ─────────────────────────────────────────────────────────────
 let dbConnected = false;
@@ -57,7 +62,7 @@ function calculateScore(riskLevel) {
 
 // ─── Persist AuditReport to MongoDB ──────────────────────────────────────────
 async function persistAuditReport(auditResult, payload) {
-    const { contractCode, contractAddress, ownerAddress } = payload;
+    const { contractAddress, ownerAddress } = payload;
 
     try {
         // Try to find the parent contract document for the FK relationship
@@ -76,6 +81,15 @@ async function persistAuditReport(auditResult, payload) {
             return null;
         }
 
+        const summaryCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+        auditResult.vulnerabilities.forEach(v => {
+            const severity = (v.severity || 'LOW').toUpperCase();
+            if (severity === 'CRITICAL') summaryCounts.critical++;
+            else if (severity === 'HIGH') summaryCounts.high++;
+            else if (severity === 'MEDIUM') summaryCounts.medium++;
+            else summaryCounts.low++;
+        });
+
         const report = await AuditReport.create({
             contractId,
             contractAddress:  contractAddress?.toLowerCase() || null,
@@ -88,14 +102,11 @@ async function persistAuditReport(auditResult, payload) {
                 title:       v.title,
                 severity:    v.severity,
                 description: v.description,
-                advice:      v.advice || null,
-                line:        v.line   || null,
+                advice:      v.advice || v.recommendation || null,
+                line:        parseInt(v.location) || parseInt(v.line) || null,
                 code:        v.code   || null,
             })),
-            summary: {
-                aiSummary:       auditResult.aiInsights.summary,
-                recommendations: auditResult.recommendations,
-            },
+            summary:       summaryCounts,
             engineVersion: 'v2-async-bullmq',
         });
 
@@ -108,82 +119,81 @@ async function persistAuditReport(auditResult, payload) {
     }
 }
 
-// ─── Worker Definition ────────────────────────────────────────────────────────
+// ─── Job Processor ────────────────────────────────────────────────────────────
+async function processAuditJob(bullJob) {
+    const { jobId, payload } = bullJob.data;
+    const { contractCode, ownerAddress, contractAddress } = payload;
 
+    console.log(`[AuditWorker] Processing job: ${jobId}`);
+
+    await ensureDbConnected();
+
+    // LIFECYCLE: pending → processing
+    await Job.markProcessing(jobId);
+
+    try {
+        // ── STEP 1: Slither Static Analysis ─────────────────────────────
+        console.log(`[AuditWorker] Running Slither analysis...`);
+        const slitherFindings = await runSlitherAnalysis(contractCode);
+        await bullJob.updateProgress(35);
+        console.log(`[AuditWorker] Slither complete. Findings: ${slitherFindings.length}`);
+
+        // ── STEP 2: Gemini LLM Analysis ──────────────────────────────────
+        console.log(`[AuditWorker] Running LLM analysis...`);
+        const llmInsights = await runLLMAnalysis(contractCode, slitherFindings);
+        await bullJob.updateProgress(75);
+        console.log(`[AuditWorker] LLM complete.`);
+
+        // ── STEP 3: Aggregate Results ─────────────────────────────────────
+        const auditResult = aggregateAuditResults(slitherFindings, llmInsights);
+        await bullJob.updateProgress(85);
+
+        // ── STEP 4: Persist AuditReport ───────────────────────────────────
+        const reportId = await persistAuditReport(auditResult, payload);
+        await bullJob.updateProgress(100);
+
+        // ── STEP 5: Build result payload ──────────────────────────────────
+        const result = {
+            reportId:        reportId?.toString() || null,
+            overallRisk:     auditResult.overallRisk,
+            score:           calculateScore(auditResult.overallRisk),
+            totalFindings:   auditResult.vulnerabilities.length,
+            vulnerabilities: auditResult.vulnerabilities,
+            aiInsights:      auditResult.aiInsights,
+            recommendations: auditResult.recommendations,
+            completedAt:     new Date().toISOString(),
+        };
+
+        // LIFECYCLE: processing → completed
+        await Job.markCompleted(jobId, result);
+        console.log(`[AuditWorker] Job ${jobId} completed. Risk: ${auditResult.overallRisk}`);
+
+        return result;
+    } catch (err) {
+        // LIFECYCLE: processing → failed
+        await Job.markFailed(jobId, err.message);
+        console.error(`[AuditWorker] Job ${jobId} failed: ${err.message}`);
+
+        // Re-throw for BullMQ to handle retries
+        throw err;
+    }
+}
+
+// ─── Worker Instance ──────────────────────────────────────────────────────────
 const auditWorker = new Worker(
     'auditQueue',
-
-    async (bullJob) => {
-        const { jobId, payload } = bullJob.data;
-        const { contractCode, ownerAddress, contractAddress } = payload;
-
-        console.log(`[AuditWorker] Processing job: ${jobId}`);
-
-        await ensureDbConnected();
-
-        // LIFECYCLE: pending → processing
-        await Job.markProcessing(jobId);
-
-        try {
-            // ── STEP 1: Slither Static Analysis ─────────────────────────────
-            console.log(`[AuditWorker] Running Slither analysis...`);
-            const slitherFindings = await runSlitherAnalysis(contractCode);
-            await bullJob.updateProgress(35);
-            console.log(`[AuditWorker] Slither complete. Findings: ${slitherFindings.length}`);
-
-            // ── STEP 2: Gemini LLM Analysis ──────────────────────────────────
-            console.log(`[AuditWorker] Running LLM analysis...`);
-            const llmInsights = await runLLMAnalysis(contractCode, slitherFindings);
-            await bullJob.updateProgress(75);
-            console.log(`[AuditWorker] LLM complete.`);
-
-            // ── STEP 3: Aggregate Results ─────────────────────────────────────
-            const auditResult = aggregateAuditResults(slitherFindings, llmInsights);
-            await bullJob.updateProgress(85);
-
-            // ── STEP 4: Persist AuditReport ───────────────────────────────────
-            const reportId = await persistAuditReport(auditResult, payload);
-            await bullJob.updateProgress(100);
-
-            // ── STEP 5: Mark Job Completed ────────────────────────────────────
-            const result = {
-                reportId:         reportId?.toString() || null,
-                overallRisk:      auditResult.overallRisk,
-                score:            calculateScore(auditResult.overallRisk),
-                totalFindings:    auditResult.vulnerabilities.length,
-                vulnerabilities:  auditResult.vulnerabilities,
-                aiInsights:       auditResult.aiInsights,
-                recommendations:  auditResult.recommendations,
-                completedAt:      new Date().toISOString(),
-            };
-
-            // LIFECYCLE: processing → completed
-            await Job.markCompleted(jobId, result);
-            console.log(`[AuditWorker] Job ${jobId} completed. Risk: ${auditResult.overallRisk}`);
-
-            return result;
-        } catch (err) {
-            // LIFECYCLE: processing → failed
-            await Job.markFailed(jobId, err.message);
-            console.error(`[AuditWorker] Job ${jobId} failed: ${err.message}`);
-
-            // Re-throw for BullMQ to handle retries
-            throw err;
-        }
-    },
-
+    processAuditJob,
     {
         connection,
-        concurrency: 2,               // Max 2 concurrent audits (LLM is expensive)
+        concurrency: 2,          // Max 2 concurrent audits (LLM is expensive)
         limiter: {
-            max:      4,              // Max 4 audits per 30 seconds (Gemini rate limit)
-            duration: 30000,
+            max:      4,         // Max 4 audits per 30 seconds (Gemini rate limit)
+            duration: 30_000,
         },
     }
 );
 
 // ─── Worker Events ────────────────────────────────────────────────────────────
-
 auditWorker.on('completed', (job) => {
     console.log(`[AuditWorker] ✅ Job ${job.id} completed. Risk: ${job.returnvalue?.overallRisk}`);
 });
@@ -203,4 +213,4 @@ auditWorker.on('error', (err) => {
 
 console.log('[AuditWorker] 🚀 Worker started, listening on auditQueue');
 
-module.exports = auditWorker;
+module.exports = { auditWorker, processAuditJob };

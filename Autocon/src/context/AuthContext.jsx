@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
                 });
                 const data = await res.json();
                 if (data.success) {
-                    setUser(data.user);
+                    setUser(data.data.user);
                     setToken(savedToken);
                 } else {
                     localStorage.removeItem('autocon_token');
@@ -101,7 +101,7 @@ export function AuthProvider({ children }) {
         const { ethers } = await import('ethers');
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
-        const signature = await signer.signMessage(nonceData.message);
+        const signature = await signer.signMessage(nonceData.data.message);
 
         // 4. Verify signature on server
         const verifyRes = await fetch(`${API_BASE}/api/auth/verify`, {
@@ -116,11 +116,11 @@ export function AuthProvider({ children }) {
         }
 
         // 5. Store JWT and user info
-        localStorage.setItem('autocon_token', verifyData.token);
-        setToken(verifyData.token);
-        setUser(verifyData.user);
+        localStorage.setItem('autocon_token', verifyData.data.token);
+        setToken(verifyData.data.token);
+        setUser(verifyData.data.user);
 
-        return verifyData.user;
+        return verifyData.data.user;
     };
 
     const logout = () => {

@@ -1,6 +1,27 @@
 'use strict';
 
 /**
+ * auditService.js — ⚠️  DEPRECATED — DO NOT USE
+ *
+ * This service previously provided regex-based static analysis for the
+ * POST /api/audit-contract endpoint (now retired).
+ *
+ * All audit logic has been migrated to the async BullMQ pipeline:
+ *   - Queue:   server/queues/auditQueue.js
+ *   - Worker:  server/workers/audit.worker.js
+ *   - Engine:  server/services/slitherService.js  (deterministic AST)
+ *              server/services/llmService.js       (Gemini AI)
+ *              server/utils/auditAggregator.js     (merge + risk scoring)
+ *
+ * Frontend triggers via:
+ *   POST /api/jobs/create { type: 'audit', payload: { contractCode } }
+ *   GET  /api/jobs/:jobId  (polled by useJobPoller.js)
+ *
+ * This file is intentionally preserved (not deleted) to avoid breaking
+ * any stale require() call, but its exports are no longer invoked.
+ */
+
+/**
  * Static analysis rules for Solidity contracts.
  * Each rule describes a known vulnerability pattern.
  */

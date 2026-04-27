@@ -177,7 +177,7 @@ export default function NFTGenerator() {
                             placeholder="Describe your NFT..." 
                             value={aiIntent} 
                             onChange={(e) => setAiIntent(e.target.value)}
-                            className="w-[200px] text-[13px] px-3 py-2 bg-[var(--surface)] border border-[var(--outline-variant)] rounded-full text-[var(--on-surface)] outline-none focus:border-[#7C3AED]"
+                            className="w-[200px] text-[13px] px-3 py-2 bg-white border border-[var(--border-light)] rounded-full text-[var(--text-primary)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
                             onKeyDown={(e) => { if(e.key === 'Enter') generateSuggestions('NFT', setFormData, aiIntent) }}
                         />
                         <Button 
@@ -189,9 +189,9 @@ export default function NFTGenerator() {
                             ✨ Auto-Fill
                         </Button>
                         <Button 
-                            variant="primary"
+                            variant="ai"
                             onClick={() => setIsChatOpen(true)}
-                            className="rounded-full !py-2 !px-4 bg-[var(--db-acc)] text-black"
+                            className="rounded-full !py-2 !px-4"
                         >
                             💬 AI Chat
                         </Button>
@@ -204,7 +204,7 @@ export default function NFTGenerator() {
                 {/* Feature badges */}
                 <div className="flex gap-2 mt-3.5 flex-wrap">
                     {['Max Supply Cap', 'Mint Pricing', 'URI Storage', 'Burn Support', 'IPFS Upload', 'Owner Withdraw'].map(f => (
-                        <span key={f} className="px-3 py-1 rounded-full text-[0.68rem] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        <span key={f} className="subtle-label">
                             {f}
                         </span>
                     ))}
@@ -280,13 +280,14 @@ export default function NFTGenerator() {
                         />
 
                         <div className="mb-8">
-                            <label className="block text-xs font-bold text-[var(--outline)] uppercase tracking-wider mb-2">Owner Address</label>
+                            <label className="block text-xs font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-2">Owner Address</label>
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <input
                                     name="ownerAddress"
                                     value={formData?.ownerAddress || ''}
-                                    className="w-full bg-[var(--surface)] border border-[var(--outline-variant)] rounded-xl px-4 py-3 text-sm outline-none font-mono text-[0.85rem]"
+                                    className="w-full bg-white text-[var(--text-primary)] border border-[var(--border-light)] rounded-[var(--radius-md)] px-4 py-3 text-sm outline-none font-mono text-[0.85rem] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
                                     readOnly
+                                    required
                                     placeholder="Connect your wallet →"
                                 />
                                 <Button
@@ -299,9 +300,11 @@ export default function NFTGenerator() {
                             </div>
                         </div>
 
-                        <Button type="submit" size="lg" className="w-full">
-                            🎨 Generate NFT Contract
-                        </Button>
+                        <div className="form-actions-sticky">
+                            <Button type="submit" size="lg" className="w-full">
+                                Generate NFT Contract
+                            </Button>
+                        </div>
                     </form>
                 </Card>
 
@@ -428,7 +431,7 @@ export default function NFTGenerator() {
                                             image: metadataState.fileCID ? `ipfs://${metadataState.fileCID}` : ''
                                         }}
                                     />
-                                    <span className="px-3 py-1 rounded-full text-[0.7rem] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                    <span className="subtle-label">
                                         Compiled ✓
                                     </span>
                                 </div>
@@ -455,8 +458,8 @@ export default function NFTGenerator() {
                 receipt={deploymentReceipt}
                 provider={providerInstance}
                 sourceCode={generatedCode}
-                compilerVersion={contractData.compilerVersion}
-                constructorArgs={contractData.constructorArgs}
+                compilerVersion={contractData?.compilerVersion}
+                constructorArgs={contractData?.constructorArgs}
             />
             
             <AIChatPanel 

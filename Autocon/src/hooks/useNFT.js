@@ -47,11 +47,11 @@ export const useNFT = () => {
             });
             const data = await res.json();
 
-            if (data.success) {
-                setGeneratedCode(data.contractCode, 'NFT', { 
-                    abi: data.abi, 
-                    bytecode: data.bytecode, 
-                    compilerVersion: data.compilerVersion || 'v0.8.20+commit.a1b79de6',
+            if (data.success && data.data) {
+                setGeneratedCode(data.data.contractCode, 'NFT', { 
+                    abi: data.data.abi, 
+                    bytecode: data.data.bytecode, 
+                    compilerVersion: data.data.compilerVersion || 'v0.8.20+commit.a1b79de6',
                     constructorArgs: null 
                 });
                 setGasEstimate(null);

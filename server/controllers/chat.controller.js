@@ -73,7 +73,8 @@ Respond STRICTLY in JSON format with the following structure:
     let parsed;
 
     try {
-        parsed = JSON.parse(responseText);
+        const cleanText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        parsed = JSON.parse(cleanText);
     } catch {
         throw new AppError('AI returned malformed JSON.', 502, 'AI_PARSE_ERROR');
     }

@@ -117,7 +117,7 @@ const schemas = {
 
     // ── AI Assistant ──────────────────────────────────────────────────────────
     aiSuggest: Joi.object({
-        contractType: Joi.string().valid('ERC20', 'ERC721', 'Auction').required(),
+        contractType: Joi.string().valid('ERC20', 'ERC721', 'Auction', 'Token', 'NFT').required(),
         userDescription: Joi.string().max(500).required(),
         partialInputs: Joi.object().optional().default({}),
     }),

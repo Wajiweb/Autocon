@@ -57,13 +57,17 @@ export default function Dashboard() {
         await Promise.all(fetches.map(async ({ url, key, type }) => {
           try {
             const res = await authFetch(url);
-            const data = await res.json();
-            if (data.success && data[key]) {
-              data[key].forEach(item => allAssets.push({
-                ...item,
-                _type: type,
-                ...(type === 'Auction' ? { symbol: item.name?.substring(0, 4)?.toUpperCase() || 'AUC' } : {}),
-              }));
+            const responseData = await res.json();
+            if (responseData.success) {
+              // The backend wraps responses in a `data` object
+              const items = responseData.data ? responseData.data[key] : responseData[key];
+              if (items) {
+                items.forEach(item => allAssets.push({
+                  ...item,
+                  _type: type,
+                  ...(type === 'Auction' ? { symbol: item.name?.substring(0, 4)?.toUpperCase() || 'AUC' } : {}),
+                }));
+              }
             }
           } catch (e) { console.error(type, 'fetch error:', e); }
         }));

@@ -142,52 +142,56 @@ async function pollVerificationStatus(guid, network) {
 const verificationWorker = new Worker(
     'verificationQueue',
 
-    async (bullJob) => {
-        const { jobId, payload } = bullJob.data;
+async function processVerificationJob(bullJob) {
+    const { jobId, payload } = bullJob.data;
 
-        console.log(`[VerificationWorker] Processing job: ${jobId}`);
+    console.log(`[VerificationWorker] Processing job: ${jobId}`);
 
-        await ensureDbConnected();
+    await ensureDbConnected();
 
-        // LIFECYCLE: pending → processing
-        await Job.markProcessing(jobId);
+    // LIFECYCLE: pending → processing
+    await Job.markProcessing(jobId);
 
-        try {
-            // Step 1: Submit to Etherscan
-            console.log(`[VerificationWorker] Submitting to Etherscan (network: ${payload.network})`);
-            const guid = await submitToEtherscan(payload);
-            console.log(`[VerificationWorker] GUID received: ${guid}`);
+    try {
+        // Step 1: Submit to Etherscan
+        console.log(`[VerificationWorker] Submitting to Etherscan (network: ${payload.network})`);
+        const guid = await submitToEtherscan(payload);
+        console.log(`[VerificationWorker] GUID received: ${guid}`);
 
-            // Report progress to BullMQ (visible in monitoring tools)
-            await bullJob.updateProgress(30);
+        // Report progress to BullMQ (visible in monitoring tools)
+        await bullJob.updateProgress(30);
 
-            // Step 2: Poll until verified
-            const { isVerified, status } = await pollVerificationStatus(guid, payload.network);
-            await bullJob.updateProgress(100);
+        // Step 2: Poll until verified
+        const { isVerified, status } = await pollVerificationStatus(guid, payload.network);
+        await bullJob.updateProgress(100);
 
-            // LIFECYCLE: processing → completed
-            const result = {
-                guid,
-                isVerified,
-                status,
-                network: payload.network,
-                contractAddress: payload.contractAddress,
-                verifiedAt: new Date().toISOString(),
-            };
+        // LIFECYCLE: processing → completed
+        const result = {
+            guid,
+            isVerified,
+            status,
+            network: payload.network,
+            contractAddress: payload.contractAddress,
+            verifiedAt: new Date().toISOString(),
+        };
 
-            await Job.markCompleted(jobId, result);
-            console.log(`[VerificationWorker] Job ${jobId} completed successfully.`);
+        await Job.markCompleted(jobId, result);
+        console.log(`[VerificationWorker] Job ${jobId} completed successfully.`);
 
-            return result; // BullMQ stores this in job.returnvalue
-        } catch (err) {
-            // LIFECYCLE: processing → failed
-            await Job.markFailed(jobId, err.message);
-            console.error(`[VerificationWorker] Job ${jobId} failed: ${err.message}`);
+        return result; // BullMQ stores this in job.returnvalue
+    } catch (err) {
+        // LIFECYCLE: processing → failed
+        await Job.markFailed(jobId, err.message);
+        console.error(`[VerificationWorker] Job ${jobId} failed: ${err.message}`);
 
-            // Re-throw so BullMQ knows to handle retries
-            throw err;
-        }
-    },
+        // Re-throw so BullMQ knows to handle retries
+        throw err;
+    }
+}
+
+const verificationWorker = new Worker(
+    'verificationQueue',
+    processVerificationJob,
 
     {
         connection,
@@ -220,4 +224,4 @@ verificationWorker.on('error', (err) => {
 
 console.log('[VerificationWorker] 🚀 Worker started, listening on verificationQueue');
 
-module.exports = verificationWorker;
+module.exports = { verificationWorker, processVerificationJob };
