@@ -52,7 +52,7 @@ export default function AnalyticsCharts({ deployments = [], networkName = 'Netwo
   };
 
   const tooltipDefaults = {
-    backgroundColor: '#111f16',
+    backgroundColor: 'var(--surface)',
     borderColor: 'rgba(34,197,94,.2)',
     borderWidth: .5,
     titleColor: '#e2ede6',

@@ -26,6 +26,7 @@ const compileRoutes = require('./routes/compileRoutes');
 const jobRoutes     = require('./routes/jobRoutes');
 const userRoutes    = require('./routes/userRoutes');
 const aiRoutes      = require('./routes/aiRoutes');
+const landingRoutes = require('./routes/landingRoutes');
 const Sentry        = require('@sentry/node');
 const { nodeProfilingIntegration } = require('@sentry/profiling-node');
 
@@ -84,6 +85,9 @@ mongoose.connect(process.env.MONGO_URI)
 app.get('/api/health', (req, res) => {
     res.json({ message: "AutoCon Backend is Alive and Running!" });
 });
+
+// ─── LANDING PAGE ROUTES (public — no auth) ───
+app.use('/api/landing', landingRoutes);
 
 // ─── AUTH ROUTES (with brute-force protection) ───
 app.use('/api/auth', authLimiter, authRoutes);

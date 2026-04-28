@@ -67,7 +67,7 @@ export default function DeploymentStatusBar() {
                     display: 'flex', alignItems: 'center', gap: '8px',
                     padding: '8px 12px', borderRadius: '8px',
                     background: 'rgba(0,0,0,0.2)',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    border: '1px solid var(--surface)',
                 }}>
                     <span style={{ fontSize: '0.7rem', color: '#64748b', flexShrink: 0 }}>TX</span>
                     <span style={{

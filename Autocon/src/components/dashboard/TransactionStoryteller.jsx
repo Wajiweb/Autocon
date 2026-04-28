@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { parseReceipt } from '../../hooks/useReceiptParser';
 
@@ -17,61 +16,50 @@ export default function TransactionStoryteller({ receipt, abi, provider }) {
   return (
     <div
       className="mt-4 rounded-xl overflow-hidden"
-      style={{ border: '1px solid var(--outline-variant)', background: 'var(--surface)' }}
+      style={{ border: '1px solid #ddd', background: 'var(--surface-elevated)' }}
     >
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-white/5"
-        style={{ color: 'var(--on-surface)' }}
+        className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium"
+        style={{ color: 'var(--text-primary)' }}
       >
         <span>📖 Transaction Breakdown</span>
         {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <div className="flex flex-col gap-3 px-4 pb-4">
-              {steps.length === 0 ? (
-                <p className="text-xs text-center py-2" style={{ color: 'var(--outline)' }}>
-                  Parsing transaction...
-                </p>
-              ) : steps.map((step, i) => (
-                <motion.div
-                  key={step.label}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex flex-col gap-1"
-                >
-                  <span className="text-xs font-semibold uppercase tracking-wide"
-                        style={{ color: 'var(--outline)' }}>
-                    {step.label}
+      {open && (
+        <div className="overflow-hidden">
+          <div className="flex flex-col gap-3 px-4 pb-4">
+            {steps.length === 0 ? (
+              <p className="text-xs text-center py-2" style={{ color: 'var(--text-secondary)' }}>
+                Parsing transaction...
+              </p>
+            ) : steps.map((step, i) => (
+              <div
+                key={step.label}
+                className="flex flex-col gap-1"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wide"
+                      style={{ color: 'var(--text-secondary)' }}>
+                  {step.label}
+                </span>
+                {step.type === 'hash' ? (
+                  <code
+                    className="break-all text-xs rounded px-2 py-1"
+                    style={{ background: 'var(--surface-elevated)', color: '#666' }}
+                  >
+                    {step.value}
+                  </code>
+                ) : (
+                  <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                    {step.value}
                   </span>
-                  {step.type === 'hash' ? (
-                    <code
-                      className="break-all text-xs rounded px-2 py-1"
-                      style={{ background: 'rgba(255,255,255,0.04)', color: '#a78bfa' }}
-                    >
-                      {step.value}
-                    </code>
-                  ) : (
-                    <span className="text-sm" style={{ color: 'var(--on-surface)' }}>
-                      {step.value}
-                    </span>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -91,7 +91,7 @@ export default function ActionCard({ fn, onExecute, onEstimateGas, result, walle
         className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-opacity disabled:opacity-40"
         style={{
           background: 'linear-gradient(135deg, #7C3AED, #2563EB)',
-          color: '#fff',
+          color: 'var(--surface)',
           cursor: canExecute ? 'pointer' : 'not-allowed'
         }}
       >

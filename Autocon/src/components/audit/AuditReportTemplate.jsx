@@ -24,7 +24,7 @@ export default function AuditReportTemplate({ auditResult, dateStr }) {
                 width: '800px', // Standard A4-ish width for canvas
                 minHeight: '1131px', // A4 proportion
                 backgroundColor: '#080c14', // Solid background (deep space variable)
-                color: '#ffffff',
+                color: 'var(--surface)',
                 fontFamily: '"Inter", sans-serif',
                 padding: '40px',
                 boxSizing: 'border-box'
@@ -102,10 +102,10 @@ export default function AuditReportTemplate({ auditResult, dateStr }) {
                                     <span style={{ fontSize: '12px', color: '#94a3b8' }}>Line: {finding.line}</span>
                                 </div>
                                 <p style={{ fontSize: '13px', color: '#cbd5e1', marginBottom: '8px', lineHeight: 1.5 }}>
-                                    <strong style={{ color: '#ffffff' }}>Description:</strong> {finding.description}
+                                    <strong style={{ color: 'var(--surface)' }}>Description:</strong> {finding.description}
                                 </p>
                                 <p style={{ fontSize: '13px', color: '#a78bfa', margin: 0 }}>
-                                    <strong style={{ color: '#ffffff' }}>Recommendation:</strong> {finding.recommendation}
+                                    <strong style={{ color: 'var(--surface)' }}>Recommendation:</strong> {finding.recommendation}
                                 </p>
                             </div>
                         )

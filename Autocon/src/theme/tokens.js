@@ -70,7 +70,7 @@ export const tokens = {
     soft: '0 4px 12px rgba(0, 0, 0, 0.05)',
     elevated: '0 8px 24px rgba(0, 0, 0, 0.25)',
     glow: '0 0 12px rgba(34, 197, 94, 0.18)',
-    innerDepth: 'inset -1px 0 0 rgba(255, 255, 255, 0.03)',
+    innerDepth: 'inset -1px 0 0 var(--surface)',
     card: '0 18px 44px rgba(7, 18, 15, 0.22)',
     cardHover: '0 22px 56px rgba(7, 18, 15, 0.28)',
   },

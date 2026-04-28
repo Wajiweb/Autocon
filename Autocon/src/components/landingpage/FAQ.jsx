@@ -1,12 +1,8 @@
 import React from 'react';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { Reveal, SectionHeading } from './Shared';
 
-/* ══════════════════════════════════════════════════════
-   FAQ ACCORDION
-══════════════════════════════════════════════════════ */
 const faqs = [
   { q: 'Do I need to know Solidity to use AutoCon?', a: 'No. AutoCon is fully no-code. Fill a form with your parameters and we generate, audit, and deploy the Solidity for you.' },
   { q: 'Which blockchains are supported?', a: 'Ethereum mainnet and Sepolia testnet. Polygon, BSC, and Arbitrum are coming soon.' },
@@ -19,7 +15,7 @@ const faqs = [
 const FAQ = () => {
   const [open, setOpen] = useState(null);
   return (
-    <section id="faq" style={{ background: 'var(--bg)', padding: '60px 48px 120px' }}>
+    <section id="faq" style={{ background: 'var(--surface)', padding: '60px 48px 120px' }}>
       <Reveal>
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
           <SectionHeading pre="Frequently Asked" highlight="Questions" />
@@ -28,23 +24,19 @@ const FAQ = () => {
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
         {faqs.map((faq, i) => (
           <Reveal key={i} delay={i * 0.05}>
-            <div style={{ borderBottom: '1px solid var(--border-color)' }}>
+            <div style={{ borderBottom: '1px solid #ddd' }}>
               <button onClick={() => setOpen(open === i ? null : i)} style={{
                 width: '100%', textAlign: 'left', padding: '24px 0', background: 'none', border: 'none',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
               }}>
                 <span style={{ fontSize: '0.97rem', fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.5 }}>{faq.q}</span>
-                <motion.div animate={{ rotate: open === i ? 180 : 0 }} transition={{ duration: 0.25 }} style={{ flexShrink: 0 }}>
-                  <ChevronDown size={18} style={{ color: 'var(--primary)' }} />
-                </motion.div>
+                <ChevronDown size={18} style={{ color: 'var(--primary)', transform: open === i ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0s' }} />
               </button>
-              <AnimatePresence>
-                {open === i && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} style={{ overflow: 'hidden' }}>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.78, paddingBottom: '24px' }}>{faq.a}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {open === i && (
+                <div style={{ overflow: 'hidden' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.78, paddingBottom: '24px' }}>{faq.a}</p>
+                </div>
+              )}
             </div>
           </Reveal>
         ))}

@@ -468,7 +468,7 @@ export default function AIChatPanel({
                   style={{
                     width: 40, height: 40, borderRadius: '8px',
                     background: input.trim() && !isLoading && rateLimitCountdown <= 0 ? 'var(--db-acc)' : 'var(--db-s2)',
-                    color: input.trim() && !isLoading && rateLimitCountdown <= 0 ? '#000' : 'var(--db-t3)',
+                    color: input.trim() && !isLoading && rateLimitCountdown <= 0 ? 'var(--text-primary)' : 'var(--db-t3)',
                     border: 'none',
                     cursor: input.trim() && !isLoading ? 'pointer' : 'default',
                     fontSize: 16,

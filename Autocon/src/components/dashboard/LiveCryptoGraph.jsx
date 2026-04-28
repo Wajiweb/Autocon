@@ -157,13 +157,13 @@ export default function LiveCryptoGraph() {
           }
         },
         grid: {
-          color: 'rgba(255, 255, 255, 0.05)'
+          color: 'var(--surface)'
         },
         ticks: { color: '#94a3b8' }
       },
       y: {
         grid: {
-          color: 'rgba(255, 255, 255, 0.05)'
+          color: 'var(--surface)'
         },
         ticks: { 
           color: '#94a3b8',
@@ -177,7 +177,7 @@ export default function LiveCryptoGraph() {
         backgroundColor: '#1e293b',
         titleColor: '#f8fafc',
         bodyColor: '#cbd5e1',
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: 'var(--surface)',
         borderWidth: 1,
         padding: 12,
         callbacks: {
@@ -215,7 +215,7 @@ export default function LiveCryptoGraph() {
             {loading && <RefreshCw size={14} className="animate-spin text-cyan-400" />}
           </h3>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-            <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>
+            <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--surface)' }}>
               {currentPrice !== null ? `$${currentPrice.toLocaleString(undefined, { maximumFractionDigits: (currentPrice < 1 ? 4 : 2) })}` : '...'}
             </span>
             {priceChange !== null && (
@@ -233,7 +233,7 @@ export default function LiveCryptoGraph() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           {/* Timescale Selector */}
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', background: 'var(--surface)', padding: '4px', borderRadius: '10px', border: '1px solid var(--surface)' }}>
             {timeframes.map(tf => (
               <button
                 key={tf.value}
@@ -259,9 +259,9 @@ export default function LiveCryptoGraph() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
                   fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: '10px',
-                  border: `1px solid ${coinId === coin.id ? coin.color + '80' : 'rgba(255,255,255,0.05)'}`,
-                  background: coinId === coin.id ? coin.color + '20' : 'rgba(255,255,255,0.03)',
-                  color: coinId === coin.id ? '#fff' : '#94a3b8',
+                  border: `1px solid ${coinId === coin.id ? coin.color + '80' : 'var(--surface)'}`,
+                  background: coinId === coin.id ? coin.color + '20' : 'var(--surface)',
+                  color: coinId === coin.id ? 'var(--surface)' : '#94a3b8',
                   cursor: 'pointer', transition: 'all 0.2s'
                 }}
               >
@@ -272,7 +272,7 @@ export default function LiveCryptoGraph() {
           </div>
 
           <button onClick={handleResetZoom} style={{
-             padding: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+             padding: '6px', background: 'var(--surface)', border: '1px solid var(--surface)',
              borderRadius: '8px', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center'
           }} title="Reset Zoom">
             <Maximize2 size={14} />

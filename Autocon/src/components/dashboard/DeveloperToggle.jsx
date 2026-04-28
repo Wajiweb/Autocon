@@ -12,7 +12,7 @@ export default function DeveloperToggle() {
         display: 'inline-flex',
         alignItems: 'center',
         gap: '8px',
-        background: 'rgba(255,255,255,0.04)',
+        background: 'var(--surface)',
         padding: '5px 9px',
         borderRadius: '999px',
         border: '1px solid var(--border-dark)',

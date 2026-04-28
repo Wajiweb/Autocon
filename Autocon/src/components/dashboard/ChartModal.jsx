@@ -91,7 +91,7 @@ export default function ChartModal({ coin, onClose }) {
         display: false,
       },
       y: {
-        grid: { color: 'rgba(255,255,255,.04)' },
+        grid: { color: 'var(--surface)' },
         ticks: {
           color: '#3d5f47', font: { size: 10, family: 'IBM Plex Mono' }, maxTicksLimit: 4,
           callback: v => `$${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toLocaleString()}`,
@@ -102,7 +102,7 @@ export default function ChartModal({ coin, onClose }) {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#111f16', borderColor: 'rgba(34,197,94,.2)', borderWidth: .5,
+        backgroundColor: 'var(--surface)', borderColor: 'rgba(34,197,94,.2)', borderWidth: .5,
         titleColor: '#e2ede6', bodyColor: '#7a9e85', padding: 10,
         callbacks: {
           label: c => ` $${c.parsed.y.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: c.parsed.y < 1 ? 6 : 2 })}`,

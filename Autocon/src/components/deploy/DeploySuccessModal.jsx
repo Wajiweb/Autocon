@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Copy, ExternalLink, X, SearchCode, Download, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useABIExport } from '../../hooks/useExport';
@@ -178,33 +177,25 @@ export default function DeploySuccessModal({
   };
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div
           style={{
             position: 'fixed', inset: 0, zIndex: 9999,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(8px)',
           }}
           onClick={onClose}
         >
-          <motion.div
-            initial={{ scale: 0.85, opacity: 0, y: 30 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.85, opacity: 0, y: 30 }}
-            transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+          <div
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%', maxWidth: '460px',
-              background: 'var(--surface-high)',
-              border: '1px solid var(--outline-variant)',
+              background: 'var(--surface-elevated)',
+              border: '1px solid #ddd',
               borderRadius: '24px',
               padding: '36px',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 60px rgba(124,58,237,0.12)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
               position: 'relative',
               textAlign: 'center',
             }}
@@ -214,11 +205,11 @@ export default function DeploySuccessModal({
               onClick={onClose}
               style={{
                 position: 'absolute', top: '16px', right: '16px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--surface-elevated)',
+                border: '1px solid #ddd',
                 borderRadius: '50%', width: '32px', height: '32px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: 'var(--on-surface-variant)',
+                cursor: 'pointer', color: '#666',
                 transition: 'all 0.2s',
               }}
             >
@@ -226,20 +217,17 @@ export default function DeploySuccessModal({
             </button>
 
             {/* Success Icon */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', delay: 0.15, damping: 12 }}
+            <div
               style={{
                 width: '72px', height: '72px', borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.15))',
-                border: '2px solid rgba(16,185,129,0.3)',
+                background: '#e8f5e9',
+                border: '2px solid #4caf50',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 20px',
               }}
             >
-              <CheckCircle2 size={36} color="#10b981" />
-            </motion.div>
+              <CheckCircle2 size={36} color="#4caf50" />
+            </div>
 
             <h2 style={{
               fontSize: '1.5rem', fontWeight: 800,
@@ -249,7 +237,7 @@ export default function DeploySuccessModal({
               {contractType} Deployed! 🎉
             </h2>
             <p style={{
-              fontSize: '0.85rem', color: 'var(--on-surface-variant)',
+              fontSize: '0.85rem', color: '#666',
               marginBottom: '24px'
             }}>
               Successfully deployed to <strong style={{ color: 'var(--primary)' }}>{network}</strong>
@@ -261,7 +249,7 @@ export default function DeploySuccessModal({
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
                 padding: '14px 20px', borderRadius: '14px',
-                background: 'rgba(255,255,255,0.03)',
+                background: 'var(--surface)',
                 border: '1px solid var(--outline-variant)',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -307,7 +295,7 @@ export default function DeploySuccessModal({
                     flex: '1 1 100%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                     padding: '10px', borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.04)',
+                    background: 'var(--surface)',
                     border: '1px solid var(--outline-variant)',
                     color: 'var(--on-surface)', fontWeight: 600, fontSize: '0.82rem',
                     cursor: 'pointer', transition: 'all 0.2s',
@@ -365,9 +353,9 @@ export default function DeploySuccessModal({
             {receipt && abi && provider && (
               <TransactionStoryteller receipt={receipt} abi={abi} provider={provider} />
             )}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }

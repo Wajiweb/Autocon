@@ -70,10 +70,10 @@ export default function CodeViewer({ style = {} }) {
                               <button onClick={() => { saveSnapshot(); toast.success("Snapshot saved ✅"); setShowHistory(false); }} style={{...menuBtnStyle, color: '#10b981'}}>
                                   + Save Snapshot
                               </button>
-                              <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '4px 0' }}/>
+                              <hr style={{ borderColor: 'var(--surface)', margin: '4px 0' }}/>
                               {snapshots.length === 0 && <span style={{ fontSize: '11px', color: 'gray', padding: '4px 8px' }}>No snapshots saved</span>}
                               {snapshots.map((s, i) => (
-                                  <button key={s.id} onClick={() => handleRestore(s.id)} style={{...menuBtnStyle, display: 'flex', justifyContent: 'space-between', background: i === 0 ? 'rgba(255,255,255,0.05)' : 'transparent'}}>
+                                  <button key={s.id} onClick={() => handleRestore(s.id)} style={{...menuBtnStyle, display: 'flex', justifyContent: 'space-between', background: i === 0 ? 'var(--surface)' : 'transparent'}}>
                                       <span>Restore {i === 0 && <span style={{fontSize:'9px', color:'#10b981', marginLeft: '4px'}}>(Latest)</span>}</span>
                                       <span style={{ color: 'var(--outline)', fontSize: '10px' }}>{timeAgo(s.timestamp)}</span>
                                   </button>
@@ -115,8 +115,8 @@ export default function CodeViewer({ style = {} }) {
 }
 
 const btnStyle = {
-  background: 'rgba(255,255,255,0.1)',
-  border: '1px solid rgba(255,255,255,0.2)',
+  background: 'var(--surface)',
+  border: '1px solid var(--surface)',
   color: '#e2e8f0',
   padding: '4px 10px',
   borderRadius: 6,

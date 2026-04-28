@@ -1,24 +1,16 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+/**
+ * ThemeContext.jsx
+ * AutoCon uses a single unified dark Web3 theme system.
+ * The ThemeProvider is kept for backward compatibility (components
+ * import useTheme), but toggleTheme is a no-op — there is one theme.
+ */
+import { createContext, useContext } from 'react';
 
-const ThemeContext = createContext(null);
+const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {} });
 
 export function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState(() => {
-        const saved = localStorage.getItem('autocon_theme');
-        return saved || 'dark';
-    });
-
-    useEffect(() => {
-        localStorage.setItem('autocon_theme', theme);
-        document.documentElement.setAttribute('data-theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-    };
-
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={{ theme: 'dark', toggleTheme: () => {} }}>
             {children}
         </ThemeContext.Provider>
     );

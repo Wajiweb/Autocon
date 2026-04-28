@@ -137,7 +137,7 @@ export default function SecurityScanner({ contractCode, onAuditResult }) {
                         <p style={{ fontSize: '0.8rem', color: 'var(--outline)', marginTop: '4px' }}>Analyzing AST with Slither and interpreting logic via AI...</p>
                     </div>
                     {/* Live progress bar */}
-                    <div style={{ width: '100%', height: '4px', borderRadius: '99px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '4px', borderRadius: '99px', background: 'var(--surface)', overflow: 'hidden' }}>
                         <div style={{ height: '100%', borderRadius: '99px', width: `${progress}%`, background: 'var(--primary)', transition: 'width 0.6s ease' }} />
                     </div>
                     <p style={{ fontSize: '0.7rem', color: 'var(--outline)' }}>{status === 'pending' ? 'Queued...' : 'Processing...'}</p>
@@ -210,7 +210,7 @@ export default function SecurityScanner({ contractCode, onAuditResult }) {
                                 onClick={() => setExpandedVuln(expandedVuln === i ? null : i)}
                                 style={{
                                     padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                    cursor: 'pointer', background: expandedVuln === i ? 'rgba(255,255,255,0.02)' : 'transparent'
+                                    cursor: 'pointer', background: expandedVuln === i ? 'var(--surface)' : 'transparent'
                                 }}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

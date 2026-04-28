@@ -62,7 +62,7 @@ export default function AuctionGenerator() {
     return (
         <div className="container pt-3">
             {/* Header */}
-            <div className="animate-fade-in-up mb-8">
+            <div className="mb-8">
                 <div className="flex justify-between items-center mb-2">
                     <div className="flex items-center gap-3">
                         <div className="w-11 h-11 bg-[var(--primary-gradient)] rounded-xl flex items-center justify-center text-[22px] shadow-[var(--shadow-ambient)]">🔨</div>
@@ -76,7 +76,7 @@ export default function AuctionGenerator() {
                             placeholder="Describe your auction..." 
                             value={aiIntent} 
                             onChange={(e) => setAiIntent(e.target.value)}
-                            className="w-[200px] text-[13px] px-3 py-2 bg-white border border-[var(--border-light)] rounded-full text-[var(--text-primary)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
+                            className="w-[200px] text-[13px] px-3 py-2 bg-[var(--surface-elevated)] border border-[var(--border-light)] rounded-full text-[var(--text-primary)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
                             onKeyDown={(e) => { if(e.key === 'Enter') generateSuggestions('Auction', setFormData, aiIntent) }}
                         />
                         <Button 
@@ -113,7 +113,7 @@ export default function AuctionGenerator() {
             <div className={`grid grid-cols-1 ${generatedCode ? 'lg:grid-cols-2' : ''} gap-8 items-start`}>
                 
                 {/* Left Column: Form */}
-                <Card variant="glass" className="animate-fade-in-up delay-100">
+                <Card variant="glass" className="">
                     <form onSubmit={generateAuction}>
                         
                         <Input
@@ -199,7 +199,7 @@ export default function AuctionGenerator() {
                                 <input
                                     name="ownerAddress"
                                     value={formData.ownerAddress}
-                                    className="w-full bg-white text-[var(--text-primary)] border border-[var(--border-light)] rounded-[var(--radius-md)] px-4 py-3 text-sm outline-none font-mono text-[0.85rem] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
+                                    className="w-full bg-[var(--surface-elevated)] text-[var(--text-primary)] border border-[var(--border-light)] rounded-[var(--radius-md)] px-4 py-3 text-sm outline-none font-mono text-[0.85rem] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
                                     readOnly
                                     required
                                     placeholder="Connect your wallet →"
@@ -224,7 +224,7 @@ export default function AuctionGenerator() {
 
                 {/* Right Column: Info, Gas, Deploy, Code */}
                 {generatedCode && (
-                    <div className="flex flex-col gap-6 animate-fade-in-up delay-200">
+                    <div className="flex flex-col gap-6">
                         
                         {/* Info Card */}
                         <Card>

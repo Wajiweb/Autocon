@@ -234,7 +234,7 @@ function CustomiseModal({ template, onClose, onLaunch }) {
             Cancel
           </button>
           <button className="pg-btn pg-btn-primary" onClick={() => onLaunch(params)}
-            style={{ flex: 2, background: template.color, color: '#fff', boxShadow: `0 4px 20px ${template.accent}` }}>
+            style={{ flex: 2, background: template.color, color: 'var(--surface)', boxShadow: `0 4px 20px ${template.accent}` }}>
             Launch Generator →
           </button>
         </div>
@@ -279,7 +279,7 @@ export default function TemplateLibrary() {
             className="pg-btn"
             style={{
               background: filter === f ? 'var(--primary)' : 'var(--surface-high)',
-              color: filter === f ? '#fff' : 'var(--on-surface-variant)',
+              color: filter === f ? 'var(--surface)' : 'var(--on-surface-variant)',
               border: filter === f ? 'none' : '1px solid var(--outline)',
               boxShadow: filter === f ? '0 4px 16px rgba(93,169,233,.25)' : 'none',
               fontWeight: 700, fontSize: 13,
@@ -367,7 +367,7 @@ export default function TemplateLibrary() {
                 className="pg-btn"
                 style={{
                   width: '100%', justifyContent: 'center',
-                  background: t.color, color: '#fff',
+                  background: t.color, color: 'var(--surface)',
                   fontWeight: 700, boxShadow: `0 4px 16px ${t.accent}`,
                 }}>
                 Use Template →

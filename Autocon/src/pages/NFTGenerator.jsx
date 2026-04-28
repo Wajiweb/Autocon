@@ -163,7 +163,7 @@ export default function NFTGenerator() {
     return (
         <div className="container pt-3">
             {/* Header */}
-            <div className="animate-fade-in-up mb-8">
+            <div className="mb-8">
                 <div className="flex justify-between items-center mb-2">
                     <div className="flex items-center gap-3">
                         <div className="w-11 h-11 bg-[var(--primary-gradient)] rounded-xl flex items-center justify-center text-[22px] shadow-[var(--shadow-ambient)]">🎨</div>
@@ -177,7 +177,7 @@ export default function NFTGenerator() {
                             placeholder="Describe your NFT..." 
                             value={aiIntent} 
                             onChange={(e) => setAiIntent(e.target.value)}
-                            className="w-[200px] text-[13px] px-3 py-2 bg-white border border-[var(--border-light)] rounded-full text-[var(--text-primary)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
+                            className="w-[200px] text-[13px] px-3 py-2 bg-[var(--surface-elevated)] border border-[var(--border-light)] rounded-full text-[var(--text-primary)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
                             onKeyDown={(e) => { if(e.key === 'Enter') generateSuggestions('NFT', setFormData, aiIntent) }}
                         />
                         <Button 
@@ -215,7 +215,7 @@ export default function NFTGenerator() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                 
                 {/* Left Column: Form */}
-                <Card variant="glass" className="animate-fade-in-up delay-100">
+                <Card variant="glass" className="">
                     <form onSubmit={generateNFT}>
                         
                         <Input
@@ -285,7 +285,7 @@ export default function NFTGenerator() {
                                 <input
                                     name="ownerAddress"
                                     value={formData?.ownerAddress || ''}
-                                    className="w-full bg-white text-[var(--text-primary)] border border-[var(--border-light)] rounded-[var(--radius-md)] px-4 py-3 text-sm outline-none font-mono text-[0.85rem] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
+                                    className="w-full bg-[var(--surface-elevated)] text-[var(--text-primary)] border border-[var(--border-light)] rounded-[var(--radius-md)] px-4 py-3 text-sm outline-none font-mono text-[0.85rem] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
                                     readOnly
                                     required
                                     placeholder="Connect your wallet →"
@@ -312,7 +312,7 @@ export default function NFTGenerator() {
                 <div className="flex flex-col gap-6">
                     
                     {/* Info Card */}
-                    <Card className="animate-fade-in-up delay-200">
+                    <Card className="">
                         <h3 className="text-[0.9rem] font-extrabold text-[var(--on-surface)] mb-3.5">
                             📘 What Your NFT Contract Includes
                         </h3>
@@ -338,7 +338,7 @@ export default function NFTGenerator() {
 
                     {/* Gas Estimation */}
                     {generatedCode && (
-                        <Card className="animate-fade-in-up">
+                        <Card className="">
                             <div className={`flex justify-between items-center ${gasEstimate ? 'mb-5' : ''}`}>
                                 <div>
                                     <h3 className="text-base font-bold text-[var(--on-surface)] mb-1">
@@ -415,7 +415,7 @@ export default function NFTGenerator() {
 
                     {/* Generated Code Preview */}
                     {generatedCode && (
-                        <div className="animate-fade-in-up mt-2">
+                        <div className="mt-2">
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-sm font-bold text-[var(--on-surface)]">
                                     📄 Generated ERC-721 Contract

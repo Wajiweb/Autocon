@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
 import { useWallet } from '../../hooks/useWallet';
 import { useNetwork } from '../../context/NetworkContext';
 import toast from 'react-hot-toast';
@@ -29,7 +28,6 @@ const NAV_GROUPS = [
 ];
 
 export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
-  const { theme, toggleTheme } = useTheme();
   const { walletAddress } = useWallet();
   const { network } = useNetwork();
   const [blockNum, setBlockNum] = useState(8241036);
@@ -113,10 +111,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
             </div>
           </div>
 
-          {/* Theme toggle */}
-          <button className="db-theme-btn" onClick={toggleTheme}>
-            {theme === 'dark' ? '☀' : '☾'} {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </button>
         </div>
       </aside>
     </>

@@ -86,11 +86,11 @@ export default function PriceChart({ coin }) {
           tooltipFormat: 'MMM d, HH:mm',
           displayFormats: { hour: 'HH:mm', day: 'MMM d', month: 'MMM' },
         },
-        grid:  { color: 'rgba(255,255,255,0.04)' },
+        grid:  { color: 'var(--surface)' },
         ticks: { color: '#64748b', maxTicksLimit: 6 },
       },
       y: {
-        grid:  { color: 'rgba(255,255,255,0.04)' },
+        grid:  { color: 'var(--surface)' },
         ticks: {
           color: '#64748b',
           callback: (v) => `$${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toLocaleString()}`,
@@ -101,9 +101,9 @@ export default function PriceChart({ coin }) {
       legend: { display: false },
       tooltip: {
         backgroundColor: '#0C1007',
-        titleColor: '#ffffff',
+        titleColor: 'var(--surface)',
         bodyColor: '#94a3b8',
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: 'var(--surface)',
         borderWidth: 1,
         padding: 10,
         callbacks: {

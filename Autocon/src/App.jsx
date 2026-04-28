@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -17,7 +16,7 @@ import AuctionGenerator from './pages/AuctionGenerator';
 import TemplateLibrary from './pages/TemplateLibrary';
 import ProfilePage from './pages/ProfilePage';
 import LandingPage from './pages/LandingPage';
-import AnimatedPage from './components/dashboard/AnimatedPage';
+
 import ASTPage from './pages/ASTPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import JobsPage from './pages/JobsPage';
@@ -29,22 +28,20 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+    <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<AnimatedPage><Dashboard /></AnimatedPage>} />
-        <Route path="/tokens" element={<AnimatedPage><TokenGenerator /></AnimatedPage>} />
-        <Route path="/nfts" element={<AnimatedPage><NFTGenerator /></AnimatedPage>} />
-        <Route path="/auctions" element={<AnimatedPage><AuctionGenerator /></AnimatedPage>} />
-        <Route path="/audit" element={<AnimatedPage><AuditPage /></AnimatedPage>} />
-        <Route path="/profile" element={<AnimatedPage><ProfilePage /></AnimatedPage>} />
-        <Route path="/templates" element={<AnimatedPage><TemplateLibrary /></AnimatedPage>} />
-        <Route path="/ast" element={<AnimatedPage><ASTPage /></AnimatedPage>} />
-        <Route path="/analytics" element={<AnimatedPage><AnalyticsPage /></AnimatedPage>} />
-        <Route path="/jobs"      element={<AnimatedPage><JobsPage /></AnimatedPage>} />
-        <Route path="/ai-chat"   element={<AnimatedPage><AIChatPage /></AnimatedPage>} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/tokens" element={<TokenGenerator />} />
+        <Route path="/nfts" element={<NFTGenerator />} />
+        <Route path="/auctions" element={<AuctionGenerator />} />
+        <Route path="/audit" element={<AuditPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/templates" element={<TemplateLibrary />} />
+        <Route path="/ast" element={<ASTPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
+        <Route path="/jobs"      element={<JobsPage />} />
+        <Route path="/ai-chat"   element={<AIChatPage />} />
       </Routes>
-    </AnimatePresence>
   );
 }
 
@@ -55,8 +52,8 @@ function AppContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center gap-4">
-        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid var(--primary-subtle)', borderTopColor: 'var(--primary)', animation: 'spin-slow 1s linear infinite' }} />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid var(--primary-subtle)', borderTopColor: '#22C55E', animation: 'spin-slow 1s linear infinite' }} />
         <p className="text-sm" style={{ color: 'var(--on-surface-variant)' }}>Loading AutoCon...</p>
       </div>
     );
@@ -100,32 +97,33 @@ function App() {
         <NetworkProvider>
           <WalletProvider>
             <AuthProvider>
-              {/* Single global Toaster — dark mode, Kinetic Ether themed */}
-              <Toaster
-                position="bottom-right"
-                reverseOrder={false}
-                toastOptions={{
-                  style: {
-                    background: 'var(--surface)',
-                    color: 'var(--on-surface)',
-                    border: '1px solid var(--border, rgba(255,255,255,0.15))',
-                    fontFamily: '"Inter", sans-serif',
-                    fontSize: '0.875rem',
-                    borderRadius: '12px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-                  },
-                  success: {
-                    iconTheme: { primary: '#10b981', secondary: '#161d2b' },
-                  },
-                  error: {
-                    iconTheme: { primary: '#ef4444', secondary: '#161d2b' },
-                  },
-                  loading: {
-                    iconTheme: { primary: '#a78bfa', secondary: '#161d2b' },
-                  },
-                }}
-              />
-              <AppContent />
+              <div className="min-h-screen bg-[#0A1412] text-white">
+                <Toaster
+                  position="bottom-right"
+                  reverseOrder={false}
+                  toastOptions={{
+                    style: {
+                      background: 'var(--surface)',
+                      color: 'var(--on-surface)',
+                      border: '1px solid var(--border, var(--surface))',
+                      fontFamily: '"Inter", sans-serif',
+                      fontSize: '0.875rem',
+                      borderRadius: '12px',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                    },
+                    success: {
+                      iconTheme: { primary: '#10b981', secondary: '#161d2b' },
+                    },
+                    error: {
+                      iconTheme: { primary: '#ef4444', secondary: '#161d2b' },
+                    },
+                    loading: {
+                      iconTheme: { primary: '#a78bfa', secondary: '#161d2b' },
+                    },
+                  }}
+                />
+                <AppContent />
+              </div>
             </AuthProvider>
           </WalletProvider>
         </NetworkProvider>

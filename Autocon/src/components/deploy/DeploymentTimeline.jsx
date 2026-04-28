@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Circle, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const STEPS = [
@@ -10,11 +9,6 @@ const STEPS = [
   'Deployment Successful!'
 ];
 
-/**
- * DeploymentTimeline
- * A vertical stepper tracking blockchain contract deployments.
- * @param {number} currentStep - The active zero-indexed step (0 to 4).
- */
 export default function DeploymentTimeline({ currentStep = 0, errorStep = -1, errorMessage = '' }) {
   return (
     <div className="flex flex-col w-full max-w-md mx-auto" style={{ fontFamily: '"Inter", sans-serif' }}>
@@ -25,113 +19,57 @@ export default function DeploymentTimeline({ currentStep = 0, errorStep = -1, er
         const isPending  = !isError && currentStep < idx;
         const isLast     = idx === STEPS.length - 1;
 
-        // Colors per AutoCon palette
-        const primary = 'var(--primary)'; // Electric Blue
-        const success = '#10b981';        // var(--success)
-        const mutedLabel = '#9ca3af';
-        const activeLabel = '#ffffff';
+        const primary = 'var(--primary)';
+        const success = '#28a745';
+        const mutedLabel = 'var(--text-secondary)';
+        const activeLabel = 'var(--text-primary)';
 
         return (
           <div key={idx} className="relative flex items-stretch">
-            {/* The vertical connector line - placed below the icon spanning downwards */}
             {!isLast && (
               <div 
-                className="absolute"
                 style={{
-                  left: '19px', // Center of the 38px bounding box of the icon area
+                  position: 'absolute',
+                  left: '19px',
                   top: '36px',
                   bottom: '-8px',
                   width: '2px',
-                  background: isCompleted ? success : 'rgba(255, 255, 255, 0.1)',
-                  transition: 'background 0.4s ease'
+                  background: isCompleted ? success : '#eee',
                 }}
               />
             )}
 
-            {/* Container for Icon + Text, pulsing if active */}
-            <motion.div
-              layout
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: idx * 0.1 }}
+            <div
               className="relative z-10 flex items-center w-full rounded-xl"
               style={{
                 padding: '8px 12px',
                 marginBottom: '8px',
-                // glass pane active glow
-                background: isActive ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-                // pulse border for active
-                border: isActive ? `1px solid var(--primary-muted)` : '1px solid transparent',
+                background: isActive ? 'var(--surface)' : 'transparent',
+                border: isActive ? `1px solid #ddd` : '1px solid transparent',
               }}
             >
-              {/* Icon Area */}
               <div className="flex-shrink-0 flex items-center justify-center" style={{ width: '38px' }}>
-                <AnimatePresence mode="popLayout">
-                  {isCompleted && (
-                    <motion.div
-                      key="completed"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                    >
-                      <CheckCircle2 size={22} color={success} />
-                    </motion.div>
-                  )}
-                  {isActive && (
-                    <motion.div
-                      key="active"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                    >
-                      <Loader2 
-                        size={22} 
-                        color={primary} 
-                        style={{ animation: 'spin-slow 1.5s linear infinite' }} 
-                      />
-                    </motion.div>
-                  )}
-                  {isPending && (
-                    <motion.div
-                      key="pending"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <Circle size={18} color="rgba(255,255,255,0.2)" strokeWidth={2} />
-                    </motion.div>
-                  )}
-                  {isError && (
-                    <motion.div
-                      key="error"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                    >
-                      <AlertTriangle size={22} color="#f87171" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {isCompleted && <CheckCircle2 size={22} color={success} />}
+                {isActive && <Loader2 size={22} color={primary} />}
+                {isPending && <Circle size={18} color="var(--border-dark)" strokeWidth={2} />}
+                {isError && <AlertTriangle size={22} color="#dc3545" />}
               </div>
 
-              {/* Text Area */}
               <div 
-                className="ml-3 font-medium transition-all duration-300"
+                className="ml-3 font-medium"
                 style={{
                   fontSize: isActive ? '0.95rem' : '0.85rem',
-                  color: isError ? '#f87171' : (isActive ? activeLabel : (isCompleted ? '#d1d5db' : mutedLabel)),
-                  textShadow: isActive ? `0 0 12px ${primary}80` : 'none',
-                  letterSpacing: '0.01em'
+                  color: isError ? '#dc3545' : (isActive ? activeLabel : (isCompleted ? '#888' : mutedLabel)),
                 }}
               >
                 {stepStr}
                 {isError && errorMessage && (
-                  <div className="mt-1 text-xs font-normal" style={{ color: '#fca5a5' }}>
+                  <div className="mt-1 text-xs font-normal" style={{ color: '#dc3545' }}>
                     {errorMessage}
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           </div>
         );
       })}
@@ -171,7 +109,7 @@ export function MockDeploymentTimeline() {
         fontFamily: '"Space Grotesk", sans-serif',
         fontSize: '1.2rem',
         fontWeight: 700,
-        color: '#fff',
+        color: 'var(--surface)',
         marginBottom: '24px',
         textAlign: 'center'
       }}>

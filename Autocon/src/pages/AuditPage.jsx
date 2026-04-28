@@ -246,8 +246,8 @@ export default function AuditPage() {
       {/* FIX #4 — Empty state: shown when no audit is running and no result */}
       {!isActive && !auditResult && status !== 'failed' && (
         <div className="pg-card db-enter" style={{
-          border: '1px dashed rgba(255,255,255,.1)',
-          background: 'rgba(255,255,255,.02)',
+          border: '1px dashed var(--surface)',
+          background: 'var(--surface)',
           textAlign: 'center', padding: '28px 20px', marginBottom: 16,
         }}>
           <ShieldCheck size={36} style={{ margin: '0 auto 10px', color: 'var(--db-t3)' }} />
@@ -334,7 +334,7 @@ export default function AuditPage() {
           </div>
 
           {/* Progress bar */}
-          <div style={{ height: 5, borderRadius: 99, background: 'rgba(255,255,255,.06)', overflow: 'hidden', maxWidth: 400, margin: '0 auto' }}>
+          <div style={{ height: 5, borderRadius: 99, background: 'var(--surface)', overflow: 'hidden', maxWidth: 400, margin: '0 auto' }}>
             <div style={{
               height: '100%', borderRadius: 99,
               width: `${progress}%`,
@@ -378,7 +378,7 @@ export default function AuditPage() {
           <div style={{
             display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center',
             padding: '10px 14px', borderRadius: 'var(--db-r-sm)', marginBottom: 14,
-            background: 'rgba(255,255,255,.03)', border: '.5px solid var(--db-br)',
+            background: 'var(--surface)', border: '.5px solid var(--db-br)',
             fontFamily: 'var(--db-mono)', fontSize: 11, color: 'var(--db-t3)',
           }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>

@@ -45,7 +45,7 @@ function Skeleton() {
       {[1, 2, 3].map(i => (
         <div key={i} style={{
           height: 72, borderRadius: 'var(--db-r)',
-          background: 'rgba(255,255,255,.04)',
+          background: 'var(--surface)',
           animation: 'db-pulse 1.6s ease infinite',
           animationDelay: `${i * 0.15}s`,
         }} />
@@ -336,7 +336,7 @@ export default function JobsPage() {
                           alignItems: 'center',
                           gap: 14, padding: '14px 16px',
                           borderRadius: isSel ? 'var(--db-r) var(--db-r) 0 0' : 'var(--db-r)',
-                          background: isSel ? 'rgba(255,255,255,.045)' : 'rgba(255,255,255,.025)',
+                          background: isSel ? 'var(--surface)' : 'var(--surface)',
                           border: `.5px solid ${isActive ? ss.border : isSel ? 'var(--db-br2)' : 'var(--db-br)'}`,
                           cursor: 'pointer', transition: 'background .15s, border-color .15s',
                         }}
@@ -385,7 +385,7 @@ export default function JobsPage() {
                         {/* Progress bar for active jobs */}
                         {isActive && (
                           <div style={{ width: 80, textAlign: 'center' }}>
-                            <div style={{ height: 4, borderRadius: 99, background: 'rgba(255,255,255,.06)', overflow: 'hidden', marginBottom: 4 }}>
+                            <div style={{ height: 4, borderRadius: 99, background: 'var(--surface)', overflow: 'hidden', marginBottom: 4 }}>
                               <div style={{ height: '100%', borderRadius: 99, width: status === 'processing' ? '55%' : '10%', background: ss.color, transition: 'width .5s ease' }} />
                             </div>
                             <span style={{ fontFamily: 'var(--db-mono)', fontSize: 9, color: 'var(--db-t3)' }}>
@@ -411,7 +411,7 @@ export default function JobsPage() {
                         <div style={{
                           padding: '14px 18px',
                           borderRadius: '0 0 var(--db-r) var(--db-r)',
-                          background: 'rgba(255,255,255,.03)',
+                          background: 'var(--surface)',
                           border: '.5px solid var(--db-br2)', borderTop: 'none',
                           fontFamily: 'var(--db-mono)', fontSize: 11,
                         }}>

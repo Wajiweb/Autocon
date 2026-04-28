@@ -55,7 +55,7 @@ function StatCard({ label, value, sub, color, icon, delay }) {
 /* ─── Chart helpers ──────────────────────────────────── */
 const tooltipStyle = {
   backgroundColor: 'var(--db-s2)',
-  borderColor: 'rgba(255,255,255,.1)',
+  borderColor: 'var(--surface)',
   borderWidth: .5,
   titleColor: 'var(--db-t1)',
   bodyColor: 'var(--db-t2)',
@@ -200,7 +200,7 @@ export default function AnalyticsPage() {
               onClick={() => setTimeRange(m)}
               style={{
                 background: timeRange === m ? 'var(--primary)' : 'var(--db-s2)',
-                color: timeRange === m ? '#fff' : 'var(--db-t2)',
+                color: timeRange === m ? 'var(--surface)' : 'var(--db-t2)',
                 border: timeRange === m ? 'none' : '1px solid var(--db-br)',
                 fontWeight: 700, fontSize: 12,
               }}>

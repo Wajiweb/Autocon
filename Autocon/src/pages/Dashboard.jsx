@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
@@ -12,8 +12,6 @@ import DeploymentTable from '../components/dashboard/DeploymentTable';
 import Sparkline from '../components/ui/Sparkline';
 import { exportDeploymentsCSV, exportDeploymentsPDF } from '../utils/exportUtils';
 import { Button } from '../components/ui/Button';
-
-const DashboardScene = lazy(() => import('../3d/DashboardScene'));
 
 /* ─── Counter animation ─────────────────────────────── */
 function useCounter(target, delay = 300) {
@@ -133,9 +131,6 @@ export default function Dashboard() {
   return (
     <>
       <OnboardingTour />
-      {/* 3D background */}
-      <Suspense fallback={null}><DashboardScene /></Suspense>
-
       <div className="db-content">
 
         {/* ── Page Header ── */}

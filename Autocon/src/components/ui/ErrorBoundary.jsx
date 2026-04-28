@@ -46,7 +46,7 @@ export default class ErrorBoundary extends React.Component {
             }}>
                 <div style={{
                     maxWidth: '520px', width: '100%', textAlign: 'center',
-                    background: 'rgba(255,255,255,0.03)',
+                    background: 'var(--surface)',
                     border: '1px solid rgba(239,68,68,0.25)',
                     borderRadius: '20px', padding: '48px 36px',
                 }}>
@@ -108,8 +108,8 @@ export default class ErrorBoundary extends React.Component {
                             onClick={() => window.location.reload()}
                             style={{
                                 padding: '12px 28px', borderRadius: '12px',
-                                background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.1)',
+                                background: 'var(--surface)',
+                                border: '1px solid var(--surface)',
                                 color: '#94a3b8', fontWeight: 700, fontSize: '0.9rem',
                                 cursor: 'pointer', transition: 'all 0.2s',
                             }}

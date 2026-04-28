@@ -59,7 +59,7 @@ export default function JobStatusBadge({ jobId, type = 'job', onComplete, onFail
 
     return (
         <div style={{
-            background: 'rgba(255,255,255,0.03)',
+            background: 'var(--surface)',
             border: `1px solid ${cfg.border}`,
             borderRadius: '12px',
             padding: '14px 16px',
@@ -83,7 +83,7 @@ export default function JobStatusBadge({ jobId, type = 'job', onComplete, onFail
             {/* Progress bar */}
             <div style={{
                 height: '5px', borderRadius: '99px',
-                background: 'rgba(255,255,255,0.06)', overflow: 'hidden',
+                background: 'var(--surface)', overflow: 'hidden',
                 marginBottom: '8px',
             }}>
                 <div style={{

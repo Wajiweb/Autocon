@@ -7,8 +7,8 @@ export default function NetworkSelector() {
         <div style={{
             display: 'flex', gap: '6px', alignItems: 'center',
             padding: '4px', borderRadius: '12px',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.06)'
+            background: 'var(--surface)',
+            border: '1px solid var(--surface)'
         }}>
             {allNetworkKeys.map(key => {
                 const net = networks[key];

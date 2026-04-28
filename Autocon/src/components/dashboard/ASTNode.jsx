@@ -1,5 +1,4 @@
 import { memo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { nodeColor } from '../../utils/astUtils';
 
@@ -12,7 +11,7 @@ const ASTNode = memo(function ASTNode({ node, depth = 0 }) {
   return (
     <div style={{ marginLeft: indent }}>
       <div
-        className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:opacity-80"
+        className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm"
         style={{
           background: `${color}11`,
           border: `1px solid ${color}33`,
@@ -33,27 +32,21 @@ const ASTNode = memo(function ASTNode({ node, depth = 0 }) {
         >
           {node.type}
         </span>
-        <span style={{ color: 'var(--on-surface)' }} className="text-xs">
+        <span style={{ color: 'var(--text-primary)' }} className="text-xs">
           {node.label}
         </span>
       </div>
 
-      <AnimatePresence>
-        {expanded && hasChildren && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.15 }}
-            className="mb-1 flex flex-col overflow-hidden border-l pl-2"
-            style={{ borderColor: `${color}44` }}
-          >
-            {node.children.map(child => (
-              <ASTNode key={child.id} node={child} depth={depth + 1} />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {expanded && hasChildren && (
+        <div
+          className="mb-1 flex flex-col overflow-hidden border-l pl-2"
+          style={{ borderColor: `${color}44` }}
+        >
+          {node.children.map(child => (
+            <ASTNode key={child.id} node={child} depth={depth + 1} />
+          ))}
+        </div>
+      )}
     </div>
   );
 });

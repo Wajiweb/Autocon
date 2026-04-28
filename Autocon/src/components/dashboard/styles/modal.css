@@ -7,8 +7,8 @@
   justify-content: space-between;
   padding: 14px 20px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1px solid var(--surface);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface) 100%);
   cursor: pointer;
   transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
   position: relative;
@@ -27,8 +27,8 @@
 }
 
 .asset-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  border-color: var(--surface);
   transform: translateX(3px);
 }
 
@@ -139,7 +139,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--surface);
 }
 
 .asset-grid__body {
@@ -161,10 +161,10 @@
 .price-chart__tabs {
   display: flex;
   gap: 4px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
   padding: 4px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--surface);
   width: fit-content;
 }
 
@@ -182,7 +182,7 @@
 }
 
 .price-chart__tab--active {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface);
   color: var(--on-surface);
 }
 
@@ -240,8 +240,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--surface);
+  background: var(--surface);
   flex-shrink: 0;
   gap: 12px;
 }
@@ -312,8 +312,8 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--surface);
+  background: var(--surface);
   color: var(--on-surface-variant);
   cursor: pointer;
   display: flex;

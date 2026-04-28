@@ -103,7 +103,7 @@ export default function AISuggestButton({ contractType, partialInputs, onSuggest
               width: '100%',
               padding: '12px',
               borderRadius: 'var(--radius-sm)',
-              background: '#FFFFFF',
+              background: 'var(--surface)',
               border: '1px solid var(--border-light)',
               color: 'var(--text-primary)',
               fontSize: '0.85rem',
