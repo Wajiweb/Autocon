@@ -32,6 +32,17 @@ export function AuthProvider({ children }) {
         return payload.data;
     };
 
+    const authRequest = async (url, options, fallbackMessage) => {
+        try {
+            return await fetch(url, options);
+        } catch (err) {
+            if (err instanceof TypeError) {
+                throw new Error(`${fallbackMessage} Check that the backend is running and this app origin is allowed by CORS.`);
+            }
+            throw err;
+        }
+    };
+
     // Helper: fetch with auth header
     const authFetch = useCallback(async (url, options = {}) => {
         const currentToken = localStorage.getItem('autocon_token');
@@ -115,11 +126,15 @@ export function AuthProvider({ children }) {
 
         const walletAddress = accounts[0];
 
-        const nonceRes = await fetch(`${API_BASE}/api/auth/nonce`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ walletAddress, mode })
-        });
+        const nonceRes = await authRequest(
+            `${API_BASE}/api/auth/nonce`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress, mode })
+            },
+            'Failed to reach the authentication server.'
+        );
         const nonceData = await parseAuthResponse(nonceRes, 'Failed to get authentication nonce.');
 
         const { ethers } = await import('ethers');
@@ -127,11 +142,15 @@ export function AuthProvider({ children }) {
         const signer = await provider.getSigner();
         const signature = await signer.signMessage(nonceData.message);
 
-        const authRes = await fetch(`${API_BASE}/api/auth/${mode}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ walletAddress, signature })
-        });
+        const authRes = await authRequest(
+            `${API_BASE}/api/auth/${mode}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress, signature })
+            },
+            'Failed to reach the authentication server.'
+        );
         const authData = await parseAuthResponse(
             authRes,
             mode === 'signup' ? 'Failed to create account.' : 'Failed to sign in.'
