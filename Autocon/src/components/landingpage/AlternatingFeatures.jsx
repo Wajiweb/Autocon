@@ -4,7 +4,7 @@ import { Reveal } from './Shared';
 
 const CryptoMockupOne = () => (
   <div style={{ width: '100%', height: '100%', background: 'var(--surface)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <div style={{ position: 'relative', background: 'var(--surface)', border: '1px solid #ddd', padding: '24px', borderRadius: '16px', width: '70%' }}>
+    <div style={{ position: 'relative', background: 'var(--surface)', border: '1px solid var(--border)', padding: '24px', borderRadius: '16px', width: '70%' }}>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56' }} />
          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }} />
@@ -24,7 +24,7 @@ const CryptoMockupTwo = () => (
   <div style={{ width: '100%', height: '100%', background: 'var(--surface)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '16px', width: '70%' }}>
       {[1, 2, 3].map(i => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--surface)', border: '1px solid #ddd', borderRadius: '12px' }}>
+        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: i === 1 ? 'var(--primary)' : 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ShieldAlert size={16} color={i === 1 ? 'var(--surface)' : 'var(--text-secondary)'} />
@@ -42,7 +42,7 @@ const CryptoMockupTwo = () => (
 
 const CryptoMockupThree = () => (
   <div style={{ width: '100%', height: '100%', background: 'var(--surface)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-     <div style={{ position: 'relative', width: '60%', height: '60%', border: '2px dashed #ddd', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+     <div style={{ position: 'relative', width: '60%', height: '60%', border: '2px dashed var(--border)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '80px', height: '80px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
            <Cpu size={40} color="var(--surface)" />
         </div>
@@ -104,7 +104,7 @@ const AlternatingFeatures = ({ onLearnMore }) => (
           <div style={{
             order: i % 2 !== 0 ? 1 : 2,
             borderRadius: '16px', overflow: 'hidden',
-            border: '1px solid #ddd', aspectRatio: '4 / 3',
+            border: '1px solid var(--border)', aspectRatio: '4 / 3',
           }}>
             {f.illustration}
           </div>

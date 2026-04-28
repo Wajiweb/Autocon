@@ -13,7 +13,7 @@ export const Reveal = ({ children, delay = 0, y = 30, className = '' }) => {
 export const PillBadge = ({ children }) => (
   <span style={{
     display: 'inline-block', padding: '6px 18px', borderRadius: '99px',
-    background: 'var(--surface-elevated)', border: '1px solid #ddd',
+    background: 'var(--surface-elevated)', border: '1px solid var(--border)',
     fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)',
     letterSpacing: '0.01em', marginBottom: '24px',
   }}>{children}</span>

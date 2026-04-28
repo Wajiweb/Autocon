@@ -16,7 +16,7 @@ export default function TransactionStoryteller({ receipt, abi, provider }) {
   return (
     <div
       className="mt-4 rounded-xl overflow-hidden"
-      style={{ border: '1px solid #ddd', background: 'var(--surface-elevated)' }}
+      style={{ border: '1px solid var(--border)', background: 'var(--surface-elevated)' }}
     >
       <button
         onClick={() => setOpen(o => !o)}

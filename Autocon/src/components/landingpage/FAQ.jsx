@@ -24,7 +24,7 @@ const FAQ = () => {
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
         {faqs.map((faq, i) => (
           <Reveal key={i} delay={i * 0.05}>
-            <div style={{ borderBottom: '1px solid #ddd' }}>
+            <div style={{ borderBottom: '1px solid var(--border)' }}>
               <button onClick={() => setOpen(open === i ? null : i)} style={{
                 width: '100%', textAlign: 'left', padding: '24px 0', background: 'none', border: 'none',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',

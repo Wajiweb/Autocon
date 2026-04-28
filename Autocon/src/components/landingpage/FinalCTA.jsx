@@ -8,7 +8,7 @@ const FinalCTA = ({ onGetStarted }) => (
         maxWidth: '1160px', margin: '0 auto', textAlign: 'center',
         padding: '80px 40px', background: 'var(--surface-elevated)',
         borderRadius: '32px', position: 'relative', overflow: 'hidden',
-        border: '1px solid #ddd',
+        border: '1px solid var(--border)',
       }}>
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h2 style={{

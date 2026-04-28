@@ -20,7 +20,7 @@ const NavBar = ({ onConnect }) => {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '14px 48px',
       background: scrolled ? 'var(--surface)' : 'transparent',
-      borderBottom: scrolled ? '1px solid #ddd' : 'none',
+      borderBottom: scrolled ? '1px solid var(--border)' : 'none',
     }}>
       {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
@@ -74,7 +74,7 @@ const NavBar = ({ onConnect }) => {
       {isOpen && (
         <div style={{
           position: 'absolute', top: '64px', left: 0, right: 0,
-          background: 'var(--surface)', borderBottom: '1px solid #ddd',
+          background: 'var(--surface)', borderBottom: '1px solid var(--border)',
           padding: '24px 48px', display: 'flex', flexDirection: 'column', gap: '18px',
         }}>
           {links.map(link => (

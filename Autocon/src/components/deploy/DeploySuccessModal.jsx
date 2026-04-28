@@ -192,7 +192,7 @@ export default function DeploySuccessModal({
             style={{
               width: '100%', maxWidth: '460px',
               background: 'var(--surface-elevated)',
-              border: '1px solid #ddd',
+              border: '1px solid var(--border)',
               borderRadius: '24px',
               padding: '36px',
               boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
@@ -206,7 +206,7 @@ export default function DeploySuccessModal({
               style={{
                 position: 'absolute', top: '16px', right: '16px',
                 background: 'var(--surface-elevated)',
-                border: '1px solid #ddd',
+                border: '1px solid var(--border)',
                 borderRadius: '50%', width: '32px', height: '32px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', color: '#666',

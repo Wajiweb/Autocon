@@ -45,7 +45,7 @@ export default function DeploymentTimeline({ currentStep = 0, errorStep = -1, er
                 padding: '8px 12px',
                 marginBottom: '8px',
                 background: isActive ? 'var(--surface)' : 'transparent',
-                border: isActive ? `1px solid #ddd` : '1px solid transparent',
+                border: isActive ? `1px solid var(--border)` : '1px solid transparent',
               }}
             >
               <div className="flex-shrink-0 flex items-center justify-center" style={{ width: '38px' }}>

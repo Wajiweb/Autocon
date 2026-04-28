@@ -47,9 +47,9 @@ const DashboardMockup = () => {
         className="w-full rounded-[20px] border overflow-hidden"
         style={{ background: 'var(--surface)', borderColor: 'var(--border-dark)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
       >
-        <div style={{ padding: '18px 24px', borderBottom: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 99, background: 'var(--primary-subtle)', border: '1px solid #0066cc', fontSize: '0.66rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 99, background: 'var(--primary-subtle)', border: '1px solid var(--accent)', fontSize: '0.66rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)', display: 'inline-block' }} />
               Live Dashboard
             </div>
@@ -57,7 +57,7 @@ const DashboardMockup = () => {
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {['CSV', 'PDF'].map((label) => (
-              <div key={label} style={{ padding: '6px 14px', borderRadius: 9, border: '1px solid #ddd', background: 'var(--surface)', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600 }}>
+              <div key={label} style={{ padding: '6px 14px', borderRadius: 9, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600 }}>
                 {label}
               </div>
             ))}
@@ -66,7 +66,7 @@ const DashboardMockup = () => {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, padding: '18px 24px' }}>
           {mockStats.map((stat) => (
-            <div key={stat.label} style={{ padding: 16, borderRadius: 14, background: 'var(--surface-elevated)', border: '1px solid #ddd', overflow: 'hidden' }}>
+            <div key={stat.label} style={{ padding: 16, borderRadius: 14, background: 'var(--surface-elevated)', border: '1px solid var(--border)', overflow: 'hidden' }}>
               <p style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 10 }}>{stat.label}</p>
               <p style={{ fontSize: '1.6rem', fontWeight: 900, color: stat.value === 'Online' ? 'var(--primary)' : 'var(--text-primary)', lineHeight: 1 }}>{stat.value}</p>
               <p style={{ fontSize: '0.62rem', color: 'var(--text-secondary)', marginTop: 4 }}>{stat.subtext}</p>
@@ -74,16 +74,16 @@ const DashboardMockup = () => {
           ))}
         </div>
 
-        <div style={{ borderTop: '1px solid #ddd' }}>
-          <div style={{ padding: '13px 24px', borderBottom: '1px solid #ddd', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ borderTop: '1px solid var(--border)' }}>
+          <div style={{ padding: '13px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>Deployment Registry</h3>
-            <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: '0.68rem', fontWeight: 600, background: 'var(--primary-subtle)', color: 'var(--primary)', border: '1px solid #0066cc', fontFamily: 'monospace' }}>0x7a2...f3e1</span>
+            <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: '0.68rem', fontWeight: 600, background: 'var(--primary-subtle)', color: 'var(--primary)', border: '1px solid var(--accent)', fontFamily: 'monospace' }}>0x7a2...f3e1</span>
           </div>
           <div style={{ display: 'grid' }}>
             {mockDeployments.map((item) => (
-              <div key={item.name} style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 0.8fr', gap: 12, padding: '13px 24px', borderBottom: '1px solid #ddd', alignItems: 'center' }}>
+              <div key={item.name} style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 0.8fr', gap: 12, padding: '13px 24px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                  <div style={{ width: 33, height: 33, borderRadius: 9, background: 'var(--primary-subtle)', border: '1px solid #0066cc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', fontWeight: 800, color: 'var(--primary)' }}>
+                  <div style={{ width: 33, height: 33, borderRadius: 9, background: 'var(--primary-subtle)', border: '1px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.58rem', fontWeight: 800, color: 'var(--primary)' }}>
                     {item.symbol}
                   </div>
                   <div style={{ minWidth: 0 }}>
@@ -91,7 +91,7 @@ const DashboardMockup = () => {
                     <p style={{ fontSize: '0.58rem', color: 'var(--text-secondary)' }}>{item.network}</p>
                   </div>
                 </div>
-                <span style={{ width: 'fit-content', padding: '3px 9px', borderRadius: 20, fontSize: '0.58rem', fontWeight: 700, background: 'var(--surface)', color: 'var(--text-muted)', border: '1px solid #ddd' }}>{item.type}</span>
+                <span style={{ width: 'fit-content', padding: '3px 9px', borderRadius: 20, fontSize: '0.58rem', fontWeight: 700, background: 'var(--surface)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>{item.type}</span>
                 <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: 'var(--text-secondary)', textAlign: 'right' }}>0x742d...f6</span>
               </div>
             ))}
@@ -111,7 +111,7 @@ export default function HeroSection({ onGetStarted }) {
     >
       <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 md:px-6 text-center flex flex-col items-center">
         <div className="mb-8">
-          <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] md:text-sm font-semibold tracking-wide" style={{ border: '1px solid #ddd', background: 'var(--surface)', color: 'var(--text-muted)' }}>
+          <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] md:text-sm font-semibold tracking-wide" style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-muted)' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--primary)', display: 'inline-block' }} />
             No-Code Smart Contract Platform on Web3
           </span>

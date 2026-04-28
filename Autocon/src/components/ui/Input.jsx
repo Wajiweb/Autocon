@@ -16,7 +16,7 @@ export const Input = forwardRef(({
   ...props
 }, ref) => {
   const baseInputStyles = `
-    w-full bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-dark)] 
+    w-full bg-[var(--bg-secondary)] text-[color:var(--text-primary)] border border-[var(--border-dark)] 
     rounded-[var(--radius-md)] px-4 py-3 text-sm outline-none transition-all duration-200
     placeholder:text-[var(--text-secondary)]
     hover:border-[var(--primary)]/40

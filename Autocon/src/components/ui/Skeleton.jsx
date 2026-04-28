@@ -7,7 +7,7 @@ import React from 'react';
 export default function Skeleton({ className = '' }) {
     return (
         <div
-            className={`animate-pulse bg-[var(--surface-elevated)] border border-white/10 rounded-lg ${className}`}
+            className={`animate-pulse bg-[color:var(--surface-elevated)] border border-white/10 rounded-lg ${className}`}
             aria-hidden="true"
         />
     );
@@ -16,7 +16,7 @@ export default function Skeleton({ className = '' }) {
 /** Pre-built skeleton for a stat card */
 export function StatCardSkeleton() {
     return (
-        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 space-y-4">
+        <div className="bg-[color:var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 space-y-4">
             <div className="flex justify-between items-start">
                 <Skeleton className="h-3 w-24" />
                 <Skeleton className="h-9 w-9 rounded-xl" />

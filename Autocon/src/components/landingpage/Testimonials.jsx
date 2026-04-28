@@ -27,7 +27,7 @@ const Testimonials = () => (
           <div>
             <div style={{
               padding: '36px 32px', borderRadius: '20px',
-              border: '1px solid #ddd', background: 'var(--surface-elevated)',
+              border: '1px solid var(--border)', background: 'var(--surface-elevated)',
               cursor: 'default',
               boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
             }}>
@@ -36,7 +36,7 @@ const Testimonials = () => (
               </div>
               <p style={{ color: '#666', fontSize: '0.94rem', lineHeight: 1.7, marginBottom: '28px', fontStyle: 'italic' }}>"{t.q}"</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'var(--surface-elevated)', border: '1px solid #ddd' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'var(--surface-elevated)', border: '1px solid var(--border)' }}>
                   <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${t.name}&backgroundColor=transparent`} alt={t.name} style={{ width: '100%', height: '100%' }} />
                 </div>
                 <div>

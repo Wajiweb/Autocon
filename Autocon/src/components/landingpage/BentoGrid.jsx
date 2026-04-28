@@ -25,10 +25,10 @@ const BentoGrid = ({ onGetStarted }) => {
                 padding: '24px 20px', borderRadius: '16px', position: 'relative', overflow: 'hidden',
                 cursor: 'default',
                 background: card.highlight ? 'var(--surface-elevated)' : '#fafafa',
-                border: card.highlight ? '1px solid #0066cc' : '1px solid #ddd',
+                border: card.highlight ? '1px solid var(--accent)' : '1px solid var(--border)',
                 boxShadow: card.highlight ? '0 2px 8px rgba(0,102,204,0.1)' : '0 1px 3px rgba(0,0,0,0.05)',
               }}>
-              {card.highlight && <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '120px', height: '2px', background: 'linear-gradient(90deg, transparent, #0066cc, transparent)' }} />}
+              {card.highlight && <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '120px', height: '2px', background: 'linear-gradient(90deg, transparent, var(--accent), transparent)' }} />}
               <div style={{ fontSize: '20px', marginBottom: '12px' }}>{card.icon}</div>
               <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', letterSpacing: '-0.02em' }}>{card.title}</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: 1.6 }}>{card.desc}</p>

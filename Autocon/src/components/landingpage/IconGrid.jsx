@@ -26,7 +26,7 @@ const IconGrid = () => (
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '1px', background: 'var(--border-dark)',
-        border: '1px solid #ddd', borderRadius: '18px', overflow: 'hidden',
+        border: '1px solid var(--border)', borderRadius: '18px', overflow: 'hidden',
       }} className="icon-grid">
         {iconFeatures.map((f, i) => (
           <Reveal key={f.title} delay={i * 0.07}>
@@ -36,7 +36,7 @@ const IconGrid = () => (
               onMouseOut={e => { e.currentTarget.style.background = 'var(--surface)'; }}>
               <div style={{
                 width: '46px', height: '46px', borderRadius: '12px', marginBottom: '18px',
-                background: 'var(--primary-subtle)', border: '1px solid #ddd',
+                background: 'var(--primary-subtle)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)',
               }}>{f.icon}</div>
               <h3 style={{ fontSize: '0.97rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px', letterSpacing: '-0.01em' }}>{f.title}</h3>

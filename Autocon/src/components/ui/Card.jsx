@@ -15,11 +15,11 @@ export const Card = ({
   const baseStyles = 'rounded-[var(--radius-lg)] border transition-all duration-300';
   
   const variants = {
-    default: 'bg-gradient-to-br from-[var(--card)] to-[var(--card-elevated)] text-[var(--text-primary)] border-[var(--border-dark)] shadow-[var(--shadow-card)] hover:-translate-y-1 hover:shadow-[var(--shadow-card-hover)]',
-    solid: 'bg-[var(--card-elevated)] text-[var(--text-primary)] border-[var(--border-dark)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] hover:bg-[var(--card-hover)]',
-    glass: 'bg-gradient-to-br from-[var(--card)] to-[var(--card-elevated)] text-[var(--text-primary)] border-[var(--border-dark)] shadow-[var(--shadow-card)]',
-    highlight: 'bg-[var(--card-active)] text-[var(--text-primary)] border-[var(--primary)]/30 shadow-[var(--shadow-glow)] hover:-translate-y-1',
-    light: 'bg-[var(--surface-low)] text-[var(--text-primary)] border-[var(--border-light)] shadow-[var(--shadow-soft)] hover:-translate-y-0.5'
+    default: 'bg-gradient-to-br from-[var(--card)] to-[var(--card-elevated)] text-[color:var(--text-primary)] border-[var(--border-dark)] shadow-[var(--shadow-card)] hover:-translate-y-1 hover:shadow-[var(--shadow-card-hover)]',
+    solid: 'bg-[var(--card-elevated)] text-[color:var(--text-primary)] border-[var(--border-dark)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] hover:bg-[var(--card-hover)]',
+    glass: 'bg-gradient-to-br from-[var(--card)] to-[var(--card-elevated)] text-[color:var(--text-primary)] border-[var(--border-dark)] shadow-[var(--shadow-card)]',
+    highlight: 'bg-[var(--card-active)] text-[color:var(--text-primary)] border-[var(--primary)]/30 shadow-[var(--shadow-glow)] hover:-translate-y-1',
+    light: 'bg-[var(--surface-low)] text-[color:var(--text-primary)] border-[var(--border-light)] shadow-[var(--shadow-soft)] hover:-translate-y-0.5'
   };
 
   return (
