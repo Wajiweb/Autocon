@@ -180,18 +180,19 @@ async function processAuditJob(bullJob) {
 }
 
 // ─── Worker Instance ──────────────────────────────────────────────────────────
-const auditWorker = new Worker(
-    'auditQueue',
-    processAuditJob,
-    {
-        connection,
-        concurrency: 2,          // Max 2 concurrent audits (LLM is expensive)
-        limiter: {
-            max:      4,         // Max 4 audits per 30 seconds (Gemini rate limit)
-            duration: 30_000,
-        },
-    }
-);
+function startAuditWorker() {
+    const auditWorker = new Worker(
+        'auditQueue',
+        processAuditJob,
+        {
+            connection,
+            concurrency: 2,          // Max 2 concurrent audits (LLM is expensive)
+            limiter: {
+                max:      4,         // Max 4 audits per 30 seconds (Gemini rate limit)
+                duration: 30_000,
+            },
+        }
+    );
 
 // ─── Worker Events ────────────────────────────────────────────────────────────
 auditWorker.on('completed', (job) => {
@@ -213,4 +214,11 @@ auditWorker.on('error', (err) => {
 
 console.log('[AuditWorker] 🚀 Worker started, listening on auditQueue');
 
-module.exports = { auditWorker, processAuditJob };
+return auditWorker;
+}
+
+if (require.main === module) {
+    startAuditWorker();
+}
+
+module.exports = { startAuditWorker, processAuditJob };

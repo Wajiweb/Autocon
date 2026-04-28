@@ -27,6 +27,7 @@ import { useAuth } from '../context/AuthContext';
 export function useJobPoller({
     pollIntervalMs   = 3000,   // Poll every 3 seconds
     timeoutMs        = 300000, // Stop after 5 minutes regardless
+    pendingTimeoutMs = 45000,  // Fail fast if a job never leaves the queue
 } = {}) {
     const { authFetch } = useAuth();
     const [jobId,     setJobId]     = useState(null);
@@ -38,6 +39,7 @@ export function useJobPoller({
 
     const intervalRef  = useRef(null);
     const timeoutRef   = useRef(null);
+    const pendingTimeoutRef = useRef(null);
     const activeJobRef = useRef(null);
 
     // Compute a UX-friendly 0–100 progress estimate from status
@@ -52,8 +54,10 @@ export function useJobPoller({
     const stopPolling = useCallback(() => {
         if (intervalRef.current)  clearInterval(intervalRef.current);
         if (timeoutRef.current)   clearTimeout(timeoutRef.current);
+        if (pendingTimeoutRef.current) clearTimeout(pendingTimeoutRef.current);
         intervalRef.current = null;
         timeoutRef.current  = null;
+        pendingTimeoutRef.current = null;
         setIsPolling(false);
     }, []);
 
@@ -76,6 +80,11 @@ export function useJobPoller({
 
             setStatus(s);
             setAttempts(a ?? 0);
+
+            if (s === 'processing' && pendingTimeoutRef.current) {
+                clearTimeout(pendingTimeoutRef.current);
+                pendingTimeoutRef.current = null;
+            }
 
             if (s === 'completed') {
                 setResult(r);
@@ -118,7 +127,14 @@ export function useJobPoller({
             setError('Job is taking longer than expected. Please check back later.');
             stopPolling();
         }, timeoutMs);
-    }, [poll, pollIntervalMs, timeoutMs, stopPolling]);
+
+        pendingTimeoutRef.current = setTimeout(() => {
+            console.warn(`[useJobPoller] Job ${id} stayed pending for too long`);
+            setStatus('failed');
+            setError('Audit job is still queued. Start the worker process or enable local in-memory jobs, then try again.');
+            stopPolling();
+        }, pendingTimeoutMs);
+    }, [poll, pollIntervalMs, timeoutMs, pendingTimeoutMs, stopPolling]);
 
     // Cleanup on unmount
     useEffect(() => {

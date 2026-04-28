@@ -15,8 +15,11 @@
  * and MongoDB (Job model persistence).
  */
 
-const verificationWorker = require('./verification.worker');
-const auditWorker        = require('./audit.worker');
+const { startVerificationWorker } = require('./verification.worker');
+const { startAuditWorker }        = require('./audit.worker');
+
+const verificationWorker = startVerificationWorker();
+const auditWorker        = startAuditWorker();
 
 console.log('═══════════════════════════════════════════════════');
 console.log('  AutoCon Worker Process Started');

@@ -139,9 +139,6 @@ async function pollVerificationStatus(guid, network) {
 
 // ─── Worker Definition ────────────────────────────────────────────────────────
 
-const verificationWorker = new Worker(
-    'verificationQueue',
-
 async function processVerificationJob(bullJob) {
     const { jobId, payload } = bullJob.data;
 
@@ -189,19 +186,19 @@ async function processVerificationJob(bullJob) {
     }
 }
 
-const verificationWorker = new Worker(
-    'verificationQueue',
-    processVerificationJob,
-
-    {
-        connection,
-        concurrency: 3,              // Process up to 3 verifications in parallel
-        limiter: {
-            max:      5,             // Max 5 jobs per 10 seconds (Etherscan rate limit)
-            duration: 10000,
-        },
-    }
-);
+function startVerificationWorker() {
+    const verificationWorker = new Worker(
+        'verificationQueue',
+        processVerificationJob,
+        {
+            connection,
+            concurrency: 3,              // Process up to 3 verifications in parallel
+            limiter: {
+                max:      5,             // Max 5 jobs per 10 seconds (Etherscan rate limit)
+                duration: 10000,
+            },
+        }
+    );
 
 // ─── Worker Events ────────────────────────────────────────────────────────────
 
@@ -224,4 +221,11 @@ verificationWorker.on('error', (err) => {
 
 console.log('[VerificationWorker] 🚀 Worker started, listening on verificationQueue');
 
-module.exports = { verificationWorker, processVerificationJob };
+return verificationWorker;
+}
+
+if (require.main === module) {
+    startVerificationWorker();
+}
+
+module.exports = { startVerificationWorker, processVerificationJob };

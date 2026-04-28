@@ -11,7 +11,6 @@
  */
 
 const Job         = require('../models/Job');
-const { addVerificationJob, addAuditJob } = require('../queues');
 const { buildVerificationJob, buildAuditJob } = require('../queues/jobHelpers');
 
 // ─── Failure Logger ───────────────────────────────────────────────────────────
@@ -29,6 +28,24 @@ function logJobFailure(context, jobId, reason, attempt) {
         })
     );
 }
+
+const shouldRunInlineJobs = () => (
+    process.env.USE_IN_MEMORY_QUEUE === 'true' ||
+    (process.env.NODE_ENV !== 'production' && process.env.USE_IN_MEMORY_QUEUE !== 'false')
+);
+
+const runInlineJob = (type, jobData) => {
+    const mockBullJob = { data: jobData, updateProgress: async () => {} };
+
+    if (type === 'verification') {
+        const { processVerificationJob } = require('../workers/verification.worker');
+        processVerificationJob(mockBullJob).catch(err => console.error('[InlineWorker]', err));
+        return;
+    }
+
+    const { processAuditJob } = require('../workers/audit.worker');
+    processAuditJob(mockBullJob).catch(err => console.error('[InlineWorker]', err));
+};
 
 // ─── POST /api/jobs/create ────────────────────────────────────────────────────
 
@@ -55,7 +72,7 @@ async function createJob(req, res) {
 
     try {
         let jobData;
-        const USE_IN_MEMORY_QUEUE = process.env.USE_IN_MEMORY_QUEUE === 'true';
+        const USE_IN_MEMORY_QUEUE = shouldRunInlineJobs();
 
         if (type === 'verification') {
             const { contractAddress, sourceCode, contractName, compilerVersion, network } = payload;
@@ -79,10 +96,9 @@ async function createJob(req, res) {
 
             // Enqueue into Redis/BullMQ or run inline
             if (USE_IN_MEMORY_QUEUE) {
-                const { processVerificationJob } = require('../workers/verification.worker');
-                const mockBullJob = { data: jobData, updateProgress: async () => {} };
-                processVerificationJob(mockBullJob).catch(err => console.error('[InlineWorker]', err));
+                runInlineJob('verification', jobData);
             } else {
+                const { addVerificationJob } = require('../queues');
                 await addVerificationJob(jobData);
             }
 
@@ -103,10 +119,9 @@ async function createJob(req, res) {
             });
 
             if (USE_IN_MEMORY_QUEUE) {
-                const { processAuditJob } = require('../workers/audit.worker');
-                const mockBullJob = { data: jobData, updateProgress: async () => {} };
-                processAuditJob(mockBullJob).catch(err => console.error('[InlineWorker]', err));
+                runInlineJob('audit', jobData);
             } else {
+                const { addAuditJob } = require('../queues');
                 await addAuditJob(jobData);
             }
         }
