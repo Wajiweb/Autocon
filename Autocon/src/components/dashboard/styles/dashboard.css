@@ -13,8 +13,8 @@
   --db-s3:      var(--card-active);
   --db-acc:     var(--primary);
   --db-acc-hov: var(--primary-hover);
-  --db-acc-d:   rgba(22,163,74,.12);
-  --db-acc-dd:  rgba(22,163,74,.07);
+  --db-acc-d:   hsla(14,100%,50%,.12);
+  --db-acc-dd:  hsla(14,100%,50%,.07);
   --db-lav:     var(--ai-teal);
   --db-lav-d:   rgba(20,184,166,.12);
   --db-red:     var(--error);
@@ -25,7 +25,7 @@
   --db-t2:      var(--text-dark-secondary);
   --db-t3:      var(--text-dark-muted);
   --db-br:      var(--border-dark);
-  --db-br2:     rgba(34,197,94,.24);
+  --db-br2:     hsla(14,100%,50%,.24);
   --db-r:       var(--radius-md);
   --db-r-sm:    var(--radius-sm);
   --db-sidebar: var(--sidebar-width, 218px);
@@ -65,7 +65,7 @@
   position: fixed;
   inset: 0 auto 0 0;
   width: var(--db-sidebar);
-  background: #08120F;
+  background: var(--bg);
   box-shadow: inset -1px 0 0 var(--surface);
   display: flex;
   flex-direction: column;
@@ -107,11 +107,11 @@
   font-family: var(--db-font);
 }
 .db-nav-link:hover  { background: var(--db-acc-dd); color: var(--db-t1); }
-.db-nav-link.active { background: rgba(34,197,94,.08); color: #22C55E; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-1px); }
+.db-nav-link.active { background: hsla(14,100%,50%,.08); color: var(--db-acc); box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-1px); }
 .db-nav-link.active::before {
   content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-  width: 3px; border-radius: 0 2px 2px 0; background: #22C55E;
-  box-shadow: 0 0 8px rgba(34,197,94,.4);
+  width: 3px; border-radius: 0 2px 2px 0; background: var(--db-acc);
+  box-shadow: 0 0 8px hsla(14,100%,50%,.40);
 }
 .db-nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
 .db-nav-badge {
@@ -140,8 +140,8 @@
 .db-wc-copy:hover { color: var(--db-acc); }
 
 @keyframes net-pulse {
-  0%,90%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.4); }
-  45%          { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+  0%,90%,100% { box-shadow: 0 0 0 0 hsla(14,100%,50%,.40); }
+  45%          { box-shadow: 0 0 0 5px hsla(14,100%,50%,0); }
 }
 .db-net-dot {
   width: 7px; height: 7px; border-radius: 50%; background: var(--db-acc); flex-shrink: 0;
@@ -178,7 +178,7 @@
   transition: border-color .15s; font-family: var(--db-font);
 }
 .db-tb-chip.green {
-  background: var(--db-acc-d); color: var(--db-acc); border-color: rgba(34,197,94,.25);
+  background: var(--db-acc-d); color: var(--db-acc); border-color: hsla(14,100%,50%,.25);
 }
 .db-tb-chip.muted {
   background: transparent; color: var(--db-t2);
@@ -323,7 +323,7 @@
 
 /* Chat bubbles */
 .pg-chat-user {
-  background: var(--db-acc-d); border: .5px solid rgba(34,197,94,.2);
+  background: var(--db-acc-d); border: .5px solid hsla(14,100%,50%,.20);
   border-radius: 18px 18px 4px 18px; color: var(--db-t1);
   padding: 14px 18px; max-width: 85%; font-size: 13px; line-height: 1.6;
   align-self: flex-end;
@@ -337,7 +337,7 @@
 
 /* Loading spinner */
 .pg-spinner {
-  width: 20px; height: 20px; border: 2px solid rgba(34,197,94,.15);
+  width: 20px; height: 20px; border: 2px solid hsla(14,100%,50%,.15);
   border-top-color: var(--db-acc); border-radius: 50%;
   animation: db-spin .8s linear infinite; flex-shrink: 0;
 }
@@ -364,7 +364,7 @@
   background: transparent; cursor: pointer; transition: all .15s; font-family: var(--db-font);
 }
 .db-btn:hover { border-color: var(--db-acc); color: var(--db-acc); background: var(--db-acc-d); }
-.db-btn.accent { border-color: rgba(22,163,74,.35); color: var(--db-acc); background: var(--db-acc-d); }
+.db-btn.accent { border-color: hsla(14,100%,50%,.35); color: var(--db-acc); background: var(--db-acc-d); }
 .db-btn.accent:hover { background: var(--db-acc); color: #fff; }
 
 /* ─── Stat Cards ──────────────────────────────────────── */
@@ -421,12 +421,12 @@
 }
 .db-online-ring {
   width: 11px; height: 11px; border-radius: 50%;
-  background: var(--db-acc); box-shadow: 0 0 0 3px rgba(34,197,94,.2);
+  background: var(--db-acc); box-shadow: 0 0 0 3px hsla(14,100%,50%,.20);
   flex-shrink: 0; position: relative;
 }
 .db-online-ring::after {
   content: ''; position: absolute; inset: -5px; border-radius: 50%;
-  border: 1px solid rgba(34,197,94,.25);
+  border: 1px solid hsla(14,100%,50%,.25);
   animation: ring-expand 2.5s ease infinite;
 }
 .db-status-txt  { font-size: 14px; font-weight: 600; color: var(--db-acc); }
@@ -443,7 +443,7 @@
 .db-live-badge {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 10px; font-weight: 500; color: var(--db-acc);
-  background: var(--db-acc-d); border: .5px solid rgba(34,197,94,.25);
+  background: var(--db-acc-d); border: .5px solid hsla(14,100%,50%,.25);
   padding: 3px 9px; border-radius: 20px;
 }
 .db-live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--db-acc); animation: net-pulse 2s ease infinite; }
@@ -462,14 +462,14 @@
 }
 .db-asset-card.up {
   background: linear-gradient(145deg, #0c2316, #0f1f14);
-  border-color: rgba(34,197,94,.15);
+  border-color: hsla(14,100%,50%,.15);
 }
 .db-asset-card.dn {
   background: linear-gradient(145deg, #221018, #1c0e14);
   border-color: rgba(239,68,68,.15);
 }
 .db-asset-card:hover { transform: translateY(-2px); }
-.db-asset-card.up:hover { box-shadow: 0 8px 28px rgba(34,197,94,.07); border-color: rgba(34,197,94,.28); }
+.db-asset-card.up:hover { box-shadow: 0 8px 28px hsla(14,100%,50%,.07); border-color: hsla(14,100%,50%,.28); }
 .db-asset-card.dn:hover { box-shadow: 0 8px 28px rgba(239,68,68,.07); border-color: rgba(239,68,68,.28); }
 .db-asset-card::before {
   content: ''; position: absolute; top: -30px; right: -30px;
@@ -488,7 +488,7 @@
 .db-coin-name { font-size: 13px; font-weight: 600; color: var(--db-t1); }
 .db-coin-sym  { font-size: 10px; color: var(--db-t3); font-family: var(--db-mono); margin-top: 1px; }
 .db-pct-tag   { font-family: var(--db-mono); font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 6px; }
-.db-pct-tag.up { color: var(--db-acc); background: rgba(34,197,94,.12); }
+.db-pct-tag.up { color: var(--db-acc); background: hsla(14,100%,50%,.12); }
 .db-pct-tag.dn { color: var(--db-red); background: rgba(239,68,68,.12); }
 .db-ac-price  { font-family: var(--db-mono); font-size: 19px; font-weight: 500; color: var(--db-t1); letter-spacing: -.5px; margin-bottom: 11px; }
 .db-ac-spark  { height: 34px; }
@@ -497,7 +497,7 @@
 /* Flash on price change — subtle single pulse */
 @keyframes db-flashUp {
   0%   { background-color: transparent; }
-  25%  { background-color: rgba(34,197,94,.15); }
+  25%  { background-color: hsla(14,100%,50%,.15); }
   100% { background-color: transparent; }
 }
 @keyframes db-flashDown {
@@ -726,7 +726,7 @@
   transition: all .12s; background: transparent;
 }
 .db-rp:hover { color: var(--db-t1); }
-.db-rp.on    { background: var(--db-acc-d); color: var(--db-acc); border-color: rgba(34,197,94,.25); }
+.db-rp.on    { background: var(--db-acc-d); color: var(--db-acc); border-color: hsla(14,100%,50%,.25); }
 
 .db-m-chart { height: 190px; margin-bottom: 20px; }
 .db-m-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -839,7 +839,7 @@
   left: 0;
   right: 0;
   height: 20px;
-  background: linear-gradient(to bottom, transparent, var(--bg, #0A1412));
+  background: linear-gradient(to bottom, transparent, var(--bg));
   pointer-events: none;
 }
 
@@ -857,3 +857,4 @@
   border: 1px solid rgba(20, 184, 166, 0.2);
   font-family: var(--db-font);
 }
+

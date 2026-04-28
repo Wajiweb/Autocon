@@ -22,7 +22,6 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import JobsPage from './pages/JobsPage';
 import AIChatPage from './pages/AIChatPage';
 import OnboardingTour from './components/dashboard/OnboardingTour';
-import { dashboardCssVars } from './theme/tokens';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -53,7 +52,7 @@ function AppContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid var(--primary-subtle)', borderTopColor: '#22C55E', animation: 'spin-slow 1s linear infinite' }} />
+        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid var(--primary-subtle)', borderTopColor: 'var(--primary)', animation: 'spin-slow 1s linear infinite' }} />
         <p className="text-sm" style={{ color: 'var(--on-surface-variant)' }}>Loading AutoCon...</p>
       </div>
     );
@@ -68,7 +67,7 @@ function AppContent() {
 
   // Main App Layout
   return (
-    <div className="dashboard-theme dashboard-app" style={dashboardCssVars}>
+    <div className="dashboard-theme dashboard-app">
       <OnboardingTour />
       {/* Fixed sidebar */}
       <Sidebar
@@ -97,7 +96,7 @@ function App() {
         <NetworkProvider>
           <WalletProvider>
             <AuthProvider>
-              <div className="min-h-screen bg-[#0A1412] text-white">
+              <div className="min-h-screen bg-[color:var(--bg)] text-white">
                 <Toaster
                   position="bottom-right"
                   reverseOrder={false}
@@ -112,13 +111,13 @@ function App() {
                       boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
                     },
                     success: {
-                      iconTheme: { primary: '#10b981', secondary: '#161d2b' },
+                      iconTheme: { primary: 'var(--accent)', secondary: 'var(--surface-elevated)' },
                     },
                     error: {
-                      iconTheme: { primary: '#ef4444', secondary: '#161d2b' },
+                      iconTheme: { primary: 'var(--error)', secondary: 'var(--surface-elevated)' },
                     },
                     loading: {
-                      iconTheme: { primary: '#a78bfa', secondary: '#161d2b' },
+                      iconTheme: { primary: 'var(--ai-accent)', secondary: 'var(--surface-elevated)' },
                     },
                   }}
                 />
