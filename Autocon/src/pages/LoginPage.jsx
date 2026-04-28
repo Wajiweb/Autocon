@@ -1,20 +1,33 @@
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, LogIn, UserPlus, Wallet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
-    const { login } = useAuth();
+    const { login, signup } = useAuth();
+    const [authMode, setAuthMode] = useState('login');
     const [isConnecting, setIsConnecting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
-    const handleLogin = async () => {
+    const isSignup = authMode === 'signup';
+
+    const switchMode = (mode) => {
+        setAuthMode(mode);
+        setErrorMessage('');
+    };
+
+    const handleAuth = async () => {
         setIsConnecting(true);
+        setErrorMessage('');
+
         try {
-            await login();
-            toast.success('Signed in successfully!');
+            await (isSignup ? signup() : login());
+            toast.success(isSignup ? 'Account created successfully!' : 'Signed in successfully!');
         } catch (err) {
-            console.error('Login Error:', err);
-            toast.error(err.message || 'Failed to sign in.');
+            console.error('Authentication Error:', err);
+            const message = err.message || (isSignup ? 'Failed to create account.' : 'Failed to sign in.');
+            setErrorMessage(message);
+            toast.error(message);
         } finally {
             setIsConnecting(false);
         }
@@ -30,20 +43,17 @@ export default function LoginPage() {
             position: 'relative',
             overflowX: 'hidden',
         }}>
-            {/* Ambient glow — top-right */}
             <div aria-hidden="true" style={{
                 position: 'absolute', top: '-180px', right: '-120px', pointerEvents: 'none',
                 width: '500px', height: '500px', borderRadius: '50%',
                 background: 'radial-gradient(circle, hsla(14,100%,50%,0.10) 0%, transparent 70%)',
             }} />
-            {/* Ambient glow — bottom-left */}
             <div aria-hidden="true" style={{
                 position: 'absolute', bottom: '-120px', left: '-80px', pointerEvents: 'none',
                 width: '400px', height: '400px', borderRadius: '50%',
                 background: 'radial-gradient(circle, hsla(230,60%,60%,0.07) 0%, transparent 70%)',
             }} />
 
-            {/* Back to Home */}
             <a
                 href="/"
                 style={{
@@ -70,8 +80,7 @@ export default function LoginPage() {
                 Back to Home
             </a>
 
-            {/* Login Card */}
-            <div style={{ width: '100%', maxWidth: '420px', padding: '0 20px', position: 'relative', zIndex: 1 }}>
+            <div style={{ width: '100%', maxWidth: '440px', padding: '0 20px', position: 'relative', zIndex: 1 }}>
                 <div style={{
                     borderRadius: '24px',
                     textAlign: 'center',
@@ -81,7 +90,6 @@ export default function LoginPage() {
                     boxShadow: '0 24px 60px rgba(0,0,0,0.60), 0 0 0 1px var(--outline-subtle)',
                     padding: '44px 40px',
                 }}>
-                    {/* Logo */}
                     <div style={{
                         width: '88px', height: '88px',
                         borderRadius: '22px', margin: '0 auto 28px',
@@ -96,7 +104,6 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    {/* Heading */}
                     <h1 style={{
                         fontSize: '1.9rem', fontWeight: 900,
                         color: 'var(--on-surface)', marginBottom: '8px', letterSpacing: '-0.04em',
@@ -105,19 +112,70 @@ export default function LoginPage() {
                     </h1>
                     <p style={{
                         color: 'var(--on-surface-variant)', fontSize: '0.9rem',
-                        marginBottom: '36px', lineHeight: 1.65,
+                        marginBottom: '24px', lineHeight: 1.65,
                     }}>
                         No-Code Smart Contract Platform<br />
                         <span style={{ fontSize: '0.78rem', color: 'var(--on-surface-muted)' }}>
-                            Connect your wallet to get started
+                            {isSignup ? 'Create your wallet-secured account' : 'Sign in with your existing wallet'}
                         </span>
                     </p>
 
-                    {/* MetaMask Button */}
+                    <div
+                        role="tablist"
+                        aria-label="Authentication mode"
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '6px',
+                            padding: '6px',
+                            marginBottom: '24px',
+                            borderRadius: '14px',
+                            background: 'var(--surface-elevated)',
+                            border: '1px solid var(--outline-subtle)',
+                        }}
+                    >
+                        {[
+                            { mode: 'login', label: 'Sign In' },
+                            { mode: 'signup', label: 'Create Account' },
+                        ].map(({ mode, label }) => {
+                            const active = authMode === mode;
+
+                            return (
+                                <button
+                                    key={mode}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={active}
+                                    onClick={() => switchMode(mode)}
+                                    disabled={isConnecting}
+                                    style={{
+                                        minHeight: '42px',
+                                        borderRadius: '10px',
+                                        border: '1px solid',
+                                        borderColor: active ? 'var(--primary-muted)' : 'transparent',
+                                        background: active ? 'var(--surface)' : 'transparent',
+                                        color: active ? 'var(--primary)' : 'var(--on-surface-variant)',
+                                        fontSize: '0.82rem',
+                                        fontWeight: 800,
+                                        cursor: isConnecting ? 'not-allowed' : 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                >
+                                    {mode === 'login' ? <LogIn size={16} /> : <UserPlus size={16} />}
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
                     <button
-                        onClick={handleLogin}
+                        onClick={handleAuth}
                         disabled={isConnecting}
-                        aria-label="Sign in with MetaMask"
+                        aria-label={isSignup ? 'Create account with MetaMask' : 'Sign in with MetaMask'}
                         style={{
                             width: '100%',
                             padding: '15px 24px',
@@ -145,17 +203,40 @@ export default function LoginPage() {
                                     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
                                     <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                                 </svg>
-                                Signing In…
+                                {isSignup ? 'Creating Account...' : 'Signing In...'}
                             </>
                         ) : (
                             <>
-                                <span style={{ fontSize: '1.35rem' }}>🦊</span>
-                                Sign In with MetaMask
+                                <Wallet size={20} />
+                                {isSignup ? 'Create Account with MetaMask' : 'Sign In with MetaMask'}
                             </>
                         )}
                     </button>
 
-                    {/* Divider */}
+                    {errorMessage && (
+                        <div
+                            role="alert"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '10px',
+                                marginTop: '16px',
+                                padding: '12px 14px',
+                                borderRadius: '12px',
+                                background: 'rgba(239, 68, 68, 0.10)',
+                                border: '1px solid rgba(239, 68, 68, 0.35)',
+                                color: '#fca5a5',
+                                fontSize: '0.82rem',
+                                fontWeight: 600,
+                                lineHeight: 1.45,
+                                textAlign: 'left',
+                            }}
+                        >
+                            <AlertCircle size={18} style={{ flex: '0 0 auto', marginTop: 1 }} />
+                            <span>{errorMessage}</span>
+                        </div>
+                    )}
+
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: 14,
                         margin: '28px 0 20px', color: 'var(--on-surface-muted)', fontSize: '0.72rem',
@@ -166,9 +247,8 @@ export default function LoginPage() {
                         <div style={{ flex: 1, height: 1, background: 'var(--outline-subtle)' }} />
                     </div>
 
-                    {/* Security badges */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
-                        {['🔐 Non-custodial', '⛓ On-chain Auth', '🛡 No passwords'].map(badge => (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+                        {['Non-custodial', 'Nonce signed', 'No passwords'].map(badge => (
                             <span key={badge} style={{
                                 fontSize: '0.72rem', fontWeight: 600,
                                 color: 'var(--on-surface-muted)',
@@ -181,13 +261,12 @@ export default function LoginPage() {
                         ))}
                     </div>
 
-                    {/* Footer */}
                     <p style={{
                         color: 'var(--on-surface-muted)',
                         fontSize: '0.72rem',
                         lineHeight: 1.5,
                     }}>
-                        AutoCon Platform · Sepolia · Polygon · BNB Testnet
+                        AutoCon Platform | Sepolia | Polygon | BNB Testnet
                     </p>
                 </div>
             </div>

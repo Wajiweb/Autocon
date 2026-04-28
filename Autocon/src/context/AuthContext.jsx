@@ -10,6 +10,28 @@ export function AuthProvider({ children }) {
 
     const isAuthenticated = !!user && !!token;
 
+    const logout = useCallback(() => {
+        localStorage.removeItem('autocon_token');
+        setToken(null);
+        setUser(null);
+    }, []);
+
+    const parseAuthResponse = async (response, fallbackMessage) => {
+        let payload = {};
+
+        try {
+            payload = await response.json();
+        } catch {
+            // Use the fallback message for empty or non-JSON error responses.
+        }
+
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.message || payload.error || fallbackMessage);
+        }
+
+        return payload.data;
+    };
+
     // Helper: fetch with auth header
     const authFetch = useCallback(async (url, options = {}) => {
         const currentToken = localStorage.getItem('autocon_token');
@@ -30,7 +52,7 @@ export function AuthProvider({ children }) {
         }
 
         return response;
-    }, []);
+    }, [logout]);
 
     // Check existing session on mount
     useEffect(() => {
@@ -63,74 +85,70 @@ export function AuthProvider({ children }) {
         checkSession();
     }, []);
 
-    // MetaMask accountsChanged — auto-logout if user switches wallet
+    // MetaMask account changes invalidate the current app session.
     useEffect(() => {
         if (!window.ethereum) return;
         const handleAccountsChanged = (accounts) => {
             if (accounts.length === 0) {
-                // MetaMask locked or disconnected
                 logout();
-            } else if (user && accounts[0].toLowerCase() !== user.walletAddress) {
-                // User switched to a different wallet account
+            } else if (user && accounts[0].toLowerCase() !== user.walletAddress.toLowerCase()) {
                 logout();
             }
         };
         window.ethereum.on('accountsChanged', handleAccountsChanged);
         return () => window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-    }, [user]);
+    }, [logout, user]);
 
-    // MetaMask Sign-In Flow
-    const login = async () => {
+    const authenticateWithWallet = useCallback(async (mode) => {
         if (!window.ethereum) {
             throw new Error('MetaMask is not installed. Please install it to continue.');
         }
 
-        // 1. Request accounts
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const walletAddress = accounts[0];
-
-        // 2. Get nonce from server
-        const nonceRes = await fetch(`${API_BASE}/api/auth/nonce/${walletAddress}`);
-        const nonceData = await nonceRes.json();
-
-        if (!nonceData.success) {
-            throw new Error(nonceData.error || 'Failed to get nonce.');
+        if (!['login', 'signup'].includes(mode)) {
+            throw new Error('Invalid authentication mode.');
         }
 
-        // 3. Sign the nonce message with MetaMask
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (!accounts?.length) {
+            throw new Error('No wallet account selected.');
+        }
+
+        const walletAddress = accounts[0];
+
+        const nonceRes = await fetch(`${API_BASE}/api/auth/nonce`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ walletAddress, mode })
+        });
+        const nonceData = await parseAuthResponse(nonceRes, 'Failed to get authentication nonce.');
+
         const { ethers } = await import('ethers');
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
-        const signature = await signer.signMessage(nonceData.data.message);
+        const signature = await signer.signMessage(nonceData.message);
 
-        // 4. Verify signature on server
-        const verifyRes = await fetch(`${API_BASE}/api/auth/verify`, {
+        const authRes = await fetch(`${API_BASE}/api/auth/${mode}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ walletAddress, signature })
         });
-        const verifyData = await verifyRes.json();
+        const authData = await parseAuthResponse(
+            authRes,
+            mode === 'signup' ? 'Failed to create account.' : 'Failed to sign in.'
+        );
 
-        if (!verifyData.success) {
-            throw new Error(verifyData.error || 'Signature verification failed.');
-        }
+        localStorage.setItem('autocon_token', authData.token);
+        setToken(authData.token);
+        setUser(authData.user);
 
-        // 5. Store JWT and user info
-        localStorage.setItem('autocon_token', verifyData.data.token);
-        setToken(verifyData.data.token);
-        setUser(verifyData.data.user);
+        return authData.user;
+    }, []);
 
-        return verifyData.data.user;
-    };
-
-    const logout = () => {
-        localStorage.removeItem('autocon_token');
-        setToken(null);
-        setUser(null);
-    };
+    const login = useCallback(() => authenticateWithWallet('login'), [authenticateWithWallet]);
+    const signup = useCallback(() => authenticateWithWallet('signup'), [authenticateWithWallet]);
 
     return (
-        <AuthContext.Provider value={{ user, token, isAuthenticated, isLoading, login, logout, authFetch }}>
+        <AuthContext.Provider value={{ user, token, isAuthenticated, isLoading, login, signup, logout, authFetch }}>
             {children}
         </AuthContext.Provider>
     );
