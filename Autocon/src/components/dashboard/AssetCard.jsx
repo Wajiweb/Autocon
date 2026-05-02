@@ -60,6 +60,7 @@ export default function NewAssetCard({ token, price, change, flashing, onClick }
   const cardRef    = useRef(null);
   const animActive = useRef(false);
   const sparkRef   = useRef(null);
+  const [imgError, setImgError] = React.useState(false);
 
   const isUp = change >= 0;
   const displayPrice = price != null
@@ -111,9 +112,18 @@ export default function NewAssetCard({ token, price, change, flashing, onClick }
         <div className="db-coin-id">
           <div
             className="db-coin-avatar"
-            style={{ background: coinBg, color: coinColor }}
+            style={{ background: coinBg, color: coinColor, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            {token.symbol.slice(0, 2)}
+            {token.iconUrl && !imgError ? (
+              <img
+                src={token.iconUrl}
+                alt={token.symbol}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              token.symbol.slice(0, 2)
+            )}
           </div>
           <div>
             <div className="db-coin-name">{token.name}</div>

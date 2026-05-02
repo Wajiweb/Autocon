@@ -1,22 +1,25 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight, LayoutGrid, Coins, Image, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, FileCode, ExternalLink, Download } from 'lucide-react';
+import { ASSET_TOKENS } from '../../utils/assets';
 
-const BTCSVG = () => (<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#F7931A"/><path d="M22.56 14.17c.3-2.02-1.23-3.1-3.33-3.83l.68-2.73-1.66-.41-.66 2.66c-.44-.11-.89-.21-1.33-.31l.67-2.68-1.66-.41-.68 2.73c-.36-.08-.72-.17-1.07-.26l-2.29-.57-.44 1.77s1.23.28 1.2.3c.67.17.79.6.77.95l-.77 3.1c.05.01.11.03.17.06l-.17-.04-1.09 4.36c-.08.2-.29.5-.75.39.02.02-1.2-.3-1.2-.3l-.82 1.9 2.16.54c.4.1.8.21 1.19.31l-.69 2.76 1.66.41.68-2.73c.46.12.9.24 1.34.34l-.68 2.72 1.66.41.69-2.76c2.83.54 4.96.32 5.86-2.24.72-2.06-.04-3.25-1.53-4.02 1.09-.25 1.91-1 2.13-2.52zm-3.81 5.35c-.51 2.06-3.98.95-5.1.67l.91-3.65c1.12.28 4.72.83 4.19 2.98zm.52-5.38c-.47 1.88-3.36.93-4.3.69l.83-3.31c.94.23 3.98.67 3.47 2.62z" fill="#fff"/></svg>);
-const ETHSVG = () => (<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#627EEA"/><path d="M16.498 4v8.87l7.497 3.35z" fill="#fff" opacity=".6"/><path d="M16.498 4L9 16.22l7.498-3.35z" fill="#fff"/><path d="M16.498 21.968v6.027L24 17.616z" fill="#fff" opacity=".6"/><path d="M16.498 27.995v-6.028L9 17.616z" fill="#fff"/><path d="M16.498 20.573l7.497-4.353-7.497-3.348z" fill="#fff" opacity=".2"/><path d="M9 16.22l7.498 4.353v-7.701z" fill="#fff" opacity=".6"/></svg>);
-const USDTSVG = () => (<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#26A17B"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.663 0-.816 2.902-1.49 6.79-1.666v2.655c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.654c3.88.175 6.775.85 6.775 1.664 0 .816-2.895 1.49-6.775 1.662m0-3.59v-2.366h5.414V8.558H8.595v2.869h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.126 0 1.052 3.309 1.923 7.709 2.125v7.588h3.913v-7.588c4.393-.202 7.694-1.073 7.694-2.125 0-1.052-3.3-1.924-7.694-2.126" fill="#fff"/></svg>);
-const BNBSVG = () => (<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#F3BA2F"/><path d="M12.116 14.404L16 10.52l3.886 3.886 2.26-2.26L16 6l-6.144 6.144 2.26 2.26zM6 16l2.26-2.26 2.26 2.26-2.26 2.26L6 16zm6.116 1.596L16 21.48l3.886-3.886 2.26 2.259L16 26l-6.144-6.144-.003-.003 2.263-2.257zM21.48 16l2.26-2.26L26 16l-2.26 2.26L21.48 16zm-3.276-.002h.002V16L16 18.206l-2.204-2.204-.003-.002v-.003L16 13.794l2.204 2.204z" fill="#fff"/></svg>);
-const SOLSVG = () => (<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#9945FF"/><path d="M10.02 20.28a.57.57 0 0 1 .4-.16h13.4a.28.28 0 0 1 .2.48l-2.36 2.36a.57.57 0 0 1-.4.16H7.86a.28.28 0 0 1-.2-.48zm0-11.24A.57.57 0 0 1 10.42 9h13.4a.28.28 0 0 1 .2.48l-2.36 2.36a.57.57 0 0 1-.4.16H7.86a.28.28 0 0 1-.2-.48zm13.96 5.56a.57.57 0 0 1-.4.16H10.18a.28.28 0 0 1-.2-.48l2.36-2.36a.57.57 0 0 1 .4-.16h13.4a.28.28 0 0 1 .2.48z" fill="#fff"/></svg>);
-const DOTSVG = () => (<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#E6007A"/><ellipse cx="16" cy="8.5" rx="4.5" ry="2.5" fill="#fff"/><ellipse cx="16" cy="23.5" rx="4.5" ry="2.5" fill="#fff"/><ellipse cx="9" cy="12.5" rx="2.5" ry="4.5" transform="rotate(-30 9 12.5)" fill="#fff"/><ellipse cx="23" cy="19.5" rx="2.5" ry="4.5" transform="rotate(-30 23 19.5)" fill="#fff"/><ellipse cx="9" cy="19.5" rx="2.5" ry="4.5" transform="rotate(30 9 19.5)" fill="#fff"/><ellipse cx="23" cy="12.5" rx="2.5" ry="4.5" transform="rotate(30 23 12.5)" fill="#fff"/></svg>);
+const cryptoIcons = ASSET_TOKENS.map(token => ({
+  name: token.symbol,
+  color: token.iconColor,
+  iconUrl: token.iconUrl
+}));
 
-const cryptoIcons = [
-  { name: 'BTC', color: '#F7931A', svg: <BTCSVG /> },
-  { name: 'ETH', color: '#627EEA', svg: <ETHSVG /> },
-  { name: 'USDT', color: '#26A17B', svg: <USDTSVG /> },
-  { name: 'BNB', color: '#F3BA2F', svg: <BNBSVG /> },
-  { name: 'SOL', color: '#9945FF', svg: <SOLSVG /> },
-  { name: 'DOT', color: '#E6007A', svg: <DOTSVG /> },
-];
+const CoinIcon = ({ iconUrl, symbol, size = 36 }) => (
+  <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden' }}>
+    {iconUrl ? (
+      <img src={iconUrl} alt={symbol} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    ) : (
+      <div style={{ width: '100%', height: '100%', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.4, fontWeight: 'bold' }}>
+        {symbol.slice(0, 2)}
+      </div>
+    )}
+  </div>
+);
 
 const OrbitalRing = ({ size, duration, reverse = false, children }) => (
   <motion.div
@@ -36,7 +39,9 @@ const OrbitingCoin = ({ coin, angle, duration, reverse = false }) => (
       transition={{ repeat: Infinity, ease: 'linear', duration }}
       className="absolute flex items-center justify-center rounded-full will-change-transform"
       style={{ width: 44, height: 44, left: '50%', top: 0, border: `1.5px solid ${coin.color}40`, background: 'var(--surface)', overflow: 'hidden' }}
-    ><div style={{ width: 36, height: 36 }}>{coin.svg}</div></motion.div>
+    >
+      <CoinIcon iconUrl={coin.iconUrl} symbol={coin.name} size={36} />
+    </motion.div>
   </div>
 );
 
@@ -70,22 +75,22 @@ const OrbitalBackground = () => (
       className="absolute top-[18%] left-[12%] w-14 h-14 rounded-full will-change-transform"
       style={{ background: 'var(--surface)', border: '1px solid rgba(22,163,74,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       aria-hidden="true">
-      <div style={{ width: 36, height: 36 }}><BTCSVG /></div>
+      <CoinIcon iconUrl={cryptoIcons[0].iconUrl} symbol={cryptoIcons[0].name} size={36} />
     </motion.div>
     <motion.div animate={{ y: [0, -20, 0], rotate: [0, -10, 10, 0] }} transition={{ repeat: Infinity, ease: 'easeInOut', duration: 10, delay: 0.5 }}
       className="absolute top-[28%] right-[15%] w-16 h-16 rounded-full will-change-transform"
       style={{ background: 'var(--surface)', border: '1px solid rgba(22,163,74,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       aria-hidden="true">
-      <div style={{ width: 40, height: 40 }}><ETHSVG /></div>
+      <CoinIcon iconUrl={cryptoIcons[1].iconUrl} symbol={cryptoIcons[1].name} size={40} />
     </motion.div>
     <motion.div animate={{ y: [0, 20, 0] }} transition={{ repeat: Infinity, ease: 'easeInOut', duration: 9, delay: 1.5 }}
       className="absolute top-[50%] right-[8%] will-change-transform"
       style={{ display: 'flex', gap: 8 }} aria-hidden="true">
       <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--surface)', border: '1px solid rgba(93,169,233,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 28, height: 28 }}><SOLSVG /></div>
+        <CoinIcon iconUrl={cryptoIcons[2].iconUrl} symbol={cryptoIcons[2].name} size={28} />
       </div>
       <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--surface)', border: '1px solid rgba(182,181,216,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 24, height: 24 }}><BNBSVG /></div>
+        <CoinIcon iconUrl={cryptoIcons[3].iconUrl} symbol={cryptoIcons[3].name} size={24} />
       </div>
     </motion.div>
   </div>
@@ -162,7 +167,7 @@ const DashboardMockup = () => {
             <h2 style={{ color: 'var(--on-surface)', fontSize: '1.1rem', fontWeight: 800 }}>Executive <span style={{ color: 'var(--primary)' }}>Overview</span></h2>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            {[['📊', 'CSV'], ['📄', 'PDF']].map(([icon, label]) => (
+            {[[<FileCode size={12} />, 'CSV'], [<Download size={12} />, 'PDF']].map(([icon, label]) => (
               <div key={label} style={{ padding: '6px 14px', borderRadius: 9, border: '1px solid var(--outline-subtle)',
                 background: 'var(--surface-low)', color: 'var(--on-surface-variant)', fontSize: '0.75rem', fontWeight: 600,
                 display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
@@ -237,8 +242,8 @@ const DashboardMockup = () => {
                     </td>
                     <td style={{ padding: '12px 20px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: 5, justifyContent: 'flex-end' }}>
-                        <span style={{ fontSize: '0.62rem', padding: '5px 10px', borderRadius: 7, background: 'var(--surface-low)', color: 'var(--on-surface-variant)', border: '1px solid var(--outline-subtle)', cursor: 'pointer' }}>📋</span>
-                        <span style={{ fontSize: '0.62rem', padding: '5px 10px', borderRadius: 7, background: 'var(--surface-low)', color: 'var(--on-surface-variant)', border: '1px solid var(--outline-subtle)', cursor: 'pointer' }}>↗</span>
+                        <span style={{ fontSize: '0.62rem', padding: '5px 10px', borderRadius: 7, background: 'var(--surface-low)', color: 'var(--on-surface-variant)', border: '1px solid var(--outline-subtle)', cursor: 'pointer' }}><FileCode size={12} /></span>
+                        <span style={{ fontSize: '0.62rem', padding: '5px 10px', borderRadius: 7, background: 'var(--surface-low)', color: 'var(--on-surface-variant)', border: '1px solid var(--outline-subtle)', cursor: 'pointer' }}><ExternalLink size={12} /></span>
                       </div>
                     </td>
                   </tr>

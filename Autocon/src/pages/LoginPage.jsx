@@ -143,15 +143,12 @@ export default function LoginPage() {
                     >
                         {isConnecting ? (
                             <>
-                                <svg style={{ animation: 'spin-slow 1s linear infinite', width: 20, height: 20 }} viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
-                                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                                </svg>
+                                <div style={{ animation: 'spin-slow 1s linear infinite', width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
                                 Signing In...
                             </>
                         ) : (
                             <>
-                                <span style={{ fontSize: '1.4rem' }}>🦊</span>
+                                <img src="/metamask-fox.svg" alt="MetaMask" style={{ width: 24, height: 24 }} />
                                 Sign In with MetaMask
                             </>
                         )}
