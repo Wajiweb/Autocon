@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Coins,
+  Image as ImageIcon,
+  Gavel,
+  ShieldCheck,
+  MessageSquare,
+  Activity,
+  BarChart3,
+  User,
+  Copy,
+  Sun,
+  Moon
+} from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useWallet } from '../../hooks/useWallet';
 import { useNetwork } from '../../context/NetworkContext';
@@ -10,20 +24,20 @@ const NAV_GROUPS = [
   {
     label: 'Contracts',
     items: [
-      { label: 'Dashboard',        path: '/dashboard', icon: '◈' },
-      { label: 'Token Generator',  path: '/tokens',    icon: '⬡', badge: null },
-      { label: 'NFT Generator',    path: '/nfts',      icon: '⬢' },
-      { label: 'Auction Generator',path: '/auctions',  icon: '◉' },
-      { label: 'Security Audit',   path: '/audit',     icon: '⚑' },
+      { label: 'Dashboard',        path: '/dashboard', icon: <LayoutDashboard size={18} /> },
+      { label: 'Token Generator',  path: '/tokens',    icon: <Coins size={18} />, badge: null },
+      { label: 'NFT Generator',    path: '/nfts',      icon: <ImageIcon size={18} /> },
+      { label: 'Auction Generator',path: '/auctions',  icon: <Gavel size={18} /> },
+      { label: 'Security Audit',   path: '/audit',     icon: <ShieldCheck size={18} /> },
     ],
   },
   {
     label: 'Tools',
     items: [
-      { label: 'AI Assistant',     path: '/ai-chat',   icon: '🤖' },
-      { label: 'Activity Monitor', path: '/jobs',      icon: '◎' },
-      { label: 'Analytics',        path: '/analytics', icon: '◑' },
-      { label: 'Profile',          path: '/profile',   icon: '⊙' },
+      { label: 'AI Assistant',     path: '/ai-chat',   icon: <MessageSquare size={18} /> },
+      { label: 'Activity Monitor', path: '/jobs',      icon: <Activity size={18} /> },
+      { label: 'Analytics',        path: '/analytics', icon: <BarChart3 size={18} /> },
+      { label: 'Profile',          path: '/profile',   icon: <User size={18} /> },
     ],
   },
 ];
@@ -103,7 +117,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
                 }}
                 title="Copy address"
               >
-                ⎘
+              <Copy size={12} />
               </button>
             </div>
             <div className="db-net-row">
@@ -115,7 +129,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
 
           {/* Theme toggle */}
           <button className="db-theme-btn" onClick={toggleTheme}>
-            {theme === 'dark' ? '☀' : '☾'} {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
         </div>
       </aside>

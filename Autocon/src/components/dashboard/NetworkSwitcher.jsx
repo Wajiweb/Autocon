@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { ChevronDown, ExternalLink } from 'lucide-react';
 import { useNetwork } from '../../context/NetworkContext';
 import './styles/dashboard.css';
 
@@ -53,9 +54,7 @@ export default function NetworkSwitcher() {
                 }} />
                 {network?.name || 'Sepolia'}
                 {/* Chevron */}
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: .6, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s', flexShrink: 0 }}>
-                    <path d="M2 3.5 L5 6.5 L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <ChevronDown size={14} style={{ opacity: .6, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s', flexShrink: 0 }} />
             </button>
 
             {/* Dropdown */}
@@ -159,7 +158,7 @@ export default function NetworkSwitcher() {
                             onMouseEnter={e => e.currentTarget.style.color = 'var(--db-acc)'}
                             onMouseLeave={e => e.currentTarget.style.color = 'var(--db-t3)'}
                         >
-                            🚰 Get {network.currencySymbol} from faucet ↗
+                            <span style={{ fontSize: 12 }}>🚰</span> Get {network.currencySymbol} from faucet <ExternalLink size={10} style={{ marginLeft: 2 }} />
                         </a>
                     )}
                 </div>
