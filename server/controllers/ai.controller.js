@@ -25,7 +25,7 @@ const suggestConfig = asyncHandler(async (req, res) => {
     // Validate and truncate contract code if too large
     const codeToProcess = (partialInputs?.sourceCode || '').slice(0, MAX_CONTRACT_SIZE);
     
-    const model = getGeminiModel('gemini-1.5-flash');
+    const model = getGeminiModel('gemini-2.5-flash');
 
     const prompt = `You are an expert Web3 smart contract architect.
 The user wants to configure a ${contractType} contract.
@@ -80,7 +80,7 @@ const explainAudit = asyncHandler(async (req, res) => {
     // Validate and truncate contract code
     const truncatedCode = (contractCode || '').slice(0, AUDIT_MAX_CONTRACT_SIZE);
     
-    const model = getGeminiModel('gemini-1.5-flash');
+    const model = getGeminiModel('gemini-2.5-flash');
 
     const prompt = `You are an expert Web3 security auditor.
 I have a smart contract and its raw technical audit results (e.g. from Slither).

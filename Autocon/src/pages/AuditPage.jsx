@@ -1,11 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useJobPoller } from '../hooks/useJobPoller';
 import { Download, FileText, ShieldAlert, ShieldCheck, RefreshCw, Clock, Cpu } from 'lucide-react';
 import { usePDFExport } from '../hooks/useExport';
 import AuditReportTemplate from '../components/audit/AuditReportTemplate';
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import '../components/dashboard/styles/dashboard.css';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const LS_JOB_KEY = 'autocon_audit_jobId';   // localStorage key for session persistence
 
@@ -40,9 +47,11 @@ export default function AuditPage() {
   const { authFetch }  = useAuth();
   const { generatePDF, isGenerating: isExportingPDF } = usePDFExport();
 
+  const location = useLocation();
+
   /* Form state */
-  const [contractCode, setContractCode] = useState('');
-  const [contractType, setContractType] = useState('Custom');
+  const [contractCode, setContractCode] = useState(location.state?.code || '');
+  const [contractType, setContractType] = useState(location.state?.type || 'Custom');
 
   /* Job / result state */
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -231,6 +240,23 @@ export default function AuditPage() {
   ───────────────────────────────────────────────────────────────────── */
 
   const isActive = isSubmitting || isPolling;
+
+  const chartData = auditResult ? {
+    datasets: [{
+      data: [
+        auditResult.summary.critical || 0.01,
+        auditResult.summary.high || 0.01,
+        auditResult.summary.medium || 0.01,
+        auditResult.summary.low || 0.01
+      ],
+      backgroundColor: ['#ef4444', '#f97316', '#a78bfa', '#60a5fa'],
+      borderColor: 'transparent',
+      borderWidth: 2,
+      hoverOffset: 4,
+    }],
+  } : null;
+
+  const totalFindings = auditResult ? Object.values(auditResult.summary).reduce((a,b) => a+b, 0) : 0;
 
   return (
     <div className="pg-wrap">
@@ -449,7 +475,7 @@ export default function AuditPage() {
           )}
 
           {/* ── Score + summary grid ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: 14, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '180px 160px 1fr', gap: 14, marginBottom: 16 }}>
 
             {/* Score circle */}
             <div className="pg-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '28px 20px' }}>
@@ -478,8 +504,33 @@ export default function AuditPage() {
               </span>
             </div>
 
+            {/* Severity Doughnut Chart */}
+            <div className="pg-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+              <div style={{ position: 'relative', width: 100, height: 100, marginBottom: 12 }}>
+                <Doughnut
+                  data={chartData}
+                  options={{
+                    cutout: '72%', responsive: true, maintainAspectRatio: true,
+                    animation: { duration: 800, easing: 'easeOutQuart' },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                  }}
+                />
+                <div style={{
+                  position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center'
+                }}>
+                  <div style={{ fontFamily: 'var(--db-mono)', fontSize: 20, fontWeight: 700, color: 'var(--db-t1)', lineHeight: 1 }}>
+                    {totalFindings}
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--db-t3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                Vulnerabilities
+              </div>
+            </div>
+
             {/* Severity count grid */}
-            <div className="pg-mini-stats cols-2" style={{ alignContent: 'start' }}>
+            <div className="pg-mini-stats cols-2" style={{ alignContent: 'start', height: '100%' }}>
               {[
                 { label: 'Critical', count: auditResult.summary.critical, s: SEV.CRITICAL },
                 { label: 'High',     count: auditResult.summary.high,     s: SEV.HIGH     },
@@ -487,7 +538,7 @@ export default function AuditPage() {
                 { label: 'Low',      count: auditResult.summary.low,      s: SEV.LOW      },
               ].map(({ label, count, s }) => (
                 <div key={label} style={{
-                  padding: '16px', borderRadius: 'var(--db-r)',
+                  padding: '16px', borderRadius: 'var(--db-r)', height: '100%',
                   background: s.bg, border: `.5px solid ${s.border}`,
                   display: 'flex', alignItems: 'center', gap: 12,
                 }}>
@@ -498,22 +549,25 @@ export default function AuditPage() {
             </div>
           </div>
 
-          {/* ── AI Explain button (only if we have vulns and haven't explained yet) ── */}
+          {/* ── AI Explain button ── */}
           {auditResult.findings.length > 0 && !auditResult.findings.some(f => f.aiDescription) && (
             <button
               onClick={handleExplainAI}
               disabled={isExplaining}
               className="pg-btn"
               style={{
-                width: '100%', marginBottom: 16, padding: '11px 0',
-                background: 'linear-gradient(135deg, rgba(124,58,237,.15), rgba(6,182,212,.15))',
-                border: '1px solid rgba(124,58,237,.3)',
-                color: '#c4b5fd', fontWeight: 600, fontSize: 13,
-                justifyContent: 'center', gap: 7,
+                position: 'relative', width: '100%', marginBottom: 16, padding: '12px 0',
+                background: 'linear-gradient(135deg, rgba(124,58,237,.2), rgba(6,182,212,.2))',
+                border: '1px solid rgba(124,58,237,.4)',
+                color: '#ddd6fe', fontWeight: 700, fontSize: 14,
+                justifyContent: 'center', gap: 8,
+                boxShadow: '0 0 20px rgba(124,58,237,.15), inset 0 0 12px rgba(124,58,237,.1)',
+                textShadow: '0 0 8px rgba(196,181,253,.3)',
+                overflow: 'hidden', transition: 'all 0.3s ease',
               }}
             >
               {isExplaining
-                ? <><div className="pg-spinner" style={{ width: 14, height: 14, borderTopColor: '#c4b5fd' }} /> AI is analysing…</>
+                ? <><div className="pg-spinner" style={{ width: 15, height: 15, borderTopColor: '#c4b5fd' }} /> AI is analysing vulnerabilities…</>
                 : '✨ Explain All Findings with AI'}
             </button>
           )}
@@ -581,7 +635,16 @@ export default function AuditPage() {
                           </p>
 
                           {f.code && (
-                            <div className="pg-code-block" style={{ marginBottom: 10 }}>{f.code}</div>
+                            <div style={{ marginBottom: 10, borderRadius: 'var(--db-r-sm)', overflow: 'hidden', border: '.5px solid var(--db-br)' }}>
+                              <SyntaxHighlighter
+                                language="solidity"
+                                style={vscDarkPlus}
+                                customStyle={{ margin: 0, fontSize: 12, background: '#1e1e1e', padding: '12px' }}
+                                wrapLines={true}
+                              >
+                                {f.code}
+                              </SyntaxHighlighter>
+                            </div>
                           )}
 
                           <div style={{

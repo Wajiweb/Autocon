@@ -26,6 +26,31 @@ function getExplorerUrl(network) {
   return EXPLORER_URLS.sepolia;
 }
 
+function timeAgo(dateInput) {
+  if (!dateInput) return '';
+  const date = new Date(dateInput);
+  const diffInSeconds = Math.floor((new Date() - date) / 1000);
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d ago`;
+}
+
+function stringToColor(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = Math.abs(hash) % 360;
+  return {
+    bg: `hsla(${h}, 70%, 60%, 0.12)`,
+    color: `hsl(${h}, 80%, 75%)`
+  };
+}
+
 export default function DeploymentTable({ filteredDeployments, isLoading, activeFilter, setActiveFilter, handleDelete }) {
   const [search, setSearch] = useState('');
   const [searchFilter, setSearchFilter] = useState(filteredDeployments);
@@ -42,6 +67,11 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
   }, [search, filteredDeployments]);
 
   const handleVerify = async (item) => {
+    if (!item.sourceCode) {
+      toast.error('Source code is missing. Only newly deployed contracts can be verified.');
+      return;
+    }
+
     const job = verificationJobs[item.contractAddress];
     if (job?.status === 'pending' || job?.status === 'processing') return;
 
@@ -58,6 +88,7 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
             contractName: item.name,
             compilerVersion: item.compilerVersion || 'v0.8.20+commit.a1b79de6',
             network: item.network || 'sepolia',
+            constructorArguments: item.constructorArgs || '',
           }
         }),
       });
@@ -136,10 +167,9 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
           href={`${baseUrl}/address/${item.contractAddress}#code`}
           target="_blank"
           rel="noreferrer"
-          className="db-act exp"
-          style={{ background: 'rgba(52,211,153,0.12)', color: '#34d399', borderColor: 'rgba(52,211,153,0.35)' }}
+          className="db-act-btn primary"
         >
-          View on Explorer ↗
+          Explorer ↗
         </a>
       );
     }
@@ -147,10 +177,10 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
   };
 
   const typeStyles = (type) => ({
-    'ERC-20': { pillClass: '', icon: '◈', label: 'ERC-20', color: '#818cf8', bg: 'rgba(129,140,248,.12)' },
-    'ERC-721': { pillClass: 'nft', icon: '⬡', label: 'ERC-721', color: '#60a5fa', bg: 'rgba(96,165,250,.12)' },
-    'Auction': { pillClass: 'auction', icon: '◉', label: 'Auction', color: '#f59e0b', bg: 'rgba(245,158,11,.12)' },
-  }[type] || { pillClass: '', icon: '◈', label: type, color: '#818cf8', bg: 'rgba(129,140,248,.12)' });
+    'ERC-20': { pillClass: 'token', icon: '◈', label: 'ERC-20' },
+    'ERC-721': { pillClass: 'nft', icon: '⬡', label: 'ERC-721' },
+    'Auction': { pillClass: 'auction', icon: '◉', label: 'Auction' },
+  }[type] || { pillClass: 'token', icon: '◈', label: type });
 
   return (
     <div className="db-table-card db-enter db-enter-6">
@@ -183,10 +213,19 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
         </div>
       </div>
 
-      <table className="db-table">
+      <div className="db-table-wrap">
+        <table className="db-table">
+          <colgroup>
+            <col style={{ width: '21%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '29%' }} />
+          </colgroup>
         <thead>
           <tr>
-            {['Asset', 'Type', 'Verification', 'Contract Address', 'Deployed', 'Actions'].map(h => (
+            {['Contract', 'Type', 'Verification', 'Contract Address', 'Deployed', 'Actions'].map(h => (
               <th key={h}>{h}</th>
             ))}
           </tr>
@@ -197,43 +236,46 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
           ) : (searchFilter || []).length > 0
             ? (searchFilter || []).map(item => {
                 const ts = typeStyles(item._type);
-                const sym = (item.symbol || item.name || '').substring(0, 3).toUpperCase();
                 return (
                   <tr key={item._id}>
                     <td>
                       <div className="db-ta-asset">
-                        <div className="db-ta-av" style={{ background: ts.bg, color: ts.color }}>{sym}</div>
+                        <div className="db-ta-av">{(item.symbol || item.name || '').substring(0, 3).toUpperCase()}</div>
                         <div>
                           <div className="db-ta-name">{item.name}</div>
-                          <div className="db-ta-net">{item.network || 'Sepolia'} · {item._type}</div>
+                          <div className="db-ta-net">{item.network || 'Sepolia'}</div>
                         </div>
                       </div>
                     </td>
                     <td><span className={`db-type-pill ${ts.pillClass}`}>{ts.icon} {ts.label}</span></td>
                     <td>{getVerificationBadge(item)}</td>
-                    <td><span className="db-addr-txt">{item.contractAddress.slice(0, 10)}…{item.contractAddress.slice(-6)}</span></td>
-                    <td><span className="db-ts-txt">{new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></td>
                     <td>
-                      <div className="db-acts">
-                        <button className="db-act" title="Copy address"
-                          onClick={() => { navigator.clipboard.writeText(item.contractAddress); toast.success('Address copied!'); }}>
+                      <div className="db-addr-wrap">
+                        <span className="db-addr-txt">{item.contractAddress.slice(0, 6)}…{item.contractAddress.slice(-4)}</span>
+                        <button className="db-copy-btn" title="Copy address"
+                          onClick={() => { navigator.clipboard.writeText(item.contractAddress); toast.success('Copied!'); }}>
                           ⎘
                         </button>
+                      </div>
+                    </td>
+                    <td><span className="db-ts-txt" title={new Date(item.createdAt).toLocaleString()}>{timeAgo(item.createdAt)}</span></td>
+                    <td>
+                      <div className="db-acts">
                         {!item.isVerified && (!verificationJobs[item.contractAddress]?.jobId || verificationJobs[item.contractAddress]?.status?.toLowerCase() === 'failed') && (
-                          <button className="db-act" title="Verify Contract"
+                          <button className="db-act verify" title="Verify this contract on Etherscan"
                             onClick={() => handleVerify(item)}
                             disabled={verificationJobs[item.contractAddress]?.status?.toLowerCase() === 'pending' || verificationJobs[item.contractAddress]?.status?.toLowerCase() === 'processing'}
-                            style={{ color: '#60a5fa', borderColor: 'rgba(96,165,250,0.35)', background: 'rgba(96,165,250,0.08)' }}
                           >
-                            ✓
+                            ✓ Verify
                           </button>
                         )}
-                        <button className="db-act" title="View site"
+                        <button className="db-act mint-site" title="Open the public minting site for this contract"
                           onClick={() => {
                             window.open(`${API_BASE}/api/site/view?contractAddress=${item.contractAddress}&network=${item.network}&name=${encodeURIComponent(item.name)}&type=${item._type}`, '_blank');
                             toast.success('Minting Site Opened! 🌐');
-                          }}>
-                          ◈
+                          }}
+                        >
+                          🌐 Minting Site
                         </button>
                         {getExplorerLink(item) || (
                           <a
@@ -256,8 +298,9 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
                 );
               })
             : null}
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
 
       {!isLoading && (searchFilter || []).length === 0 && (
         <div style={{ padding: '32px 22px' }}>

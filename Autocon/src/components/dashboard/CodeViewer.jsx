@@ -8,8 +8,10 @@ export default function CodeViewer({ style = {} }) {
   const [showHistory, setShowHistory] = useState(false);
   const { generatedCode, isEditingEnabled, updateManualCode, snapshots, saveSnapshot, restoreSnapshot, resetCode } = useContractStore();
 
+  const now = Date.now();
+
   const timeAgo = (timestamp) => {
-      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      const seconds = Math.floor((now - timestamp) / 1000);
       if (seconds < 60) return `Just now`;
       const minutes = Math.floor(seconds / 60);
       if (minutes < 60) return `${minutes} min ago`;

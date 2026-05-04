@@ -40,19 +40,23 @@ export default function ChartModal({ coin, onClose }) {
   useEffect(() => {
     if (!coin?.binanceId) return;
     let cancelled = false;
-    setLoading(true);
-    setChartData([]);
 
-    (async () => {
+    const fetchData = async () => {
+      setLoading(true);
+      setChartData([]);
       try {
         const res = await fetch(
           `https://api.binance.com/api/v3/klines?symbol=${coin.binanceId}&interval=${range.interval}&limit=${range.limit}`
         );
         const raw = await res.json();
         if (!cancelled) setChartData(raw.map(k => ({ x: k[0], y: parseFloat(k[4]) })));
-      } catch (_) {}
+      } catch (_) {
+        // Silent fail
+      }
       if (!cancelled) setLoading(false);
-    })();
+    };
+
+    fetchData();
 
     return () => { cancelled = true; };
   }, [coin?.binanceId, range.value]);

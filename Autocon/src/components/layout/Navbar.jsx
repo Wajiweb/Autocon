@@ -13,10 +13,11 @@ import Button from '../ui/Button';
 import { navbarSlideDown } from '../../lib/motionVariants';
 
 const NAV_LINKS = [
-  { label: 'Features',     href: 'features'     },
-  { label: 'Chain',        href: 'chain'         },
-  { label: 'Testimonials', href: 'testimonials'  },
-  { label: 'FAQ',          href: 'faq'           },
+  { label: 'Features',    href: 'features'  },
+  { label: 'Contracts',   href: 'chain'     },
+  { label: 'Templates',   href: 'trading'   },
+  { label: 'Testimonials', href: 'testimonials' },
+  { label: 'FAQs',        href: 'faq'        },
 ];
 
 const scrollTo = (id) => {
@@ -160,18 +161,10 @@ export default function Navbar({ onConnect }) {
             <Button
               variant="ghost"
               onClick={onConnect}
-              aria-label="Sign in to AutoCon"
+              aria-label="Connect Wallet"
               style={{ padding: '10px 20px', fontSize: '0.88rem' }}
             >
-              Sign In
-            </Button>
-            <Button
-              variant="primary"
-              onClick={onConnect}
-              aria-label="Get started with AutoCon for free"
-              style={{ padding: '10px 22px', fontSize: '0.88rem' }}
-            >
-              Get Started
+              Connect Wallet
             </Button>
           </div>
 
@@ -240,8 +233,7 @@ export default function Navbar({ onConnect }) {
                   </button>
                 ))}
                 <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <Button variant="secondary" onClick={() => { onConnect(); setMobileOpen(false); }} style={{ width: '100%', justifyContent: 'center' }}>Sign In</Button>
-                  <Button variant="primary"   onClick={() => { onConnect(); setMobileOpen(false); }} style={{ width: '100%', justifyContent: 'center' }}>Get Started Free</Button>
+                  <Button variant="secondary" onClick={() => { onConnect(); setMobileOpen(false); }} style={{ width: '100%', justifyContent: 'center' }}>Connect Wallet</Button>
                 </div>
               </div>
             </motion.div>

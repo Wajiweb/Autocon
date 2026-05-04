@@ -20,8 +20,11 @@ const MAX_ANSWER_SIZE = 10000;   // 10KB max answer
  * POST /api/chat
  *
  * Body (validated by Joi schema `chatMessage`):
- *   contractCode: string  — The Solidity source to analyze
- *   question:     string  — User's question about the contract
+ *   message:  string               — User's prompt or question
+ *   mode?:    "chat" | "contract" — AI request mode
+ *   contract?: string               — Solidity source for contract analysis mode
+ *   wallet?:  string               — Optional wallet address
+ *   chain?:   string               — Optional network name
  *
  * Response:
  *   {
@@ -40,14 +43,43 @@ const chat = asyncHandler(async (req, res) => {
         );
     }
 
-    const { contractCode, question } = req.body;
+    const {
+        mode,
+        message,
+        question,
+        contract,
+        contractCode,
+        wallet,
+        chain,
+        contextId,
+        history,
+        temperature,
+    } = req.body;
 
-    // Truncate contract code if too large to prevent abuse
-    const truncatedCode = (contractCode || '').slice(0, MAX_CONTRACT_SIZE);
-    
+    const text = (message || question || '').trim();
+    const contractPayload = (contract || contractCode || '').trim();
+    const effectiveMode = mode || (contractPayload ? 'contract' : 'chat');
+    const requestId = req.requestId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const startTime = Date.now();
+
+    console.log(JSON.stringify({
+        event: 'ai.chat.request',
+        requestId,
+        mode: effectiveMode,
+        hasContract: Boolean(contractPayload),
+        wallet,
+        chain,
+        contextId,
+        historyLength: Array.isArray(history) ? history.length : undefined,
+        temperature,
+    }));
+
+    const truncatedCode = contractPayload.slice(0, MAX_CONTRACT_SIZE);
     const model = getGeminiModel('gemini-2.5-flash');
 
-    const prompt = `
+    let prompt;
+    if (effectiveMode === 'contract' && truncatedCode) {
+        prompt = `
 You are a Senior Smart Contract Security Auditor and Web3 Educator.
 The user is asking a question about the following Solidity contract.
 
@@ -56,7 +88,7 @@ Input Solidity Code:
 ${truncatedCode}
 \`\`\`
 
-User Question: ${question}
+User Question: ${text}
 
 Provide a helpful, accurate, and easy-to-understand answer. Use markdown formatting inside the answer string.
 Also, generate an array of 3 to 4 highly relevant, contextual follow-up questions the user might want to ask next based on this code.
@@ -67,6 +99,23 @@ Respond STRICTLY in JSON format with the following structure:
   "suggestedQuestions": ["Follow up question 1?", "Follow up question 2?", "Follow up question 3?"]
 }
 `;
+    } else {
+        prompt = `
+You are a Senior Web3 AI Assistant and Smart Contract Educator.
+Answer the user's question directly and clearly, without contract context.
+
+User Question: ${text}
+
+Provide a helpful, accurate, and easy-to-understand answer. Use markdown formatting inside the answer string.
+Also, generate an array of 3 to 4 highly relevant, contextual follow-up questions the user might want to ask next.
+
+Respond STRICTLY in JSON format with the following structure:
+{
+  "answer": "Your detailed answer to the user's question, using markdown.",
+  "suggestedQuestions": ["Follow up question 1?", "Follow up question 2?", "Follow up question 3?"]
+}
+`;
+    }
 
     const result       = await model.generateContent(prompt);
     const responseText = result.response.text();
@@ -79,13 +128,22 @@ Respond STRICTLY in JSON format with the following structure:
         throw new AppError('AI returned malformed JSON.', 502, 'AI_PARSE_ERROR');
     }
 
-    // Truncate answer if too large
-    const answer = (parsed.answer || "I'm sorry, I couldn't generate an answer.").slice(0, MAX_ANSWER_SIZE);
+    const answer = (parsed.answer || parsed.reply || "I'm sorry, I couldn't generate an answer.").slice(0, MAX_ANSWER_SIZE);
+    const responseTimeMs = Date.now() - startTime;
+
+    console.log(JSON.stringify({
+        event: 'ai.chat.response',
+        requestId,
+        mode: effectiveMode,
+        success: true,
+        durationMs: responseTimeMs,
+        hasSuggestedQuestions: Array.isArray(parsed.suggestedQuestions),
+    }));
 
     return res.json({
         success: true,
         data: {
-            answer:             answer,
+            reply: answer,
             suggestedQuestions: parsed.suggestedQuestions || [],
         },
     });

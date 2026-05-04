@@ -1,32 +1,35 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
+import HeroParticles from './HeroParticles';
 
-const partnerNames = ['Ethereum', 'Polygon', 'Binance', 'OpenZeppelin', 'Chainlink', 'MetaMask'];
+const PARTNERS = ['Ethereum', 'Polygon', 'Binance', 'OpenZeppelin', 'Chainlink', 'MetaMask', 'Alchemy', 'Infura'];
 
-const PartnerBanner = () => (
-  <div className="absolute bottom-0 left-0 right-0 overflow-hidden" style={{ zIndex: 20 }}>
-    <span className="sr-only">Our trusted partners include: {partnerNames.join(', ')}</span>
-    <div
-      className="w-full h-[72px] md:h-[88px] flex items-center border-t"
-      style={{
-        background: 'var(--surface)',
-        borderColor: 'var(--border-dark)',
-      }}
-    >
-      <div className="flex items-center justify-around w-full px-8 md:px-16 gap-6 md:gap-12">
-        {partnerNames.map((name) => (
-          <span
-            key={name}
-            className="text-sm md:text-base font-bold tracking-tight"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            {name}
-          </span>
-        ))}
+const PartnerSection = () => {
+  const row1 = [...PARTNERS, ...PARTNERS];
+  const row2 = [...PARTNERS].reverse();
+
+  return (
+    <section className="partner-section">
+      <p className="partner-label">Trusted by leading protocols & tools</p>
+      <div className="partner-angle-wrapper">
+        <div className="partner-rotated">
+          <div className="partner-container">
+            <div className="partner-track partner-track-1">
+              {row1.map((name, i) => (
+                <span key={`r1-${i}`} className="partner-badge">{name}</span>
+              ))}
+            </div>
+            <div className="partner-track partner-track-2">
+              {row2.map((name, i) => (
+                <span key={`r2-${i}`} className="partner-badge">{name}</span>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-);
+    </section>
+  );
+};
 
 const DashboardMockup = () => {
   const mockDeployments = [
@@ -79,7 +82,7 @@ const DashboardMockup = () => {
             <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>Deployment Registry</h3>
             <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: '0.68rem', fontWeight: 600, background: 'var(--primary-subtle)', color: 'var(--primary)', border: '1px solid var(--accent)', fontFamily: 'monospace' }}>0x7a2...f3e1</span>
           </div>
-          <div style={{ display: 'grid' }}>
+          <div>
             {mockDeployments.map((item) => (
               <div key={item.name} style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 0.8fr', gap: 12, padding: '13px 24px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
@@ -107,8 +110,10 @@ export default function HeroSection({ onGetStarted }) {
     <section
       id="home"
       className="relative w-full min-h-screen flex flex-col items-center pt-28 pb-32 md:pb-40 overflow-hidden font-inter"
-      style={{ background: 'var(--surface)' }}
+      style={{ position: 'relative', background: 'var(--surface)' }}
     >
+      <HeroParticles />
+
       <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 md:px-6 text-center flex flex-col items-center">
         <div className="mb-8">
           <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[11px] md:text-sm font-semibold tracking-wide" style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-muted)' }}>
@@ -146,7 +151,7 @@ export default function HeroSection({ onGetStarted }) {
         </div>
       </div>
 
-      <PartnerBanner />
+      <PartnerSection />
     </section>
   );
 }

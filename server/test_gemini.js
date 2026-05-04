@@ -5,7 +5,7 @@ async function test() {
     console.log("Key:", process.env.GEMINI_API_KEY ? "EXISTS" : "MISSING");
     const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = client.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         generationConfig: { responseMimeType: 'application/json' }
     });
 

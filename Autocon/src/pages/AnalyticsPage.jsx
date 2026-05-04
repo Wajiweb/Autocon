@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Doughnut, Bar, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS, ArcElement, Tooltip, Legend,
@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { useGasTracker } from '../hooks/useGasTracker';
+import { usePlatformStore } from '../store/usePlatformStore';
 import '../components/dashboard/styles/dashboard.css';
 
 ChartJS.register(
@@ -68,38 +69,25 @@ export default function AnalyticsPage() {
   const { user, authFetch } = useAuth();
   const { network } = useNetwork();
   const { gasPriceGwei, status } = useGasTracker();
-  const [deployments, setDeployments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { deployments, isInitialLoad } = usePlatformStore();
+  const isLoading = isInitialLoad;
   const [timeRange, setTimeRange] = useState(6); // months
 
   /* fetch all contracts */
-  useEffect(() => {
-    if (!user?.walletAddress) return;
-    (async () => {
-      const all = [];
-      const fetches = [
-        { url: `/api/token/my-tokens/${user.walletAddress}`, key: 'tokens', type: 'ERC-20' },
-        { url: `/api/nft/my-nfts/${user.walletAddress}`,    key: 'nfts',    type: 'ERC-721' },
-        { url: `/api/auction/my-auctions/${user.walletAddress}`, key: 'auctions', type: 'Auction' },
-      ];
-      await Promise.all(fetches.map(async ({ url, key, type }) => {
-        try {
-          const res = await authFetch(url);
-          const data = await res.json();
-          if (data.success && data[key]) data[key].forEach(d => all.push({ ...d, _type: type }));
-        } catch (_) {}
-      }));
-      all.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      setDeployments(all);
-      setIsLoading(false);
-    })();
-  }, [user, authFetch]);
+
 
   /* ── Computed data ── */
   const tokens   = deployments.filter(d => d._type === 'ERC-20').length;
   const nfts     = deployments.filter(d => d._type === 'ERC-721').length;
   const auctions = deployments.filter(d => d._type === 'Auction').length;
   const total    = deployments.length;
+
+  const portfolioAge = useMemo(() => {
+    if (deployments.length === 0) return '0 days';
+    const firstDeployment = new Date(deployments[0]?.createdAt);
+    const days = Math.floor((Date.now() - firstDeployment.getTime()) / 86400000);
+    return `${days} days`;
+  }, [deployments]);
 
   // Networks used
   const networkCounts = deployments.reduce((acc, d) => {
@@ -361,7 +349,7 @@ export default function AnalyticsPage() {
                 { label: 'Most Deployed Type', value: tokens >= nfts && tokens >= auctions ? 'ERC-20 Token' : nfts >= auctions ? 'ERC-721 NFT' : 'Auction', icon: '🏆', color: AMBER, desc: 'Most common contract type' },
                 { label: 'Networks Active', value: Object.keys(networkCounts).length, icon: '🌐', color: SUCCESS, desc: Object.keys(networkCounts).join(' · ') || 'None' },
                 { label: 'Peak Activity', value: `${peakMonth}`, icon: '⚡', color: PINK, desc: `${peakCount} deploys in one month` },
-                { label: 'Portfolio Age', value: deployments.length > 0 ? `${Math.floor((Date.now() - new Date(deployments[0]?.createdAt)) / 86400000)} days` : '0 days', icon: '📅', color: AMBER, desc: 'Since first deployment' },
+                { label: 'Portfolio Age', value: portfolioAge, icon: '📅', color: AMBER, desc: 'Since first deployment' },
                 { label: 'Wallet', value: user?.walletAddress ? `${user.walletAddress.slice(0,6)}…${user.walletAddress.slice(-4)}` : '—', icon: '🦊', color: PRIMARY, desc: 'Connected address' },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px', borderRadius: 10, background: 'var(--db-s2)', border: '1px solid var(--db-br)' }}>

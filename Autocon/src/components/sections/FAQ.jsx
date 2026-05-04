@@ -1,8 +1,6 @@
 /**
- * FAQ.jsx — Accessible accordion with keyboard navigation
- * Single item open at a time.
- * Height animation via Framer Motion AnimatePresence.
- * Full aria: role="region", aria-expanded, aria-controls.
+ * FAQ.jsx — Premium animated accordion with cinematic design
+ * Enhanced with motion, depth, and AutoCon's premium theme
  */
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,12 +40,26 @@ function FAQItem({ q, a, index, isOpen, onToggle }) {
   const buttonId = `faq-button-${index}`;
 
   return (
-    <div
+    <motion.div
       role="region"
       aria-label={q}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4, delay: index * 0.08 }}
       style={{
-        borderBottom: '1px solid var(--lp-border-subtle)',
+        background:   isOpen 
+          ? 'linear-gradient(145deg, rgba(25,25,25,0.95), rgba(18,18,18,0.9))' 
+          : 'linear-gradient(145deg, #111111, #0a0a0a)',
+        border:       isOpen ? '1px solid rgba(255,107,0,0.25)' : '1px solid rgba(255,107,0,0.08)',
+        borderRadius: '14px',
         overflow:     'hidden',
+        marginBottom: '12px',
+        transition:   'all 0.3s ease',
+        transform:    isOpen ? 'scale(1.01)' : 'scale(1)',
+        boxShadow:    isOpen 
+          ? '0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(255,107,0,0.08)' 
+          : '0 2px 12px rgba(0,0,0,0.15)',
       }}
     >
       <button
@@ -66,7 +78,7 @@ function FAQItem({ q, a, index, isOpen, onToggle }) {
           background:     'none',
           border:         'none',
           cursor:         'pointer',
-          padding:        '22px 0',
+          padding:        '20px 24px',
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'space-between',
@@ -78,28 +90,32 @@ function FAQItem({ q, a, index, isOpen, onToggle }) {
         <span style={{
           fontSize:   '1rem',
           fontWeight: 700,
-          color:      isOpen ? 'var(--lp-accent)' : 'var(--lp-text-primary)',
+          color:      isOpen ? '#ff6b00' : 'var(--lp-text-primary)',
           lineHeight: 1.4,
-          transition: 'color 0.2s',
+          transition: 'color 0.25s',
           flex:       1,
         }}>
           {q}
         </span>
         <motion.span
-          animate={{ rotate: isOpen ? 45 : 0 }}
+          animate={{ 
+            rotate: isOpen ? 45 : 0,
+            scale: isOpen ? 1.1 : 1,
+          }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
           style={{
             flexShrink:   0,
             width:        '28px',
             height:       '28px',
             borderRadius: '50%',
-            background:   isOpen ? 'var(--lp-accent-soft)' : 'var(--lp-surface)',
-            border:       `1px solid ${isOpen ? 'var(--lp-accent)' : 'var(--lp-border-subtle)'}`,
+            background:   isOpen ? 'rgba(255,107,0,0.2)' : 'transparent',
+            border:       `1px solid ${isOpen ? 'rgba(255,107,0,0.5)' : 'rgba(255,107,0,0.15)'}`,
             display:      'flex',
             alignItems:   'center',
             justifyContent:'center',
-            color:        isOpen ? 'var(--lp-accent)' : 'var(--lp-text-muted)',
-            transition:   'background 0.2s, border-color 0.2s',
+            color:        isOpen ? '#ff6b00' : 'rgba(255,255,255,0.4)',
+            transition:   'all 0.25s ease',
+            boxShadow:    isOpen ? '0 0 12px rgba(255,107,0,0.3)' : 'none',
           }}
           aria-hidden="true"
         >
@@ -124,15 +140,14 @@ function FAQItem({ q, a, index, isOpen, onToggle }) {
               fontSize:     '0.92rem',
               color:        'var(--lp-text-secondary)',
               lineHeight:   1.75,
-              paddingBottom:'22px',
-              paddingRight: '44px',
+              padding:      '0 24px 20px 24px',
             }}>
               {a}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 
@@ -148,7 +163,27 @@ export default function FAQ() {
       id="faq"
       className="landing-section"
       aria-label="Frequently asked questions"
+      style={{ 
+        position: 'relative',
+        background: '#0a0a0a',
+      }}
     >
+      {/* Ambient background glow */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'radial-gradient(circle at 50% 30%, rgba(255,107,0,0.06), transparent 60%)',
+        pointerEvents: 'none',
+      }} />
+      
+      {/* Vignette */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'radial-gradient(ellipse 80% 60% at 50% 50%, transparent 50%, rgba(0,0,0,0.3) 100%)',
+        pointerEvents: 'none',
+      }} />
+      
       <Container>
         <div style={{
           display:             'grid',

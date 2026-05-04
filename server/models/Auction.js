@@ -10,6 +10,9 @@ const auctionSchema = new mongoose.Schema({
     duration: { type: Number, required: true },
     minimumBid: { type: String, default: '0' },
     type: { type: String, default: 'Auction' },
+    sourceCode: { type: String, default: '' },
+    compilerVersion: { type: String, default: 'v0.8.20+commit.a1b79de6' },
+    constructorArgs: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
 });
 

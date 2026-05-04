@@ -14,14 +14,17 @@ export const useAuction = () => {
     const { network } = useNetwork();
     const location = useLocation();
     const prefill = location.state?.prefill || {};
-    const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
         name: prefill.name || '',
         itemName: prefill.itemName || '',
         itemDescription: prefill.itemDescription || '',
         duration: prefill.duration || '3600',
         minimumBid: prefill.minimumBid || '0.01',
-        ownerAddress: ''
-    });
+        reservePrice: prefill.reservePrice || '',
+        ownerAddress: '',
+        hasExtension: false, extensionPeriod: '300',
+        hasAntiSnipe: false, antiSnipePeriod: '300'
+      });
     const { generatedCode, setGeneratedCode, isEditingEnabled, contractData, setContractData } = useContractStore();
     const { resetTransaction, setStatus, setTxHash, setConfirmed, setError, setNetwork, setStep, setErrorStep } = useTransactionStore();
     const txInFlight = useTransactionStore(selectIsDeploying);
@@ -170,6 +173,19 @@ export const useAuction = () => {
             toast.success(`Auction deployed on ${network.name}! 🎉`, { id: deployToast });
             fireConfetti();
 
+            // Encode constructor arguments
+            const iface = new ethers.Interface(finalAbi);
+            const constructorArgsArr = [
+                formData.ownerAddress, 
+                parseInt(formData.duration), 
+                minBidWei, 
+                formData.itemName || 'Item', 
+                formData.itemDescription || ''
+            ];
+            const encodedArgs = iface.encodeDeploy(constructorArgsArr);
+            const constructorArgsHex = encodedArgs.startsWith('0x') ? encodedArgs.slice(2) : encodedArgs;
+
+            // Save to database with source code artifacts
             try {
                 const saveRes = await authFetch('/api/auction/save', {
                     method: 'POST',
@@ -181,51 +197,43 @@ export const useAuction = () => {
                         ownerAddress: formData.ownerAddress,
                         network: network.name,
                         duration: parseInt(formData.duration),
-                        minimumBid: formData.minimumBid
+                        minimumBid: formData.minimumBid,
+                        sourceCode: generatedCode,
+                        compilerVersion: 'v0.8.20+commit.a1b79de6',
+                        constructorArgs: constructorArgsHex
                     })
                 });
                 const saveData = await saveRes.json();
                 if (saveData.success) toast.success("Saved to Registry!", { icon: '☁️' });
             } catch { toast.error("Failed to save to database."); }
 
-            // Verify on Etherscan
+            // Queue background verification job
             try {
-                const verifyToast = toast.loading('Verifying contract on Etherscan...');
-                
-                // ABI Encode constructor arguments
-                // constructor(address _owner, uint _biddingTime, uint _minBid, string memory _itemName, string memory _itemDescription)
-                const abiCoder = new ethers.AbiCoder();
-                const encodedArgs = abiCoder.encode(
-                    ["address", "uint256", "uint256", "string", "string"], 
-                    [
-                        formData.ownerAddress, 
-                        parseInt(formData.duration), 
-                        minBidWei, 
-                        formData.itemName || 'Item', 
-                        formData.itemDescription || ''
-                    ]
-                );
+                const verifyToast = toast.loading('Queuing verification job...');
 
-                const verifyRes = await authFetch('/api/verify', {
+                const verifyRes = await authFetch('/api/jobs/create', {
                     method: 'POST',
                     body: JSON.stringify({
-                        contractAddress: deployedAddress,
-                        sourceCode: generatedCode,
-                        contractName: formData.name.replace(/\s+/g, ''),
-                        compilerVersion: 'v0.8.20+commit.a1b79de6',
-                        network: network.name,
-                        constructorArguments: encodedArgs
+                        type: 'verification',
+                        payload: {
+                            contractAddress: deployedAddress,
+                            sourceCode: generatedCode,
+                            contractName: formData.name.replace(/\s+/g, '') || 'AuctionContract',
+                            compilerVersion: 'v0.8.20+commit.a1b79de6',
+                            network: network.name,
+                            constructorArgs: constructorArgsHex
+                        }
                     })
                 });
 
                 const verifyData = await verifyRes.json();
                 if (verifyData.success) {
-                    toast.success("Etherscan Verification Submitted! ✅", { id: verifyToast });
+                    toast.success("Verification job queued! ✅", { id: verifyToast });
                 } else {
-                    toast.error("Etherscan verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
+                    toast.error("Verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
                 }
             } catch {
-                toast.error("Failed to request Etherscan verification.");
+                toast.error("Failed to queue verification.");
             }
 
             // Reset form after successful deployment

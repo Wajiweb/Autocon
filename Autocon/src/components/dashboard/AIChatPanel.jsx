@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLocation } from 'react-router-dom';
+import { usePlatformStore } from '../../store/usePlatformStore';
+import { AnimatedAIChat } from '../ui/animated-ai-chat';
+import { RateLimitBanner } from '../ui/RateLimitBanner';
+import { sendChatRequest } from '../../services/chatApi';
+import { RequestThrottler } from '../../utils/throttling';
 import './styles/dashboard.css';
 
 const INITIAL_SUGGESTIONS = [
@@ -31,20 +37,42 @@ export default function AIChatPanel({
   const [suggestedQuestions, setSuggestedQuestions] = useState(INITIAL_SUGGESTIONS);
   const [activeContext, setActiveContext] = useState(contractCode);
   const [activeContextName, setActiveContextName] = useState(contractName);
-  const [copiedIdx, setCopiedIdx] = useState(null);
-  const [rateLimitMsg, setRateLimitMsg] = useState(null);
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
+  const [formError, setFormError] = useState('');
   const [streamingText, setStreamingText] = useState('');
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const streamRef = useRef(null);
   const isStreamingRef = useRef(false);
 
+  // Request throttler to prevent rapid consecutive requests
+  const throttlerRef = useRef(new RequestThrottler({ delay: 1500, maxQueueSize: 3 }));
+
+  const handleInputChange = (value) => {
+    setInput(value);
+    if (formError) setFormError('');
+  };
+
+  const location = useLocation();
+  const deployments = usePlatformStore(s => s.deployments) || [];
+  const jobs = usePlatformStore(s => s.jobs) || [];
+
   // ── Sync Context Props ──────────────────────────────────────────────────────
   useEffect(() => {
-    setActiveContext(contractCode);
-    setActiveContextName(contractName);
-  }, [contractCode, contractName]);
+    if (contractCode) {
+      setActiveContext(contractCode);
+      setActiveContextName(contractName || 'Smart Contract');
+    } else {
+      // Build platform context
+      const recentDeps = deployments.slice(0, 3).map(d => `${d.name} (${d._type})`).join(', ');
+      const recentJobs = jobs.slice(0, 2).map(j => `${j.type} - ${j.status}`).join(', ');
+      
+      const platformContext = `[SYSTEM PLATFORM CONTEXT]\nUser is currently on page: ${location.pathname}\nTotal Deployments: ${deployments.length}\nRecent Deployments: ${recentDeps || 'None'}\nRecent Jobs: ${recentJobs || 'None'}\nPlease tailor your assistance to this context when appropriate.`.trim();
+
+      setActiveContext(platformContext);
+      setActiveContextName('Platform Context');
+    }
+  }, [contractCode, contractName, location.pathname, deployments, jobs]);
 
   // ── Scroll to bottom ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -67,38 +95,70 @@ export default function AIChatPanel({
           setMessages(parsed);
           return;
         }
-      } catch (_) {}
+      } catch (_) {
+        // Ignore invalid saved messages
+      }
     }
   }, []);
 
   // ── Initial greeting ────────────────────────────────────────────────────────
   useEffect(() => {
     if ((isOpen || inline) && messages.length === 0) {
-      if (activeContext) {
+      if (activeContext && activeContextName !== 'Platform Context') {
         setMessages([{
           role: 'assistant',
           content: 'Contract context loaded! 🎉 I am analyzing your code in real-time.\n\n- "What does this contract do?"\n- "Is this contract secure?"\n- "Explain the mint function"',
           timestamp: Date.now()
         }]);
-      } else if (inline) {
+      } else {
         setMessages([{
           role: 'assistant',
-          content: 'Hello! I am your AI Contract Assistant. Ask me general Web3 questions or paste a contract to analyze.',
+          content: 'Hello! I am your Context-Aware AI Assistant. I can see what page you are on and your recent deployments. How can I help?',
           timestamp: Date.now()
         }]);
       }
     }
-  }, [isOpen, inline, activeContext, messages.length]);
+  }, [isOpen, inline, activeContext, activeContextName, messages.length]);
+
+  // ── Persist and restore rate limit state ────────────────────────────────────
+  useEffect(() => {
+    const stored = localStorage.getItem('autocon-rate-limit');
+    if (stored) {
+      try {
+        const { countdown, timestamp } = JSON.parse(stored);
+        const elapsed = Math.floor((Date.now() - timestamp) / 1000);
+        const remaining = Math.max(0, countdown - elapsed);
+        if (remaining > 0) {
+          setRateLimitCountdown(remaining);
+        } else {
+          localStorage.removeItem('autocon-rate-limit');
+        }
+      } catch (_) {
+        localStorage.removeItem('autocon-rate-limit');
+      }
+    }
+  }, []);
 
   // ── Rate Limit Countdown ────────────────────────────────────────────────────
   useEffect(() => {
     if (rateLimitCountdown > 0) {
-      const timer = setTimeout(() => setRateLimitCountdown(c => c - 1), 1000);
+      // Persist rate limit state
+      localStorage.setItem('autocon-rate-limit', JSON.stringify({
+        countdown: rateLimitCountdown,
+        timestamp: Date.now(),
+      }));
+
+      const timer = setTimeout(() => {
+        const newCountdown = rateLimitCountdown - 1;
+        setRateLimitCountdown(newCountdown);
+        if (newCountdown <= 0) {
+          localStorage.removeItem('autocon-rate-limit');
+          throttlerRef.current.clearQueue(); // Clear any queued requests
+        }
+      }, 1000);
       return () => clearTimeout(timer);
-    } else if (rateLimitCountdown === 0 && rateLimitMsg) {
-      setRateLimitMsg(null);
     }
-  }, [rateLimitCountdown, rateLimitMsg]);
+  }, [rateLimitCountdown]);
 
   // ── Simulated streaming reveal ──────────────────────────────────────────────
   const simulateStream = useCallback((fullText, onDone) => {
@@ -137,7 +197,13 @@ export default function AIChatPanel({
   // ── Send message ────────────────────────────────────────────────────────────
   const sendMessage = async (overrideInput) => {
     const question = (overrideInput ?? input).trim();
-    if (!question || (!activeContext && !inline) || isLoading || rateLimitCountdown > 0) return;
+    if (!question) {
+      setFormError('Message cannot be empty.');
+      return;
+    }
+
+    if ((!activeContext && !inline) || isLoading || rateLimitCountdown > 0) return;
+    setFormError('');
 
     if (isStreamingRef.current) {
         clearInterval(streamRef.current);
@@ -149,35 +215,42 @@ export default function AIChatPanel({
     if (isFirstPrompt) Analytics.track('first_prompt');
     Analytics.track('total_messages');
 
-    const userMsg = { role: 'user', content: question, timestamp: Date.now() };
     setMessages(prev => {
+        const timestamp = Date.now();
+        const userMsg = { role: 'user', content: question, timestamp };
         const newMsgs = [...prev, userMsg];
         return newMsgs.length > 50 ? newMsgs.slice(-50) : newMsgs;
     });
     setInput('');
     setIsLoading(true);
-    setRateLimitMsg(null);
 
     try {
-      const res = await authFetch('/api/chat', {
-        method: 'POST',
-        body: JSON.stringify({ contractCode: activeContext || '', question }),
+      // Use throttler to prevent rapid requests
+      const data = await throttlerRef.current.throttle(async () => {
+        return await sendChatRequest(authFetch, {
+          mode: activeContext ? 'contract' : 'chat',
+          message: question,
+          contract: activeContext || undefined,
+        });
       });
 
-      if (res.status === 429) {
-        const retryAfter = parseInt(res.headers.get('Retry-After') || '30', 10);
-        setRateLimitCountdown(retryAfter);
-        setRateLimitMsg(`You've reached the request limit. Try again in ${retryAfter}s.`);
+      if (!data.success) {
+        if (data.retryAfter) {
+          setRateLimitCountdown(data.retryAfter);
+        }
+
+        const validationText = (data.details || [])
+          .map((item) => `${item.field}: ${item.message}`)
+          .join(' | ');
+
+        setFormError(validationText || data.error || 'Something went wrong.');
         setIsLoading(false);
         return;
       }
 
-      const data = await res.json();
-      const answer = data.success && data.data
-        ? data.data.answer
-        : '❌ ' + (data.message || data.error || 'Something went wrong.');
+      const answer = data.data?.reply || 'I could not generate an answer.';
 
-      if (data.success && data.data?.suggestedQuestions?.length > 0) {
+      if (data.data?.suggestedQuestions?.length > 0) {
         setSuggestedQuestions(data.data.suggestedQuestions);
       }
 
@@ -189,10 +262,12 @@ export default function AIChatPanel({
         });
         setIsLoading(false);
       });
-    } catch {
+    } catch (err) {
+      const errorMessage = err?.message || 'AI service is temporarily unavailable.';
+      setFormError(errorMessage);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: '❌ AI service is temporarily unavailable.',
+        content: `❌ ${errorMessage}`,
         timestamp: Date.now()
       }]);
       setIsLoading(false);
@@ -207,9 +282,7 @@ export default function AIChatPanel({
   const copyMessage = async (text, idx) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedIdx(idx);
-      setTimeout(() => setCopiedIdx(null), 2000);
-    } catch (err) {
+    } catch (_err) {
       // Fallback
       const textArea = document.createElement("textarea");
       textArea.value = text;
@@ -217,9 +290,9 @@ export default function AIChatPanel({
       textArea.select();
       try {
         document.execCommand('copy');
-        setCopiedIdx(idx);
-        setTimeout(() => setCopiedIdx(null), 2000);
-      } catch (e) {}
+      } catch (_e) {
+        // Silent fail if clipboard not available
+      }
       document.body.removeChild(textArea);
     }
   };
@@ -229,7 +302,10 @@ export default function AIChatPanel({
     Analytics.track('clear_chat');
     setMessages([]);
     setSuggestedQuestions(INITIAL_SUGGESTIONS);
-    setRateLimitMsg(null);
+    setRateLimitCountdown(0);
+    setFormError('');
+    localStorage.removeItem('autocon-rate-limit');
+    throttlerRef.current.clearQueue();
     clearInterval(streamRef.current);
     setStreamingText('');
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -247,251 +323,43 @@ export default function AIChatPanel({
 
   if (!isOpen && !inline) return null;
 
-  // ── Context label ───────────────────────────────────────────────────────────
   const contextLabel = activeContextName
     ? activeContextName.length > 20 ? activeContextName.substring(0, 20) + '...' : activeContextName
     : activeContext
     ? `Contract (${activeContext.length} chars)`
     : null;
 
-  const containerStyle = inline ? {
-    flex: 1, display: 'flex', flexDirection: 'column', width: '100%', height: '100%',
-    background: 'var(--bg)', border: '1px solid var(--db-br)', borderRadius: 'var(--db-r)',
-    overflow: 'hidden',
-  } : {
-    position: 'fixed', right: 0, top: 0, bottom: 0, width: '400px', maxWidth: '100%',
-    background: 'var(--bg)', borderLeft: '1px solid var(--db-br)', zIndex: 1000,
-    display: 'flex', flexDirection: 'column',
-    boxShadow: '-10px 0 40px rgba(0,0,0,0.5)',
-    animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-  };
-
   return (
-    <>
-      {/* Backdrop (modal only) */}
-      {!inline && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }}
-          onClick={onClose}
+    <AnimatedAIChat
+      messages={messages}
+      input={input}
+      errorMessage={formError}
+      isLoading={isLoading}
+      suggestedQuestions={suggestedQuestions}
+      rateLimitCountdown={rateLimitCountdown}
+      activeContext={activeContext}
+      activeContextName={activeContextName}
+      contextLabel={contextLabel}
+      streamingText={streamingText}
+      onSendMessage={sendMessage}
+      onInputChange={handleInputChange}
+      onClearChat={clearChat}
+      onRemoveContext={() => {
+        setActiveContext(null);
+        setActiveContextName(null);
+      }}
+      onCopyMessage={copyMessage}
+      onKeyDown={handleKeyDown}
+      onClose={onClose}
+      inline={inline}
+    >
+      {rateLimitCountdown > 0 && (
+        <RateLimitBanner
+          retryAfter={rateLimitCountdown}
+          message="Rate limit reached. Try again in {seconds} seconds"
+          onCountdownComplete={() => setRateLimitCountdown(0)}
         />
       )}
-
-      {/* Main Panel */}
-      <div style={containerStyle} role="dialog" aria-label="AI Contract Assistant">
-
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid var(--db-br)', background: 'var(--db-s1)', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--db-acc-d)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🤖</div>
-            <div style={{ fontWeight: 600, color: 'var(--db-t1)', fontSize: 14 }}>AI Contract Assistant</div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {messages.length > 0 && (
-              <button
-                onClick={clearChat}
-                aria-label="Clear chat history"
-                style={{ background: 'transparent', border: 'none', color: 'var(--db-t3)', cursor: 'pointer', fontSize: 11 }}
-              >
-                Clear Chat
-              </button>
-            )}
-            {!inline && (
-              <button onClick={onClose} aria-label="Close AI panel" style={{ background: 'transparent', border: 'none', color: 'var(--db-t2)', cursor: 'pointer', fontSize: 20 }}>×</button>
-            )}
-          </div>
-        </div>
-
-        {/* Context Chip */}
-        {contextLabel && (
-          <div title={activeContextName || `Contract (${activeContext.length} chars)`} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '6px 16px', background: 'rgba(var(--db-acc-rgb, 52, 211, 153), 0.08)',
-            borderBottom: '1px solid var(--db-br)', gap: 8,
-          }}>
-            <span style={{ fontSize: 11, color: 'var(--db-acc)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span>📎</span> Context: {contextLabel}
-            </span>
-            <button
-              onClick={() => { setActiveContext(null); setActiveContextName(null); }}
-              aria-label="Remove contract context"
-              style={{ background: 'transparent', border: 'none', color: 'var(--db-t3)', cursor: 'pointer', fontSize: 11, padding: 0 }}
-            >
-              Remove
-            </button>
-          </div>
-        )}
-
-        {/* Content area */}
-        {!activeContext && !inline ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center', color: 'var(--db-t2)' }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>📄</div>
-            <h3 style={{ color: 'var(--db-t1)', margin: 0 }}>No Contract Generated</h3>
-            <p style={{ fontSize: 13, marginTop: 8, lineHeight: 1.6 }}>Generate a smart contract first — I can then analyze and explain it.</p>
-          </div>
-        ) : (
-          <>
-            {/* Messages */}
-            <div
-              role="log"
-              aria-live="polite"
-              aria-label="Chat messages"
-              style={{ flex: 1, overflowY: 'auto', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}
-            >
-              {messages.map((msg, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: msg.role === 'user' ? 'var(--db-s2)' : 'var(--db-acc-d)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
-                    {msg.role === 'user' ? '👤' : '🤖'}
-                  </div>
-                  <div style={{ maxWidth: '85%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                        {msg.role === 'user' && <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--db-t2)' }}>You</div>}
-                        {msg.role === 'assistant' && <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--db-acc)' }}>AutoCon AI</div>}
-                        {msg.timestamp && (
-                           <span style={{ fontSize: '9px', color: 'var(--db-t3)' }}>
-                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                           </span>
-                        )}
-                    </div>
-                    <div style={{
-                      color: 'var(--db-t1)', fontSize: '13px', lineHeight: '1.6',
-                      whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                      background: msg.role === 'user' ? 'var(--db-s2)' : 'transparent',
-                      padding: msg.role === 'user' ? '10px 14px' : '0',
-                      borderRadius: msg.role === 'user' ? '12px 4px 12px 12px' : '0',
-                    }}>
-                      {msg.role === 'assistant'
-                        ? <div dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }} />
-                        : msg.content}
-                    </div>
-
-                    {/* Confidence footer + Copy — assistant only */}
-                    {msg.role === 'assistant' && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
-                        <span style={{ fontSize: '10px', color: 'var(--db-t3)', fontStyle: 'italic' }}>
-                          Generated by AI · Verify critical details
-                        </span>
-                        <button
-                          onClick={() => copyMessage(msg.content, i)}
-                          aria-label="Copy AI response"
-                          style={{
-                            background: 'transparent', border: '1px solid var(--db-br)',
-                            color: copiedIdx === i ? 'var(--db-acc)' : 'var(--db-t3)',
-                            cursor: 'pointer', fontSize: 10, padding: '2px 8px', borderRadius: 50,
-                            transition: 'color 0.2s',
-                          }}
-                        >
-                          {copiedIdx === i ? '✓ Copied' : '⎘ Copy'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {/* Streaming preview */}
-              {streamingText && (
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--db-acc-d)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>🤖</div>
-                  <div style={{ flex: 1, maxWidth: '85%' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--db-acc)', marginBottom: 4 }}>AutoCon AI</div>
-                    <div
-                      style={{ color: 'var(--db-t1)', fontSize: '13px', lineHeight: '1.6', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-                      dangerouslySetInnerHTML={{ __html: renderContent(streamingText) }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Typing dots (while fetching, before streaming starts) */}
-              {isLoading && !streamingText && (
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--db-acc-d)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>🤖</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <div style={{ fontSize: 10, color: 'var(--db-t3)', marginBottom: 4 }}>AI is thinking…</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      {[0, 0.2, 0.4].map((delay, idx) => (
-                        <div key={idx} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--db-acc)', animation: `net-pulse 1.4s ease ${delay}s infinite` }} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Rate limit banner */}
-            {rateLimitMsg && (
-              <div style={{ padding: '8px 16px', background: 'rgba(251,191,36,0.1)', borderTop: '1px solid rgba(251,191,36,0.25)', color: '#fbbf24', fontSize: 12 }}>
-                ⏳ {rateLimitMsg}
-              </div>
-            )}
-
-            {/* Input area */}
-            <div style={{ padding: '14px 16px', background: 'var(--db-s1)', borderTop: '1px solid var(--db-br)' }}>
-              {/* Suggestions */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                {suggestedQuestions.map(s => (
-                  <button
-                    key={s}
-                    onClick={() => sendMessage(s)}
-                    disabled={isLoading}
-                    aria-label={`Quick prompt: ${s}`}
-                    style={{ background: 'var(--bg)', border: '1px solid var(--db-br)', color: 'var(--db-t2)', padding: '4px 10px', fontSize: '11px', borderRadius: '50px', cursor: isLoading ? 'default' : 'pointer', opacity: isLoading ? 0.5 : 1 }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-
-              {/* Text + Send */}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={isLoading ? 'AI is responding…' : rateLimitCountdown > 0 ? `Wait ${rateLimitCountdown}s...` : 'Ask about your contract… (Enter to send, Shift+Enter for new line)'}
-                  disabled={(!activeContext && !inline) || isLoading || rateLimitCountdown > 0}
-                  aria-label="Chat input"
-                  style={{
-                    flex: 1, background: 'var(--bg)', border: '1px solid var(--db-br)', color: 'var(--db-t1)',
-                    fontSize: '13px', padding: '10px 14px', borderRadius: '8px', outline: 'none',
-                    resize: 'none', minHeight: '40px',
-                    opacity: isLoading ? 0.6 : 1,
-                  }}
-                  rows={1}
-                />
-                <button
-                  onClick={() => sendMessage()}
-                  disabled={!input.trim() || (!activeContext && !inline) || isLoading || rateLimitCountdown > 0}
-                  aria-label="Send message"
-                  style={{
-                    width: 40, height: 40, borderRadius: '8px',
-                    background: input.trim() && !isLoading && rateLimitCountdown <= 0 ? 'var(--db-acc)' : 'var(--db-s2)',
-                    color: input.trim() && !isLoading && rateLimitCountdown <= 0 ? 'var(--text-primary)' : 'var(--db-t3)',
-                    border: 'none',
-                    cursor: input.trim() && !isLoading ? 'pointer' : 'default',
-                    fontSize: 16,
-                    transition: 'background 0.2s, color 0.2s',
-                  }}
-                >
-                  ➤
-                </button>
-              </div>
-              <p style={{ fontSize: 10, color: 'var(--db-t3)', marginTop: 8, marginBottom: 0 }}>
-                Shift+Enter for new line · Enter to send
-              </p>
-            </div>
-          </>
-        )}
-      </div>
-
-      <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(100%); }
-          to   { transform: translateX(0);    }
-        }
-      `}</style>
-    </>
+    </AnimatedAIChat>
   );
 }

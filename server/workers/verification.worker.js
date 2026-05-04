@@ -60,12 +60,81 @@ async function ensureDbConnected() {
 
 // ─── Core Processing Logic ────────────────────────────────────────────────────
 
+const fs = require('fs');
+
+/**
+ * Recursively resolves Solidity imports to build a Standard JSON Input
+ */
+function buildStandardJsonInput(sourceCode) {
+    const sources = {
+        'contract.sol': { content: sourceCode }
+    };
+    
+    const queue = [{ content: sourceCode, basePath: '' }];
+    const importRegex = /import\s+(?:{[^}]+}\s+from\s+)?["']([^"']+)["']/g;
+    
+    while (queue.length > 0) {
+        const item = queue.shift();
+        let match;
+        importRegex.lastIndex = 0;
+        
+        while ((match = importRegex.exec(item.content)) !== null) {
+            const importPath = match[1];
+            
+            let normalizedPath;
+            if (importPath.startsWith('@openzeppelin/')) {
+                normalizedPath = importPath;
+            } else if (item.basePath.startsWith('@openzeppelin/')) {
+                const dir = path.dirname(item.basePath);
+                normalizedPath = path.posix.normalize(dir + '/' + importPath);
+            } else {
+                continue;
+            }
+            
+            if (!sources[normalizedPath]) {
+                try {
+                    const actualPath = require.resolve(normalizedPath, { paths: [path.join(__dirname, '..')] });
+                    const fileContent = fs.readFileSync(actualPath, 'utf8');
+                    sources[normalizedPath] = { content: fileContent };
+                    queue.push({ content: fileContent, basePath: normalizedPath });
+                } catch (e) {
+                    console.error('[VerificationWorker] Failed to resolve dependency:', normalizedPath, e.message);
+                }
+            }
+        }
+    }
+
+    const standardJson = {
+        language: "Solidity",
+        sources: sources,
+        settings: {
+            optimizer: {
+                enabled: true,
+                runs: 200
+            },
+            outputSelection: {
+                "*": {
+                    "*": [
+                        "evm.bytecode",
+                        "evm.deployedBytecode",
+                        "abi"
+                    ]
+                }
+            }
+        }
+    };
+    
+    return JSON.stringify(standardJson);
+}
+
 /**
  * Submits source code to Etherscan V2 for verification.
  * @returns {string} GUID returned by Etherscan for polling
  */
 async function submitToEtherscan(payload) {
-    const { contractAddress, sourceCode, contractName, compilerVersion, network, constructorArguements } = payload;
+    // Accept both spellings: correct 'constructorArguments' and legacy typo 'constructorArguements'
+    const { contractAddress, sourceCode, contractName, compilerVersion, network } = payload;
+    const constructorArgs = payload.constructorArguments ?? payload.constructorArguements;
 
     const apiKey  = process.env.ETHERSCAN_API_KEY;
     const chainId = CHAIN_IDS[network?.toLowerCase()];
@@ -73,22 +142,27 @@ async function submitToEtherscan(payload) {
     if (!chainId) throw new Error(`Unsupported network: "${network}"`);
     if (!apiKey)  throw new Error('ETHERSCAN_API_KEY not configured');
 
+    const standardJsonCode = buildStandardJsonInput(sourceCode);
+
     const params = new URLSearchParams();
     params.append('apikey',          apiKey);
     params.append('module',          'contract');
     params.append('action',          'verifysourcecode');
     params.append('contractaddress', contractAddress);
-    params.append('sourceCode',      sourceCode);
-    params.append('codeformat',      'solidity-single-file');
-    params.append('contractname',    contractName);
+    params.append('sourceCode',      standardJsonCode);
+    params.append('codeformat',      'solidity-standard-json-input');
+    params.append('contractname',    `contract.sol:${contractName}`);
     params.append('compilerversion', compilerVersion);
+
+    // Etherscan standard JSON ignores optimization/runs params directly, but keeping them doesn't hurt.
     params.append('optimizationUsed', '1');
     params.append('runs',            '200');
 
-    if (constructorArguements) {
-        const clean = constructorArguements.startsWith('0x')
-            ? constructorArguements.slice(2)
-            : constructorArguements;
+    if (constructorArgs) {
+        const clean = constructorArgs.startsWith('0x')
+            ? constructorArgs.slice(2)
+            : constructorArgs;
+        // Etherscan API uses 'constructorArguements' (their own spelling) in form params
         params.append('constructorArguements', clean);
     }
 

@@ -39,13 +39,13 @@
   --text-dark-muted:     hsl(0 0% 40%);
 
   /* ── Accent — Orange (Web3 brand) ── */
-  --primary:          hsl(14 100% 50%);
+  --primary:          hsl(25 100% 50%);
   --accent:           var(--primary);
-  --primary-hover:    hsl(14 100% 43%);
+  --primary-hover:    hsl(25 100% 42%);
   --accent-hover:     var(--primary-hover);
-  --primary-subtle:   hsla(14, 100%, 50%, 0.10);
-  --primary-muted:    hsla(14, 100%, 50%, 0.18);
-  --primary-glow:     0 0 0 3px hsla(14, 100%, 50%, 0.20);
+  --primary-subtle:   hsla(25, 100%, 50%, 0.10);
+  --primary-muted:    hsla(25, 100%, 50%, 0.18);
+  --primary-glow:     0 0 0 3px hsla(25, 100%, 50%, 0.20);
 
   /* ── Borders ── */
   --outline:          hsl(0 0% 22%);
@@ -521,3 +521,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 /* Section base padding */
 .landing-section { padding: clamp(64px, 10vw, 120px) 0; }
+
+.lab-bg::before {
+  overflow: hidden;
+  max-width: 100vw;
+  max-height: 100vh;
+  box-sizing: border-box;
+}

@@ -14,12 +14,14 @@ export const useNFT = () => {
     const { network } = useNetwork();
     const location = useLocation();
     const prefill = location.state?.prefill || {};
-    const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
         name: prefill.name || '', symbol: prefill.symbol || '',
         maxSupply: prefill.maxSupply || '10000',
         baseURI: prefill.baseURI || '',
-        mintPrice: prefill.mintPrice ?? '0', ownerAddress: ''
-    });
+        mintPrice: prefill.mintPrice ?? '0', ownerAddress: '',
+        decimals: '0', duration: '', isRevealed: false,
+        isBurnable: false, isEnumerable: false
+      });
     const { generatedCode, setGeneratedCode, isEditingEnabled, contractData, setContractData } = useContractStore();
     const { resetTransaction, setStatus, setTxHash, setConfirmed, setError, setNetwork, setStep, setErrorStep } = useTransactionStore();
     const txInFlight = useTransactionStore(selectIsDeploying);
@@ -165,14 +167,6 @@ export const useNFT = () => {
             const submittedHash = contract.deploymentTransaction()?.hash;
             if (submittedHash) setTxHash(submittedHash);
 
-            // Encode args for Etherscan Verification later
-            const abiCoder = new ethers.AbiCoder();
-            const encodedArgs = abiCoder.encode(
-                ["address", "uint256", "string", "uint256"], 
-                [formData.ownerAddress, formData.maxSupply, formData.baseURI || '', mintPriceWei]
-            );
-            setContractData({ constructorArgs: encodedArgs });
-
             setStep(2); // Broadcasting
             const deployToast = toast.loading(`Deploying NFT to ${network.name}...`);
 
@@ -186,7 +180,18 @@ export const useNFT = () => {
             toast.success(`NFT Collection deployed on ${network.name}! 🎉`, { id: deployToast });
             fireConfetti();
 
-            // Save to database
+            // Encode constructor arguments for storage and verification
+            const iface = new ethers.Interface(finalAbi);
+            const constructorArgsArr = [
+                formData.ownerAddress,
+                formData.maxSupply,
+                formData.baseURI || '',
+                mintPriceWei
+            ];
+            const encodedArgs = iface.encodeDeploy(constructorArgsArr);
+            const constructorArgsHex = encodedArgs.startsWith('0x') ? encodedArgs.slice(2) : encodedArgs;
+
+            // Save to database with source code artifacts
             try {
                 const saveRes = await authFetch('/api/nft/save', {
                     method: 'POST',
@@ -199,7 +204,10 @@ export const useNFT = () => {
                         maxSupply: parseInt(formData.maxSupply),
                         mintPrice: formData.mintPrice,
                         baseURI: formData.baseURI,
-                        abi: contractData.abi
+                        abi: contractData.abi,
+                        sourceCode: generatedCode,
+                        compilerVersion: 'v0.8.20+commit.a1b79de6',
+                        constructorArgs: constructorArgsHex
                     })
                 });
                 const saveData = await saveRes.json();
@@ -208,6 +216,35 @@ export const useNFT = () => {
                 }
             } catch (_error) {
                 toast.error("Failed to save to database.");
+            }
+
+            // Queue background verification job
+            try {
+                const verifyToast = toast.loading('Queuing verification job...');
+
+                const verifyRes = await authFetch('/api/jobs/create', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        type: 'verification',
+                        payload: {
+                            contractAddress: deployed,
+                            sourceCode: generatedCode,
+                            contractName: formData.name.replace(/\s+/g, '') || 'NFTCollection',
+                            compilerVersion: 'v0.8.20+commit.a1b79de6',
+                            network: network.name,
+                            constructorArgs: constructorArgsHex
+                        }
+                    })
+                });
+
+                const verifyData = await verifyRes.json();
+                if (verifyData.success) {
+                    toast.success("Verification job queued! ✅", { id: verifyToast });
+                } else {
+                    toast.error("Verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
+                }
+            } catch {
+                toast.error("Failed to queue verification.");
             }
 
 

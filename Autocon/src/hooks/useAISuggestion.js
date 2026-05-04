@@ -5,10 +5,15 @@ import { useAuth } from '../context/AuthContext';
 export function useAISuggestion() {
   const { authFetch } = useAuth();
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestions, setSuggestions] = useState(null);
+  const [reasoning, setReasoning] = useState('');
 
-  const generateSuggestions = async (contractType, setFormData, intent = '') => {
+  const generateSuggestions = async (contractType, setFormData, intent = '', suppressToast = false) => {
     setIsSuggesting(true);
-    const toastId = toast.loading('🧠 AI is brainstorming parameters...');
+    setSuggestions(null);
+    setReasoning('');
+    
+    const toastId = suppressToast ? null : toast.loading('🧠 AI is brainstorming parameters...');
 
     try {
       const res = await authFetch('/api/ai/suggest', {
@@ -20,17 +25,25 @@ export function useAISuggestion() {
 
       if (data.success && data.data && data.data.suggestions) {
         setFormData(prev => ({ ...prev, ...data.data.suggestions }));
-        toast.success(`AI: ${data.data.reasoning}`, { id: toastId, duration: 5000 });
+        setSuggestions(data.data.suggestions);
+        setReasoning(data.data.reasoning || '');
       } else {
-        toast.error(data.message || data.error || 'Failed to generate suggestions.', { id: toastId });
+        toast.error(data.message || data.error || 'Failed to generate suggestions.', { id: toastId, duration: 3000 });
       }
     } catch (error) {
       console.error('AI Suggestion Error:', error);
-      toast.error('Network error. Failed to reach AI.', { id: toastId });
+      if (!suppressToast) {
+        toast.error('Network error. Failed to reach AI.', { id: toastId, duration: 3000 });
+      }
     } finally {
       setIsSuggesting(false);
     }
   };
 
-  return { isSuggesting, generateSuggestions };
+  const clearSuggestions = () => {
+    setSuggestions(null);
+    setReasoning('');
+  };
+
+  return { isSuggesting, generateSuggestions, suggestions, reasoning, clearSuggestions };
 }

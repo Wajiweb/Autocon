@@ -17,13 +17,150 @@ const { incrementDeployments } = require('../services/usageService');
 
 /** POST /api/auction/generate */
 const generateAuction = asyncHandler(async (req, res) => {
-    const { name, itemName, itemDescription, duration, minimumBid, ownerAddress } = req.body;
+    const {
+        name, itemName = '', itemDescription = '',
+        duration = 3600, minimumBid = '0.01', ownerAddress,
+        reservePrice = '', hasExtension = false, hasAntiSnipe = false,
+    } = req.body;
 
-    const safeName     = sanitize(name || '');
+    const safeName = sanitize(name || '');
+    const className = toClassName(safeName, 'AuctionContract');
 
-    const className  = toClassName(safeName, 'AuctionContract');
-    let contractCode = readTemplate('EnglishAuctionTemplate.txt');
-    const finalCode  = contractCode.replace(/{{CONTRACT_NAME}}/g, className);
+    // ── Optional reserve price state + check ──────────────────────────────────
+    const reserveState = reservePrice && parseFloat(reservePrice) > 0
+        ? `    uint256 public reservePrice;\n`
+        : '';
+    const reserveConstructor = reservePrice && parseFloat(reservePrice) > 0
+        ? `        reservePrice = ${reservePrice} ether;\n`
+        : '';
+    const reserveCheck = reservePrice && parseFloat(reservePrice) > 0
+        ? `        require(highestBid >= reservePrice, "Reserve price not met");\n`
+        : '';
+
+    // ── Anti-snipe: extend auction on bids placed in last 5 minutes ───────────
+    const antiSnipeBid = hasAntiSnipe
+        ? `
+        // Anti-snipe: extend auction if bid placed in last 5 minutes
+        if (auctionEndTime - block.timestamp < 300) {
+            auctionEndTime += 300;
+            emit AuctionExtended(auctionEndTime);
+        }`
+        : '';
+    const antiSnipeEvent = hasAntiSnipe
+        ? `    event AuctionExtended(uint256 newEndTime);\n`
+        : '';
+
+    // ── extendAuction: only include if hasExtension or hasAntiSnipe ───────────
+    const extendFn = (hasExtension || hasAntiSnipe) ? `
+    /// @notice Extend auction time (owner only)
+    function extendAuction(uint256 _extraTime) public onlyOwner {
+        require(!ended, "Auction already ended");
+        auctionEndTime += _extraTime;
+    }
+` : '';
+
+    const finalCode = `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract ${className} is Ownable {
+    // Auction Parameters
+    address public beneficiary;
+    uint256 public auctionEndTime;
+    string public itemName;
+    string public itemDescription;
+${reserveState}
+    // Current State
+    address public highestBidder;
+    uint256 public highestBid;
+    uint256 public minimumBid;
+    bool public ended;
+
+    // Track pending returns for outbid bidders
+    mapping(address => uint256) public pendingReturns;
+
+    // Events
+    event HighestBidIncreased(address indexed bidder, uint256 amount);
+    event AuctionEnded(address indexed winner, uint256 amount);
+    event BidWithdrawn(address indexed bidder, uint256 amount);
+${antiSnipeEvent}
+    constructor(
+        address initialOwner,
+        uint256 _biddingTime,
+        uint256 _minimumBid,
+        string memory _itemName,
+        string memory _itemDescription
+    )
+        Ownable(initialOwner)
+    {
+        beneficiary = initialOwner;
+        auctionEndTime = block.timestamp + _biddingTime;
+        minimumBid = _minimumBid;
+        itemName = _itemName;
+        itemDescription = _itemDescription;
+${reserveConstructor}    }
+
+    /// @notice Place a bid on the auction
+    function bid() public payable {
+        require(block.timestamp < auctionEndTime, "Auction already ended");
+        require(msg.value >= minimumBid, "Bid below minimum");
+        require(msg.value > highestBid, "There already is a higher bid");
+
+        if (highestBid != 0) {
+            pendingReturns[highestBidder] += highestBid;
+        }
+
+        highestBidder = msg.sender;
+        highestBid = msg.value;
+        emit HighestBidIncreased(msg.sender, msg.value);${antiSnipeBid}
+    }
+
+    /// @notice Withdraw a bid that was outbid
+    function withdraw() public returns (bool) {
+        uint256 amount = pendingReturns[msg.sender];
+        require(amount > 0, "No funds to withdraw");
+
+        pendingReturns[msg.sender] = 0;
+
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        require(success, "Transfer failed");
+
+        emit BidWithdrawn(msg.sender, amount);
+        return true;
+    }
+
+    /// @notice End the auction and send the highest bid to the beneficiary
+    function endAuction() public {
+        require(block.timestamp >= auctionEndTime, "Auction not yet ended");
+        require(!ended, "endAuction already called");
+${reserveCheck}
+        ended = true;
+        emit AuctionEnded(highestBidder, highestBid);
+
+        (bool success, ) = payable(beneficiary).call{value: highestBid}("");
+        require(success, "Transfer to beneficiary failed");
+    }
+
+    /// @notice Get the remaining time in seconds
+    function timeLeft() public view returns (uint256) {
+        if (block.timestamp >= auctionEndTime) return 0;
+        return auctionEndTime - block.timestamp;
+    }
+${extendFn}
+    /// @notice Get auction info
+    function getAuctionInfo() public view returns (
+        string memory _itemName,
+        string memory _itemDescription,
+        address _highestBidder,
+        uint256 _highestBid,
+        uint256 _timeLeft,
+        bool _ended
+    ) {
+        return (itemName, itemDescription, highestBidder, highestBid, timeLeft(), ended);
+    }
+}
+`;
 
     const { abi, bytecode } = compileContract(finalCode, 'Auction.sol', className);
 
@@ -32,7 +169,7 @@ const generateAuction = asyncHandler(async (req, res) => {
 
 /** POST /api/auction/save */
 const saveAuction = asyncHandler(async (req, res) => {
-    const { name, itemName, itemDescription, contractAddress, ownerAddress, network, duration, minimumBid } = req.body;
+    const { name, itemName, itemDescription, contractAddress, ownerAddress, network, duration, minimumBid, sourceCode, compilerVersion, constructorArgs } = req.body;
 
     if (req.user.walletAddress !== ownerAddress.toLowerCase()) {
         throw new AppError('You can only save your own auctions.', 403, 'FORBIDDEN');
@@ -43,6 +180,9 @@ const saveAuction = asyncHandler(async (req, res) => {
         ownerAddress: ownerAddress.toLowerCase(),
         network: network || 'Sepolia',
         duration, minimumBid,
+        sourceCode: sourceCode || '',
+        compilerVersion: compilerVersion || 'v0.8.20+commit.a1b79de6',
+        constructorArgs: constructorArgs || '',
     });
     await newAuction.save();
 

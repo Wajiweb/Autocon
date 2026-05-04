@@ -9,14 +9,15 @@ const express = require('express');
 const router  = express.Router();
 const { authMiddleware }    = require('../middleware/auth');
 const { strictLimiter }     = require('../middleware/rateLimiter');
-const { validate, schemas } = require('../middleware/validationSchemas');
+const { validateRequest } = require('../middleware/validateRequest');
+const { schemas } = require('../middleware/validationSchemas');
 const { chat }              = require('../controllers/chat.controller');
 
 /** POST /api/chat — AI-powered contract Q&A */
 router.post('/',
     strictLimiter,
     authMiddleware,
-    validate(schemas.chatMessage),
+    validateRequest(schemas.chatMessage),
     chat
 );
 

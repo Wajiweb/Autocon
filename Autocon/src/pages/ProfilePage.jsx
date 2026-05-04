@@ -24,17 +24,20 @@ export default function ProfilePage() {
       try {
         const r = await authFetch(`/api/token/my-tokens/${user.walletAddress}`);
         const d = await r.json();
-        if (d.success && d.tokens) d.tokens.forEach(t => all.push({ ...t, _type: 'ERC-20' }));
+        const tokens = d.success ? (d.data?.tokens ?? d.tokens) : null;
+        if (tokens) tokens.forEach(t => all.push({ ...t, _type: 'ERC-20' }));
       } catch (_) {}
       try {
         const r = await authFetch(`/api/nft/my-nfts/${user.walletAddress}`);
         const d = await r.json();
-        if (d.success && d.nfts) d.nfts.forEach(t => all.push({ ...t, _type: 'ERC-721' }));
+        const nfts = d.success ? (d.data?.nfts ?? d.nfts) : null;
+        if (nfts) nfts.forEach(t => all.push({ ...t, _type: 'ERC-721' }));
       } catch (_) {}
       try {
         const r = await authFetch(`/api/auction/my-auctions/${user.walletAddress}`);
         const d = await r.json();
-        if (d.success && d.auctions) d.auctions.forEach(t => all.push({ ...t, _type: 'Auction' }));
+        const auctions = d.success ? (d.data?.auctions ?? d.auctions) : null;
+        if (auctions) auctions.forEach(t => all.push({ ...t, _type: 'Auction' }));
       } catch (_) {}
       all.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setDeployments(all);

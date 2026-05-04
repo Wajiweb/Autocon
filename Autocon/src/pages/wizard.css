@@ -1,0 +1,418 @@
+/* ═══════════════════════════════════════════════════
+   AutoCon Contract Wizard — Styles
+   Multi-step guided contract generation flow
+═══════════════════════════════════════════════════ */
+
+/* ── Wrapper ─────────────────────────────────────── */
+.wz-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 0 60px;
+  font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+/* ── Page Header ─────────────────────────────────── */
+.wz-header { margin-bottom: 32px; }
+.wz-header-title {
+  font-size: 28px; font-weight: 700;
+  letter-spacing: -.7px; color: var(--text-primary); margin-bottom: 6px;
+}
+.wz-header-title em { color: var(--primary); font-style: normal; }
+.wz-header-sub { font-size: 13px; color: var(--text-secondary); }
+
+/* ── Stepper ─────────────────────────────────────── */
+.wz-stepper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 36px;
+  position: relative;
+}
+.wz-step {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+.wz-step:last-child { flex: none; }
+.wz-step-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+.wz-step-circle {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border-dark);
+  background: var(--card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  color: var(--text-muted);
+  transition: all .25s ease;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.wz-step.done .wz-step-circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.wz-step.active .wz-step-circle {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 4px hsla(14,100%,50%,.15);
+}
+.wz-step-label {
+  font-size: 10px; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--text-muted);
+  white-space: nowrap;
+  transition: color .2s;
+}
+.wz-step.active .wz-step-label { color: var(--primary); }
+.wz-step.done .wz-step-label  { color: var(--text-secondary); }
+
+/* connector line */
+.wz-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--border-dark);
+  margin: 0 8px;
+  margin-bottom: 22px;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.wz-connector-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: width .35s ease;
+}
+
+/* ── Slide container ─────────────────────────────── */
+.wz-stage {
+  position: relative;
+  overflow: hidden;
+}
+.wz-panel {
+  animation: wz-slideIn .3s cubic-bezier(.25,.8,.25,1) both;
+}
+.wz-panel.exit {
+  animation: wz-slideOut .25s cubic-bezier(.25,.8,.25,1) both;
+}
+
+@keyframes wz-slideIn {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes wz-slideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-24px); }
+}
+.wz-panel.reverse {
+  animation: wz-slideInRev .3s cubic-bezier(.25,.8,.25,1) both;
+}
+@keyframes wz-slideInRev {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Card shell ──────────────────────────────────── */
+.wz-card {
+  background: linear-gradient(145deg, var(--card), var(--card-elevated));
+  border: .5px solid var(--border-dark);
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.25);
+}
+.wz-card-title {
+  font-size: 18px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 4px; letter-spacing: -.3px;
+}
+.wz-card-sub {
+  font-size: 13px; color: var(--text-secondary);
+  margin-bottom: 28px; line-height: 1.5;
+}
+
+/* ── Step 1 — Type Selector ──────────────────────── */
+.wz-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.wz-type-card {
+  border: 1.5px solid var(--border-dark);
+  border-radius: 14px;
+  padding: 22px 18px;
+  cursor: pointer;
+  transition: all .2s ease;
+  background: var(--card);
+  text-align: center;
+}
+.wz-type-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+}
+.wz-type-card.selected {
+  border-color: var(--primary);
+  background: hsla(14,100%,50%,.06);
+  box-shadow: 0 0 0 3px hsla(14,100%,50%,.12), 0 8px 24px rgba(0,0,0,.2);
+}
+.wz-type-icon {
+  font-size: 32px; margin-bottom: 12px;
+  display: block;
+}
+.wz-type-name {
+  font-size: 15px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 6px;
+}
+.wz-type-desc {
+  font-size: 11px; color: var(--text-muted); line-height: 1.5;
+}
+.wz-type-tag {
+  display: inline-block; margin-top: 10px;
+  font-size: 10px; font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--primary);
+  background: hsla(14,100%,50%,.1);
+  border: .5px solid hsla(14,100%,50%,.25);
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+
+/* ── Step 2 — Parameters ─────────────────────────── */
+.wz-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.wz-field-grid.full { grid-template-columns: 1fr; }
+.wz-field { display: flex; flex-direction: column; gap: 7px; }
+.wz-field.span2 { grid-column: span 2; }
+.wz-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.wz-label span { color: var(--primary); margin-left: 2px; }
+.wz-input {
+  width: 100%; background: var(--surface-elevated);
+  border: .5px solid var(--border-light);
+  border-radius: 10px; padding: 11px 14px;
+  font-size: 13px; color: var(--text-primary);
+  font-family: 'Outfit', sans-serif; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.wz-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px hsla(14,100%,50%,.12);
+}
+.wz-input.error { border-color: var(--error); }
+.wz-hint { font-size: 11px; color: var(--text-muted); }
+.wz-error-msg { font-size: 11px; color: var(--error); }
+
+/* Toggles section */
+.wz-toggles-title {
+  font-size: 12px; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--text-muted);
+  margin: 24px 0 14px;
+}
+.wz-toggle-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin-bottom: 22px;
+}
+.wz-toggle {
+  display: flex; align-items: center; gap: 10px;
+  border: .5px solid var(--border-dark);
+  border-radius: 10px; padding: 12px 14px;
+  cursor: pointer; transition: all .15s;
+  background: var(--card);
+}
+.wz-toggle:hover { border-color: var(--primary); background: hsla(14,100%,50%,.03); }
+.wz-toggle.on { border-color: var(--primary); background: hsla(14,100%,50%,.06); }
+.wz-toggle-knob {
+  width: 36px; height: 20px; border-radius: 10px;
+  background: var(--surface); border: .5px solid var(--border-dark);
+  position: relative; flex-shrink: 0; transition: background .15s;
+}
+.wz-toggle.on .wz-toggle-knob { background: var(--primary); border-color: var(--primary); }
+.wz-toggle-knob::after {
+  content: ''; position: absolute;
+  top: 3px; left: 3px;
+  width: 12px; height: 12px;
+  border-radius: 50%; background: #fff;
+  transition: transform .15s;
+}
+.wz-toggle.on .wz-toggle-knob::after { transform: translateX(16px); }
+.wz-toggle-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+
+/* ── Step 3 — Review ─────────────────────────────── */
+.wz-review-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+  margin-bottom: 22px;
+}
+.wz-review-item { display: flex; flex-direction: column; gap: 4px; }
+.wz-review-label {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--text-muted);
+}
+.wz-review-val {
+  font-size: 14px; font-weight: 600;
+  color: var(--text-primary); font-family: 'IBM Plex Mono', monospace;
+}
+.wz-feature-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 22px; }
+.wz-chip {
+  font-size: 11px; font-weight: 600;
+  padding: 4px 12px; border-radius: 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  background: hsla(14,100%,50%,.1);
+  color: var(--primary);
+  border: .5px solid hsla(14,100%,50%,.25);
+}
+.wz-code-preview {
+  background: var(--surface-elevated);
+  border: .5px solid var(--border-dark);
+  border-radius: 12px; padding: 18px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; line-height: 1.8;
+  color: #7dd3a8; max-height: 260px;
+  overflow-y: auto;
+  white-space: pre;
+  margin-bottom: 22px;
+}
+
+/* ── Step 4 — Deploy ─────────────────────────────── */
+.wz-wallet-banner {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface-elevated);
+  border: .5px solid var(--border-dark);
+  border-radius: 12px; padding: 16px 20px;
+  margin-bottom: 22px;
+}
+.wz-wallet-icon { font-size: 22px; }
+.wz-wallet-info { flex: 1; }
+.wz-wallet-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+.wz-wallet-addr {
+  font-size: 13px; font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text-primary);
+}
+.wz-wallet-connect {
+  font-size: 12px; font-weight: 600;
+  color: var(--primary); cursor: pointer;
+  background: hsla(14,100%,50%,.1);
+  border: .5px solid hsla(14,100%,50%,.3);
+  border-radius: 8px; padding: 8px 16px;
+  transition: all .15s;
+}
+.wz-wallet-connect:hover { background: hsla(14,100%,50%,.18); }
+
+/* Deploy status steps */
+.wz-deploy-steps { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+.wz-ds {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: .5px solid var(--border-dark);
+  background: var(--card);
+  transition: all .2s;
+}
+.wz-ds.active { border-color: var(--primary); background: hsla(14,100%,50%,.04); }
+.wz-ds.done   { border-color: rgba(34,197,94,.3); background: rgba(34,197,94,.04); }
+.wz-ds.error  { border-color: var(--error); background: rgba(220,38,38,.04); }
+.wz-ds-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; background: var(--surface); }
+.wz-ds.active .wz-ds-icon { background: hsla(14,100%,50%,.15); }
+.wz-ds.done   .wz-ds-icon { background: rgba(34,197,94,.15); }
+.wz-ds.error  .wz-ds-icon { background: rgba(220,38,38,.15); }
+.wz-ds-text { flex: 1; }
+.wz-ds-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.wz-ds-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.wz-ds-spin {
+  width: 18px; height: 18px;
+  border: 2px solid hsla(14,100%,50%,.2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: wz-spin .7s linear infinite;
+}
+@keyframes wz-spin { to { transform: rotate(360deg); } }
+
+/* Success panel */
+.wz-success {
+  text-align: center; padding: 32px 20px;
+  animation: wz-slideIn .4s ease both;
+}
+.wz-success-icon { font-size: 52px; margin-bottom: 16px; }
+.wz-success-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.wz-success-sub   { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; }
+.wz-success-addr {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; color: var(--primary);
+  background: hsla(14,100%,50%,.08);
+  border: .5px solid hsla(14,100%,50%,.2);
+  border-radius: 10px; padding: 10px 16px;
+  margin-bottom: 24px; word-break: break-all;
+}
+
+/* ── Nav Bar ─────────────────────────────────────── */
+.wz-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 28px; padding-top: 22px;
+  border-top: .5px solid var(--border-dark);
+}
+.wz-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 24px; border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer; transition: all .15s; border: none;
+}
+.wz-btn-primary { background: var(--primary); color: #fff; }
+.wz-btn-primary:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); }
+.wz-btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+.wz-btn-ghost {
+  background: transparent; color: var(--text-secondary);
+  border: .5px solid var(--border-dark) !important;
+}
+.wz-btn-ghost:hover { border-color: var(--primary) !important; color: var(--primary); background: hsla(14,100%,50%,.05); }
+.wz-btn-success { background: #16a34a; color: #fff; }
+.wz-btn-success:hover { background: #15803d; transform: translateY(-1px); }
+
+/* ── Network selector strip ──────────────────────── */
+.wz-net-strip {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 22px; flex-wrap: wrap;
+}
+.wz-net-opt {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 8px;
+  border: .5px solid var(--border-dark);
+  background: var(--card); cursor: pointer;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  transition: all .15s;
+}
+.wz-net-opt:hover { border-color: var(--primary); color: var(--primary); }
+.wz-net-opt.sel  { border-color: var(--primary); color: var(--primary); background: hsla(14,100%,50%,.07); }
+.wz-net-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ── Validation alert ─────────────────────────────── */
+.wz-alert {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: 10px; margin-bottom: 18px;
+  font-size: 12px; font-weight: 500;
+}
+.wz-alert.error { background: rgba(220,38,38,.08); border: .5px solid rgba(220,38,38,.25); color: #fca5a5; }
+.wz-alert.info  { background: hsla(14,100%,50%,.08); border: .5px solid hsla(14,100%,50%,.2); color: var(--primary); }
+
+@media (max-width: 680px) {
+  .wz-type-grid    { grid-template-columns: 1fr; }
+  .wz-field-grid   { grid-template-columns: 1fr; }
+  .wz-toggle-grid  { grid-template-columns: 1fr 1fr; }
+  .wz-review-grid  { grid-template-columns: 1fr; }
+  .wz-field.span2  { grid-column: span 1; }
+  .wz-card         { padding: 20px 18px; }
+  .wz-step-label   { display: none; }
+}

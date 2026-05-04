@@ -10,7 +10,8 @@ const NAV_GROUPS = [
     label: 'Contracts',
     items: [
       { label: 'Dashboard',        path: '/dashboard', icon: '◈' },
-      { label: 'Token Generator',  path: '/tokens',    icon: '⬡', badge: null },
+      { label: 'Create Contract',  path: '/create',    icon: '✦', badge: 'NEW' },
+      { label: 'Token Generator',  path: '/tokens',    icon: '⬡' },
       { label: 'NFT Generator',    path: '/nfts',      icon: '⬢' },
       { label: 'Auction Generator',path: '/auctions',  icon: '◉' },
       { label: 'Security Audit',   path: '/audit',     icon: '⚑' },

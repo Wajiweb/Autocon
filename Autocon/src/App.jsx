@@ -21,7 +21,9 @@ import ASTPage from './pages/ASTPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import JobsPage from './pages/JobsPage';
 import AIChatPage from './pages/AIChatPage';
+import ContractWizard from './pages/ContractWizard';
 import OnboardingTour from './components/dashboard/OnboardingTour';
+import { usePlatformSync } from './hooks/usePlatformSync';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -40,6 +42,7 @@ function AnimatedRoutes() {
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/jobs"      element={<JobsPage />} />
         <Route path="/ai-chat"   element={<AIChatPage />} />
+        <Route path="/create"    element={<ContractWizard />} />
       </Routes>
   );
 }
@@ -48,6 +51,8 @@ function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  usePlatformSync();
 
   if (isLoading) {
     return (

@@ -76,10 +76,14 @@ const schemas = {
         name:            name.required(),
         itemName:        name.required(),
         itemDescription: Joi.string().max(500).optional().allow(''),
-        duration:        Joi.number().integer().min(1).max(30).required()
-            .messages({ 'number.min': 'Duration must be at least 1 day', 'number.max': 'Duration cannot exceed 30 days' }),
+        // Duration is sent in seconds from the frontend (e.g. 3600 = 1 hour)
+        duration:        Joi.number().integer().min(60).max(2592000).required()
+            .messages({ 'number.min': 'Duration must be at least 1 minute (60 seconds)', 'number.max': 'Duration cannot exceed 30 days (2,592,000 seconds)' }),
         minimumBid:      Joi.string().pattern(/^\d+(\.\d+)?$/).required(),
         ownerAddress:    eth.address.required(),
+        reservePrice:    Joi.string().pattern(/^\d+(\.\d+)?$/).optional().allow(''),
+        hasExtension:    Joi.boolean().optional(),
+        hasAntiSnipe:    Joi.boolean().optional(),
     }),
 
     // ── Security Audit (legacy direct route) ─────────────────────────────────
@@ -100,7 +104,7 @@ const schemas = {
                 compilerVersion:      Joi.string().pattern(/^v\d+\.\d+\.\d+\+commit\.[a-f0-9]+$/).required()
                     .messages({ 'string.pattern.base': 'compilerVersion must be in format v0.8.20+commit.xxxxxxxx' }),
                 network:              eth.network.required(),
-                constructorArguements: Joi.string().optional().allow('', null),
+                constructorArguments: Joi.string().optional().allow('', null), // was: constructorArguements (typo)
             }).required(),
             otherwise: Joi.object({
                 contractCode:    eth.solidity.required(),
@@ -111,9 +115,22 @@ const schemas = {
 
     // ── AI Chat ───────────────────────────────────────────────────────────────
     chatMessage: Joi.object({
-        contractCode: eth.solidity.required(),
-        question: Joi.string().min(1).max(2000).trim().required(),
-    }),
+        mode: Joi.string().valid('chat', 'contract').optional(),
+        message: Joi.string().min(1).max(2000).trim().optional(),
+        question: Joi.string().min(1).max(2000).trim().optional(),
+        contract: Joi.string().min(1).max(500000).optional().allow('', null),
+        contractCode: Joi.string().min(1).max(500000).optional().allow('', null),
+        wallet: eth.address.optional().allow('', null),
+        chain: eth.network.optional().allow('', null),
+    })
+        .or('message', 'question')
+        .messages({ 'object.missing': 'Either message or question is required.' })
+        .custom((value, helpers) => {
+            if (value.mode === 'contract' && !value.contract && !value.contractCode) {
+                return helpers.message('Contract content is required when mode is contract.');
+            }
+            return value;
+        }, 'Contract mode validation'),
 
     // ── AI Assistant ──────────────────────────────────────────────────────────
     aiSuggest: Joi.object({
@@ -142,6 +159,9 @@ const schemas = {
         ownerAddress:    eth.address.required(),
         network:         eth.network.optional().default('sepolia'),
         abi:             Joi.array().optional(),
+        sourceCode:      Joi.string().optional().allow(''),
+        compilerVersion: Joi.string().optional().allow(''),
+        constructorArgs: Joi.string().optional().allow(''),
     }),
 
     saveNFT: Joi.object({
@@ -154,6 +174,9 @@ const schemas = {
         mintPrice:       Joi.string().pattern(/^\d+(\.\d+)?$/).optional(),
         baseURI:         Joi.string().optional().allow(''),
         abi:             Joi.array().optional(),
+        sourceCode:      Joi.string().optional().allow(''),
+        compilerVersion: Joi.string().optional().allow(''),
+        constructorArgs: Joi.string().optional().allow(''),
     }),
 
     saveAuction: Joi.object({
@@ -165,6 +188,9 @@ const schemas = {
         network:         eth.network.optional().default('sepolia'),
         duration:        Joi.number().integer().optional(),
         minimumBid:      Joi.string().pattern(/^\d+(\.\d+)?$/).optional(),
+        sourceCode:      Joi.string().optional().allow(''),
+        compilerVersion: Joi.string().optional().allow(''),
+        constructorArgs: Joi.string().optional().allow(''),
     }),
 
     // ── Etherscan Verification ────────────────────────────────────────────────
@@ -174,7 +200,7 @@ const schemas = {
         contractName:          name.required(),
         compilerVersion:       Joi.string().required(),
         network:               eth.network.required(),
-        constructorArguements: Joi.string().optional().allow('', null),
+        constructorArguments:  Joi.string().optional().allow('', null), // was: constructorArguements (typo)
     }),
 
     // ── Gas Estimation ────────────────────────────────────────────────────────
@@ -212,10 +238,28 @@ const schemas = {
  */
 function validate(schema, source = 'body') {
     return (req, res, next) => {
+        console.log('Incoming request:', {
+            method: req.method,
+            path: req.originalUrl,
+            body: req[source],
+        });
+
         const { error, value } = schema.validate(req[source], {
             abortEarly: false,      // Collect ALL errors, not just first
             stripUnknown: true,     // Remove unrecognized keys silently
             convert: true,          // Coerce types (e.g. "123" → 123)
+        });
+
+        const details = error
+            ? error.details.map(d => ({
+                field: d.path.join('.'),
+                message: d.message.replace(/['"]/g, ''),
+            }))
+            : [];
+
+        console.log('Validation result:', {
+            valid: !error,
+            details,
         });
 
         if (error) {
@@ -223,7 +267,15 @@ function validate(schema, source = 'body') {
             return next(error);
         }
 
-        req[source] = value;        // Replace with sanitized + coerced value
+        // In Express 5, req.query has only a getter, so normal assignment throws in strict mode.
+        // We must use Object.defineProperty to overwrite it.
+        Object.defineProperty(req, source, {
+            value: value,
+            writable: true,
+            enumerable: true,
+            configurable: true
+        });
+
         next();
     };
 }

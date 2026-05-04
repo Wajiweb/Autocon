@@ -163,8 +163,13 @@ export const hoverScale = {
 
 // ── Hover Lift (cards) ────────────────────────────────────────────────────
 export const hoverLift = {
-  whileHover: { y: -6, transition: { duration: 0.25, ease: 'easeOut' } },
-  whileTap:   { scale: 0.98 },
+  initial: { y: 0, scale: 1 },
+  whileHover: { 
+    y: -10, 
+    scale: 1.03, 
+    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } 
+  },
+  whileTap:   { scale: 0.97 },
 };
 
 // ── Navbar Slide Down ────────────────────────────────────────────────────

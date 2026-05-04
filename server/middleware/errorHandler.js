@@ -43,7 +43,13 @@ class AppError extends Error {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function buildErrorResponse(code, message, details = null) {
-    return { success: false, code, message, details };
+    return {
+        success: false,
+        code,
+        message,
+        error: message,
+        details,
+    };
 }
 
 // ─── Centralized Error Middleware ─────────────────────────────────────────────
@@ -125,11 +131,25 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
         ));
     }
 
-    // ── Circuit Breaker / Service Unavailable ──────────────────────────
-    if (err.code === 'IPFS_CIRCUIT_OPEN' || err.code === 'IPFS_UPLOAD_FAILED' || err.code === 'AI_UNAVAILABLE') {
-        return res.status(503).json(buildErrorResponse(
-            'SERVICE_UNAVAILABLE',
-            err.message,
+    // ── Rate Limit Exceeded ───────────────────────────────────────────────────
+    if (err.status === 429 || res.statusCode === 429) {
+        // Log rate limit events for monitoring
+        console.log(JSON.stringify({
+            level: 'WARN',
+            event: 'rate_limit_exceeded',
+            timestamp: new Date().toISOString(),
+            method: req.method,
+            path: req.originalUrl,
+            userId: req.user?.id || 'anonymous',
+            wallet: req.user?.wallet || req.body?.wallet,
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            retryAfter: res.get('Retry-After') || 'unknown',
+        }));
+
+        return res.status(429).json(buildErrorResponse(
+            'RATE_LIMIT_EXCEEDED',
+            'Rate limit exceeded. Please try again later.',
             null
         ));
     }

@@ -8,6 +8,7 @@ import { ArrowRight, Zap } from 'lucide-react';
 import Container from '../layout/Container';
 import Button from '../ui/Button';
 import { fadeUp, staggerContainer, floatYSlow, viewportConfig } from '../../lib/motionVariants';
+import SectionGlow from '../landingpage/SectionGlow';
 
 export default function CTA({ onGetStarted }) {
   return (
@@ -23,6 +24,7 @@ export default function CTA({ onGetStarted }) {
         borderBottom: '1px solid var(--lp-border-subtle)',
       }}
     >
+      <SectionGlow position="both" intensity="medium" size="lg" variations={{ leftTop: '30%', rightTop: '50%' }} />
       {/* Background glow mesh */}
       <motion.div
         variants={floatYSlow}
@@ -53,37 +55,33 @@ export default function CTA({ onGetStarted }) {
         }}
       />
 
-      {/* Floating orbs */}
-      <motion.div
-        animate={{ x: [0, 20, 0], y: [0, -30, 0], opacity: [0.4, 0.7, 0.4] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+      {/* Static glow accents */}
+      <div
         aria-hidden="true"
         style={{
           position:     'absolute',
-          width:        '300px',
-          height:       '300px',
+          width:        '200px',
+          height:       '200px',
           borderRadius: '50%',
-          background:   'radial-gradient(circle, hsla(14,100%,50%,0.2) 0%, transparent 70%)',
-          top:          '-80px',
-          left:         '10%',
+          background:   'radial-gradient(circle, hsla(14,100%,50%,0.12) 0%, transparent 70%)',
+          top:          '-50px',
+          left:         '15%',
           pointerEvents:'none',
-          willChange:   'transform',
+          filter:       'blur(12px)',
         }}
       />
-      <motion.div
-        animate={{ x: [0, -20, 0], y: [0, 30, 0], opacity: [0.3, 0.6, 0.3] }}
-        transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+      <div
         aria-hidden="true"
         style={{
           position:     'absolute',
-          width:        '250px',
-          height:       '250px',
+          width:        '180px',
+          height:       '180px',
           borderRadius: '50%',
-          background:   'radial-gradient(circle, hsla(260,80%,65%,0.15) 0%, transparent 70%)',
-          bottom:       '-60px',
-          right:        '10%',
+          background:   'radial-gradient(circle, hsla(260,80%,65%,0.1) 0%, transparent 70%)',
+          bottom:       '-40px',
+          right:        '15%',
           pointerEvents:'none',
-          willChange:   'transform',
+          filter:       'blur(10px)',
         }}
       />
 

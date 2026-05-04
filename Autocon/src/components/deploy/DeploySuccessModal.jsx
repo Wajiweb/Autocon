@@ -37,37 +37,38 @@ export default function DeploySuccessModal({
   const [verifyState, setVerifyState] = useState('idle'); // idle, submitting, polling, verified, error
   const { downloadABI } = useABIExport();
 
-  const pollVerificationStatus = async (net, guid) => {
-    const maxAttempts = 20; // 20 * 4s = 80s timeout
+  const pollVerificationStatus = async (jobId) => {
+    const maxAttempts = 30; // 30 * 4s = 120s timeout
     let attempts = 0;
     const token = localStorage.getItem('autocon_token');
 
     const poll = setInterval(async () => {
       attempts++;
       try {
-        const res = await fetch(`${API_BASE}/api/verify/status/${encodeURIComponent(net)}/${guid}`, {
+        const res = await fetch(`${API_BASE}/api/jobs/${jobId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const data = await res.json();
+        const json = await res.json();
+        
+        if (!json.success || !json.data) return;
+        const job = json.data;
 
-        if (data.isVerified) {
+        if (job.status === 'completed') {
           clearInterval(poll);
           setVerifyState('verified');
           toast.success('Contract Verified on Explorer! 🛡️');
-        } else if (!data.isPending) {
-          // If it's not pending and not verified, it failed
+        } else if (job.status === 'failed') {
           clearInterval(poll);
           setVerifyState('error');
-          toast.error(data.status || 'Verification failed on Etherscan.');
+          toast.error(job.error || 'Verification failed on Etherscan.');
         }
 
         if (attempts >= maxAttempts) {
           clearInterval(poll);
           setVerifyState('error');
-          toast.error('Verification status check timed out. Please check the explorer manually.');
+          toast.error('Verification status check timed out. Check Activity Monitor.');
         }
       } catch (err) {
-        // Ignore intermittent network errors during polling
         console.error('Polling error:', err);
       }
     }, 4000);
@@ -94,25 +95,28 @@ export default function DeploySuccessModal({
       setVerifyState('submitting');
       const token = localStorage.getItem('autocon_token');
 
-      const res = await fetch(`${API_BASE}/api/verify`, {
+      const res = await fetch(`${API_BASE}/api/jobs/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          contractAddress: address,
-          sourceCode,
-          contractName,
-          compilerVersion,
-          network,
-          constructorArguements: constructorArgs,
+          type: 'verification',
+          payload: {
+            contractAddress: address,
+            sourceCode,
+            contractName,
+            compilerVersion,
+            network,
+            constructorArguments: constructorArgs,
+          }
         }),
       });
       const data = await res.json();
 
-      if (!data.success) throw new Error(data.error || 'Failed to submit verification request.');
+      if (!data.success || !data.jobId) throw new Error(data.error || 'Failed to submit verification request.');
 
       // Switch to polling UI and start interval
       setVerifyState('polling');
-      pollVerificationStatus(network, data.guid);
+      pollVerificationStatus(data.jobId);
 
     } catch (err) {
       console.error('[DeploySuccessModal] Verify error:', err);

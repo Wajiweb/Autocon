@@ -1,10 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo, useMemo } from 'react';
 import './styles/dashboard.css';
 
-/**
- * Generates a smooth SVG polyline spark from an array of numbers.
- * Returns an SVG string.
- */
+/* ─── Sparkline helpers (unchanged from original) ────────────────────── */
 function makeSpark(data, w, h, color) {
   const max = Math.max(...data);
   const min = Math.min(...data);
@@ -14,54 +11,52 @@ function makeSpark(data, w, h, color) {
     const y = (h - ((v - min) / range) * (h * 0.82) - h * 0.08).toFixed(1);
     return `${x},${y}`;
   });
-
-  // Approximate polyline length for dash animation
   const len = Math.ceil(pts.reduce((acc, _, i) => {
     if (i === 0) return 0;
     const [x1, y1] = pts[i - 1].split(',').map(Number);
     const [x2, y2] = pts[i].split(',').map(Number);
     return acc + Math.hypot(x2 - x1, y2 - y1);
   }, 0));
-
-  const first = pts[0];
-  const last  = pts[pts.length - 1];
-  const fillPts = `${first} ${pts.join(' ')} ${w},${h} 0,${h}`;
+  const fillPts = `${pts[0]} ${pts.join(' ')} ${w},${h} 0,${h}`;
   const gId = `sg${color.replace(/[^a-z0-9]/gi, '')}`;
-
   return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="${gId}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${color}" stop-opacity="0.22"/>
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.28"/>
         <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
       </linearGradient>
     </defs>
     <polygon points="${fillPts}" fill="url(#${gId})"
       style="opacity:0;animation:db-fadeUp .9s ease .4s forwards" />
-    <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5"
+    <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.6"
       stroke-linecap="round" stroke-linejoin="round"
       style="stroke-dasharray:${len};stroke-dashoffset:${len};animation:db-drawLine .9s ease .3s forwards"/>
   </svg>`;
 }
 
-function sparkData(n, up) {
-  const d = [50];
-  for (let i = 1; i < n; i++) {
-    const trend = up ? 0.3 : -0.3;
-    d.push(Math.max(10, Math.min(90, d[i - 1] + (Math.random() - 0.5 + trend) * 8)));
-  }
-  return d;
+
+
+/* ─── Trend arrow SVG ────────────────────────────────────────────────── */
+function TrendArrow({ up }) {
+  return up ? (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ display: 'inline' }}>
+      <path d="M6 2L10 8H2L6 2Z" fill="#22c55e"/>
+    </svg>
+  ) : (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ display: 'inline' }}>
+      <path d="M6 10L2 4H10L6 10Z" fill="#ef4444"/>
+    </svg>
+  );
 }
 
-/**
- * NewAssetCard — matches the HTML reference design.
- * Props: token, price, change, flashing, onClick
- */
-export default function NewAssetCard({ token, price, change, flashing, onClick }) {
-  const cardRef    = useRef(null);
+/* ─── Individual market row — MEMOIZED to prevent full-table re-renders ─ */
+const MarketRow = memo(function MarketRow({ token, price, change, flashing, historyData, onClick, rank, animDelay }) {
+  const rowRef     = useRef(null);
   const animActive = useRef(false);
   const sparkRef   = useRef(null);
 
   const isUp = change >= 0;
+
   const displayPrice = price != null
     ? `$${price.toLocaleString(undefined, { minimumFractionDigits: price < 1 ? 4 : 2, maximumFractionDigits: price < 1 ? 6 : 2 })}`
     : '—';
@@ -69,21 +64,26 @@ export default function NewAssetCard({ token, price, change, flashing, onClick }
     ? `${isUp ? '+' : ''}${change.toFixed(2)}%`
     : '—';
 
-  // Render spark on mount
+  /* Plot sparkline from real historical data */
   useEffect(() => {
-    if (!sparkRef.current) return;
-    const data = sparkData(18, isUp);
-    const color = isUp ? '#22c55e' : '#ef4444';
-    sparkRef.current.innerHTML = makeSpark(data, 200, 34, color);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!sparkRef.current || !historyData || historyData.length === 0) return;
+    
+    // Determine 7-day trend from the oldest to the newest data point
+    const firstPrice = historyData[0];
+    const lastPrice = historyData[historyData.length - 1];
+    const is7dUp = lastPrice >= firstPrice;
+    
+    const color = is7dUp ? '#22c55e' : '#ef4444';
+    sparkRef.current.innerHTML = makeSpark(historyData, 90, 32, color);
+  }, [historyData]); 
 
-  // Flash on price change
+  /* Flash on price update — identical logic to original */
   useEffect(() => {
-    if (!cardRef.current || !flashing || animActive.current) return;
-    const el  = cardRef.current;
-    const cls = flashing === 'up' ? 'db-flash-up' : 'db-flash-down';
+    if (!rowRef.current || !flashing || animActive.current) return;
+    const el  = rowRef.current;
+    const cls = flashing === 'up' ? 'mkt-flash-up' : 'mkt-flash-down';
     animActive.current = true;
-    el.classList.remove('db-flash-up', 'db-flash-down');
+    el.classList.remove('mkt-flash-up', 'mkt-flash-down');
     void el.offsetWidth;
     el.classList.add(cls);
     const t = setTimeout(() => {
@@ -94,40 +94,60 @@ export default function NewAssetCard({ token, price, change, flashing, onClick }
   }, [flashing]);
 
   const coinColor = token.iconColor;
-  const coinBg    = `${coinColor}2e`;
+  const coinBg    = `${coinColor}28`;
 
   return (
     <div
-      ref={cardRef}
-      className={`db-asset-card ${isUp ? 'up' : 'dn'}`}
-      onClick={onClick}
+      ref={rowRef}
+      className={`mkt-row ${isUp ? 'up' : 'dn'}`}
+      style={{ animationDelay: animDelay }}
+      /* ── ALL ORIGINAL CLICK LOGIC PRESERVED ── */
+      onClick={() => onClick && onClick({ ...token, price, change })}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+      onKeyDown={(e) => e.key === 'Enter' && onClick && onClick({ ...token, price, change })}
       aria-label={`Open ${token.name} chart`}
     >
-      {/* Row: coin id + % change */}
-      <div className="db-ac-row">
-        <div className="db-coin-id">
-          <div
-            className="db-coin-avatar"
-            style={{ background: coinBg, color: coinColor }}
-          >
-            {token.symbol.slice(0, 2)}
-          </div>
-          <div>
-            <div className="db-coin-name">{token.name}</div>
-            <div className="db-coin-sym">{token.symbol}</div>
-          </div>
+      {/* Rank */}
+      <div className="mkt-col-rank">{rank}</div>
+
+      {/* Coin identity */}
+      <div className="mkt-col-asset">
+        <div className="mkt-avatar" style={{ background: coinBg, color: coinColor }}>
+          {token.symbol.slice(0, 2)}
         </div>
-        <span className={`db-pct-tag ${isUp ? 'up' : 'dn'}`}>{displayChange}</span>
+        <div className="mkt-asset-names">
+          <span className="mkt-name">{token.name}</span>
+          <span className="mkt-sym">{token.symbol} / USDT</span>
+        </div>
+      </div>
+
+      {/* 24h change badge */}
+      <div className="mkt-col-change">
+        <span className={`mkt-badge ${isUp ? 'up' : 'dn'}`}>
+          <TrendArrow up={isUp} />
+          {displayChange}
+        </span>
       </div>
 
       {/* Price */}
-      <div className="db-ac-price">{displayPrice}</div>
+      <div className="mkt-col-price">
+        <span className="mkt-price">{displayPrice}</span>
+      </div>
 
-      {/* Sparkline */}
-      <div className="db-ac-spark" ref={sparkRef} />
+      {/* Trend direction arrow (large) */}
+      <div className="mkt-col-trend">
+        <span className={`mkt-trend-arrow ${isUp ? 'up' : 'dn'}`}>
+          {isUp ? '▲' : '▼'}
+        </span>
+      </div>
+
+      {/* Mini sparkline — hidden on small screens via CSS */}
+      <div className="mkt-col-spark mkt-spark-hide-sm">
+        <div ref={sparkRef} className="mkt-spark" />
+      </div>
     </div>
   );
-}
+});
+
+export default MarketRow;

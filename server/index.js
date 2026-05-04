@@ -80,8 +80,15 @@ app.use(express.json({ limit: '1mb' }));
 app.use(generalLimiter);
 
 // ─── MongoDB Connection ───
+const Job = require('./models/Job');
+
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log(' Connected to MongoDB Atlas!'))
+    .then(async () => {
+        console.log(' Connected to MongoDB Atlas!');
+        // Ensure Job collection indexes are created
+        await Job.ensureIndexes();
+        console.log(' Job indexes ensured.');
+    })
     .catch((err) => console.error(' MongoDB Connection Error:', err));
 
 // ─── PUBLIC ROUTES ───
@@ -97,6 +104,9 @@ app.use('/api/auth', authLimiter, authRoutes);
 
 // ─── TOKEN ROUTES ───
 app.use('/api/token', tokenRoutes);
+
+// ─── GAS ESTIMATION ROUTES ───
+app.use('/api', gasRoutes); // Mounts POST /api/estimate-gas
 
 // ─── GET SINGLE DEPLOYMENT by ID for Contract X-Ray ───
 // Updated: uses unified Contract model first, falls back to legacy models

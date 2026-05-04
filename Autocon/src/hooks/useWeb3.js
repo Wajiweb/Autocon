@@ -17,7 +17,9 @@ export const useWeb3 = () => {
   const prefill = location.state?.prefill || {};
   const [formData, setFormData] = useState({
     name: prefill.name || '', symbol: prefill.symbol || '',
-    supply: prefill.supply || '1000000', ownerAddress: ''
+    supply: prefill.supply || '1000000', decimals: '18', ownerAddress: '',
+    isMintable: false, isBurnable: false, isPausable: false,
+    isCapped: false, hasAntiWhale: false, hasTax: false, taxRate: ''
   });
   const { generatedCode, setGeneratedCode, isEditingEnabled, contractData, setContractData } = useContractStore();
   const { resetTransaction, setStatus, setTxHash, setConfirmed, setError, setNetwork, setStep, setErrorStep } = useTransactionStore();
@@ -152,7 +154,14 @@ export const useWeb3 = () => {
       toast.success(`Token deployed on ${network.name}!`, { id: deployToast });
       fireConfetti();
 
-      // Save to database via authenticated endpoint
+      // Encode constructor arguments for storage and verification
+      const iface = new ethers.Interface(finalAbi);
+      const encodedArgs = iface.encodeDeploy([formData.ownerAddress, formData.supply]);
+      const constructorArgsHex = encodedArgs.startsWith('0x') ? encodedArgs.slice(2) : encodedArgs;
+
+      console.log('[useWeb3] Saving token with sourceCode length:', generatedCode?.length, 'contract:', deployed);
+
+      // Save to database with source code artifacts
       try {
         const saveRes = await authFetch('/api/token/save-token', {
           method: 'POST',
@@ -160,7 +169,10 @@ export const useWeb3 = () => {
             name: formData.name, symbol: formData.symbol,
             contractAddress: deployed, ownerAddress: formData.ownerAddress,
             network: network.name,
-            abi: contractData.abi
+            abi: contractData.abi,
+            sourceCode: generatedCode,
+            compilerVersion: 'v0.8.20+commit.a1b79de6',
+            constructorArgs: constructorArgsHex
           })
         });
 
@@ -172,36 +184,33 @@ export const useWeb3 = () => {
         toast.error("Failed to save to database.");
       }
 
-      // Verify on Etherscan
+      // Queue background verification job
       try {
-        const verifyToast = toast.loading('Verifying contract on Etherscan...');
-        
-        // ABI Encode constructor arguments
-        const abiCoder = new ethers.AbiCoder();
-        // The ERC20 template constructor expects (address initialOwner, uint256 initialSupply)
-        // Supply passed to contract is already adjusted for decimals in the template? Wait, the template expects (address initialOwner, uint256 initialSupply)
-        const encodedArgs = abiCoder.encode(["address", "uint256"], [formData.ownerAddress, formData.supply]);
+        const verifyToast = toast.loading('Queuing verification job...');
 
-        const verifyRes = await authFetch('/api/verify', {
+        const verifyRes = await authFetch('/api/jobs/create', {
           method: 'POST',
           body: JSON.stringify({
-            contractAddress: deployed,
-            sourceCode: generatedCode,
-            contractName: formData.name.replace(/\s+/g, ''),
-            compilerVersion: 'v0.8.20+commit.a1b79de6', // Default compiler version used in AutoCon templates
-            network: network.name,
-            constructorArguments: encodedArgs
+            type: 'verification',
+            payload: {
+              contractAddress: deployed,
+              sourceCode: generatedCode,
+              contractName: formData.name.replace(/\s+/g, '') || 'TokenContract',
+              compilerVersion: 'v0.8.20+commit.a1b79de6',
+              network: network.name,
+              constructorArgs: constructorArgsHex
+            }
           })
         });
 
         const verifyData = await verifyRes.json();
         if (verifyData.success) {
-          toast.success("Etherscan Verification Submitted! ✅", { id: verifyToast });
+          toast.success("Verification job queued! ✅", { id: verifyToast });
         } else {
-          toast.error("Etherscan verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
+          toast.error("Verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
         }
       } catch {
-        toast.error("Failed to request Etherscan verification.");
+        toast.error("Failed to queue verification.");
       }
 
       // Reset form after successful deployment

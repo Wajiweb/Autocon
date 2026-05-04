@@ -11,6 +11,9 @@ const nftSchema = new mongoose.Schema({
     baseURI: { type: String, default: '' },
     type: { type: String, default: 'ERC-721' },
     abi: { type: mongoose.Schema.Types.Mixed, default: null },
+    sourceCode: { type: String, default: '' },
+    compilerVersion: { type: String, default: 'v0.8.20+commit.a1b79de6' },
+    constructorArgs: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
 });
 

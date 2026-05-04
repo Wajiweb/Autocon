@@ -12,6 +12,8 @@ import DeploymentTable from '../components/dashboard/DeploymentTable';
 import Sparkline from '../components/ui/Sparkline';
 import { exportDeploymentsCSV, exportDeploymentsPDF } from '../utils/exportUtils';
 import { Button } from '../components/ui/Button';
+import { usePlatformStore } from '../store/usePlatformStore';
+import { AnimatedDashboardCard } from '../components/ui/animated-dashboard-card';
 
 /* ─── Counter animation ─────────────────────────────── */
 function useCounter(target, delay = 300) {
@@ -37,48 +39,12 @@ function useCounter(target, delay = 300) {
 export default function Dashboard() {
   const { user, authFetch } = useAuth();
   const { network } = useNetwork();
-  const [deployments, setDeployments] = useState([]);
+  const { deployments, setDeployments, isInitialLoad } = usePlatformStore();
   const [activeFilter, setActiveFilter] = useState('all');
-  const [isLoading, setIsLoading] = useState(true);
+  const isLoading = isInitialLoad;
   const { selectedCoin, openModal, closeModal } = useSelectedCoin();
 
-  useEffect(() => {
-    const fetchAllAssets = async () => {
-      try {
-        if (!user?.walletAddress) return;
-        const allAssets = [];
-        const fetches = [
-          { url: `/api/token/my-tokens/${user.walletAddress}`, key: 'tokens', type: 'ERC-20' },
-          { url: `/api/nft/my-nfts/${user.walletAddress}`, key: 'nfts', type: 'ERC-721' },
-          { url: `/api/auction/my-auctions/${user.walletAddress}`, key: 'auctions', type: 'Auction' },
-        ];
-        await Promise.all(fetches.map(async ({ url, key, type }) => {
-          try {
-            const res = await authFetch(url);
-            const responseData = await res.json();
-            if (responseData.success) {
-              // The backend wraps responses in a `data` object
-              const items = responseData.data ? responseData.data[key] : responseData[key];
-              if (items) {
-                items.forEach(item => allAssets.push({
-                  ...item,
-                  _type: type,
-                  ...(type === 'Auction' ? { symbol: item.name?.substring(0, 4)?.toUpperCase() || 'AUC' } : {}),
-                }));
-              }
-            }
-          } catch (e) { console.error(type, 'fetch error:', e); }
-        }));
-        allAssets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setDeployments(allAssets);
-      } catch (err) {
-        console.error('Dashboard fetch error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAllAssets();
-  }, [user, authFetch]);
+
 
   const executeDelete = async (item) => {
     const tid = toast.loading('Removing from registry…');
@@ -134,101 +100,123 @@ export default function Dashboard() {
       <div className="db-content">
 
         {/* ── Page Header ── */}
-        <div className="db-page-head db-enter db-enter-1">
-          <div>
-            <div className="db-ph-title">Executive <em>Overview</em></div>
-            <div className="db-ph-sub">Real-time monitoring of your blockchain assets · {network.name}</div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => exportDeploymentsCSV(deployments)}>↓ CSV</Button>
-            <Button variant="secondary" onClick={() => exportDeploymentsPDF(deployments, user?.walletAddress)}>↓ PDF</Button>
-            {deployments.length > 0 && (
-              <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just deployed ${deployments.length} smart contract${deployments.length > 1 ? 's' : ''} on Sepolia using AutoCon! #Web3 #AutoCon`)}`}
-                target="_blank" rel="noreferrer"
-                className="db-btn accent"
-                style={{ textDecoration: 'none' }}
-              >
-                𝕏 Share
-              </a>
-            )}
-          </div>
-        </div>
-
-        {/* ── Stat Cards ── */}
-        <div className="db-stat-row db-enter db-enter-2">
-          <div className="db-stat-card c-green">
-            <div className="db-sc-top">
-              <span className="db-sc-label">Total Assets</span>
-              <div className="db-sc-ico g">◈</div>
+        <section className="mb-10">
+          <div className="db-page-head db-enter db-enter-1">
+            <div>
+              <div className="db-ph-title">Executive <em>Overview</em></div>
+              <div className="db-ph-sub">Real-time monitoring of your blockchain assets · {network.name}</div>
             </div>
-            <div className="db-sc-num g">{totalCount}</div>
-            <div className="db-sc-desc">All contract types deployed</div>
-            <Sparkline up color="#22c55e" />
-          </div>
-
-          <div className="db-stat-card c-blue">
-            <div className="db-sc-top">
-              <span className="db-sc-label">ERC-20 Tokens</span>
-              <div className="db-sc-ico b">⬡</div>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => exportDeploymentsCSV(deployments)}>↓ CSV</Button>
+              <Button variant="secondary" onClick={() => exportDeploymentsPDF(deployments, user?.walletAddress)}>↓ PDF</Button>
+              {deployments.length > 0 && (
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just deployed ${deployments.length} smart contract${deployments.length > 1 ? 's' : ''} on Sepolia using AutoCon! #Web3 #AutoCon`)}`}
+                  target="_blank" rel="noreferrer"
+                  className="db-btn accent"
+                  style={{ textDecoration: 'none' }}
+                >
+                  𝕏 Share
+                </a>
+              )}
             </div>
-            <div className="db-sc-num b">{tokenCounted}</div>
-            <div className="db-sc-desc">Fungible tokens deployed</div>
-            <Sparkline up color="#60a5fa" />
           </div>
-
-          <div className="db-stat-card c-amber">
-            <div className="db-sc-top">
-              <span className="db-sc-label">NFT Collections</span>
-              <div className="db-sc-ico a">⬢</div>
-            </div>
-            <div className="db-sc-num a">{nftCounted}</div>
-            <div className="db-sc-desc">ERC-721 collections</div>
-            <Sparkline up={nftCount > 0} color="#f59e0b" />
-          </div>
-        </div>
+        </section>
 
         {/* ── Status Banner ── */}
-        <div className="db-status-bar db-enter db-enter-3">
-          <div className="db-status-left">
-            <div className="db-online-ring" />
-            <div>
-              <div className="db-status-txt">Systems Online</div>
-              <div className="db-status-sub">All services operational · Wallet {shortAddr || 'not connected'}</div>
+        <section className="mb-8">
+          <div className="flex items-center justify-between p-4 px-6 rounded-2xl border border-white/5 bg-[#0a0a0a]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] db-enter db-enter-2 transition-transform hover:scale-[1.01]">
+            <div className="flex items-center gap-4">
+              <div className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white tracking-wide">Systems Online</h3>
+                <p className="text-[11px] text-gray-400 mt-0.5 tracking-wide">All services operational · Wallet {shortAddr || 'not connected'}</p>
+              </div>
+            </div>
+            <div className="flex gap-8 text-right">
+              <div>
+                <p className="text-lg font-mono font-semibold text-white leading-none">{deployments.length}</p>
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 mt-1">Contracts</p>
+              </div>
+              <div>
+                <p className="text-lg font-mono font-semibold text-white leading-none">{auctionCount}</p>
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 mt-1">Auctions</p>
+              </div>
+              <div>
+                <p className="text-lg font-mono font-semibold text-emerald-400 leading-none">99.9%</p>
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 mt-1">Uptime</p>
+              </div>
             </div>
           </div>
-          <div className="db-status-metrics">
-            <div className="db-sm-item">
-              <div className="db-sm-val">{deployments.length}</div>
-              <div className="db-sm-lbl">Contracts</div>
-            </div>
-            <div className="db-sm-item">
-              <div className="db-sm-val">{auctionCount}</div>
-              <div className="db-sm-lbl">Auctions</div>
-            </div>
-            <div className="db-sm-item">
-              <div className="db-sm-val">99.9%</div>
-              <div className="db-sm-lbl">Uptime</div>
-            </div>
-          </div>
-        </div>
+        </section>
 
-        {/* ── Live Asset Grid ── */}
-        <AssetGrid onSelectCoin={openModal} />
+        {/* ── Stat Cards ── */}
+        <section className="mb-8">
+          <div className="db-enter db-enter-3 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <AnimatedDashboardCard 
+              title="TOTAL DEPLOYMENTS"
+              mainValue={totalCount.toString()}
+              accentColor="#ff6b00"
+              delayOffset={0}
+              leftLabel="Network"
+              leftValue="Sepolia"
+              leftSub="Active"
+              rightLabel="Status"
+              rightValue="Online"
+              rightSub="Live"
+            />
+            <AnimatedDashboardCard 
+              title="FUNGIBLE TOKENS"
+              mainValue={tokenCounted.toString()}
+              accentColor="#3b82f6"
+              delayOffset={0.15}
+              leftLabel="Standard"
+              leftValue="ERC-20"
+              leftSub="Verified"
+              rightLabel="Type"
+              rightValue="Utility"
+              rightSub="Mintable"
+            />
+            <AnimatedDashboardCard 
+              title="DIGITAL ASSETS"
+              mainValue={(nftCounted + auctionCount).toString()}
+              accentColor="#22c55e"
+              delayOffset={0.3}
+              leftLabel="Collections"
+              leftValue={nftCounted.toString()}
+              leftSub="ERC-721"
+              rightLabel="Auctions"
+              rightValue={auctionCount.toString()}
+              rightSub="Live"
+            />
+          </div>
+        </section>
 
         {/* ── Analytics Charts ── */}
         {!isLoading && deployments.length > 0 && (
-          <AnalyticsCharts deployments={deployments} networkName={network.name} />
+          <section className="mb-8 db-enter db-enter-4">
+            <AnalyticsCharts deployments={deployments} networkName={network.name} />
+          </section>
         )}
 
+        {/* ── Live Asset Grid ── */}
+        <section className="mb-8 db-enter db-enter-5">
+          <AssetGrid onSelectCoin={openModal} />
+        </section>
+
         {/* ── Deployment Table ── */}
-        <DeploymentTable
-          filteredDeployments={filteredDeployments}
-          isLoading={isLoading}
-          activeFilter={activeFilter}
-          setActiveFilter={setActiveFilter}
-          handleDelete={handleDelete}
-        />
+        <section className="mb-8 db-enter db-enter-6">
+          <DeploymentTable
+            filteredDeployments={filteredDeployments}
+            isLoading={isLoading}
+            activeFilter={activeFilter}
+            setActiveFilter={setActiveFilter}
+            handleDelete={handleDelete}
+          />
+        </section>
 
       </div>
 

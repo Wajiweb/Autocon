@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import JobStatusBadge from '../components/dashboard/JobStatusBadge';
+import { usePlatformStore } from '../store/usePlatformStore';
 import '../components/dashboard/styles/dashboard.css';
 
 /* ─── localStorage keys ─────────────────────────────────────────────────── */
@@ -89,15 +90,29 @@ const norm = (s) => (s || '').toLowerCase();
 
 export default function JobsPage() {
   const { authFetch } = useAuth();
+  const { jobs: rawJobs, stats: storeStats, isInitialLoad, lastSynced } = usePlatformStore();
+  const loading = isInitialLoad;
+  const error = null;
 
-  const [jobs,      setJobs]      = useState([]);
-  const [stats,     setStats]     = useState(null);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState(null);
+  const jobs = (rawJobs || [])
+    .map(j => ({ ...j, status: norm(j.status) }))
+    .sort((a, b) => {
+      const aActive = a.status === 'pending' || a.status === 'processing';
+      const bActive = b.status === 'pending' || b.status === 'processing';
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    })
+    .slice(0, MAX_JOBS);
+    
+  const stats = storeStats || {
+    audit: { pending: 0, processing: 0, completed: 0, failed: 0 },
+    verification: { pending: 0, processing: 0, completed: 0, failed: 0 }
+  };
+  const lastFetched = lastSynced ? new Date(lastSynced) : null;
+
   /* FIX #8 — Restore filters from localStorage */
   const [typeFilter,   setTypeFilter]   = useState(() => localStorage.getItem(LS_TYPE)   || 'all');
   const [statusFilter, setStatusFilter] = useState(() => localStorage.getItem(LS_STATUS) || 'all');
-  const [lastFetched,  setLastFetched]  = useState(null);
   /* FIX #9 — Detail panel */
   const [selectedJob,  setSelectedJob]  = useState(null);
 
@@ -109,63 +124,26 @@ export default function JobsPage() {
   const setType = (v) => { setTypeFilter(v);   localStorage.setItem(LS_TYPE,   v); };
   const setStat = (v) => { setStatusFilter(v); localStorage.setItem(LS_STATUS, v); };
 
-  /* ── Fetch both endpoints ─────────────────────────────────────────────── */
-  const fetchAll = useCallback(async (showSpinner = false) => {
-    if (showSpinner) setLoading(true);
-    setError(null);
-    try {
-      const [jobsRes, statsRes] = await Promise.all([
-        authFetch('/api/jobs'),
-        authFetch('/api/jobs/stats'),
-      ]);
-      const [jobsData, statsData] = await Promise.all([
-        jobsRes.json(),
-        statsRes.json(),
-      ]);
 
-      if (jobsData.success) {
-        /* FIX #4 — normalise status; FIX #3 — stable sort; FIX #10 — cap at 50 */
-        const normalised = (jobsData.jobs || [])
-          .map(j => ({ ...j, status: norm(j.status) }))
-          .sort((a, b) => {
-            const aActive = a.status === 'pending' || a.status === 'processing';
-            const bActive = b.status === 'pending' || b.status === 'processing';
-            if (aActive !== bActive) return aActive ? -1 : 1;   // active jobs first
-            return new Date(b.createdAt) - new Date(a.createdAt); // then newest first
-          })
-          .slice(0, MAX_JOBS);
-        setJobs(normalised);
-      }
-      /* FIX #7 — safe stats fallback (guaranteed shape even if statsData fails) */
-      setStats(statsData?.stats || {
-        audit: { pending: 0, processing: 0, completed: 0, failed: 0 },
-        verification: { pending: 0, processing: 0, completed: 0, failed: 0 }
-      });
-      setLastFetched(new Date());
-    } catch (err) {
-      setError('Failed to load activity data. Check your connection.');
-    } finally {
-      setLoading(false);
-    }
-  }, [authFetch]);
-
-  /* FIX #1 — Pause page-level refresh when active badges are already polling */
-  /* FIX #2 — Interval properly cleaned up on unmount                         */
-  useEffect(() => {
-    fetchAll(true);
-    const tick = () => {
-      const hasActive = jobs.some(j => j.status === 'pending' || j.status === 'processing');
-      if (!hasActive) fetchAll(false);  // skip if badges are handling it
-    };
-    intervalRef.current = setInterval(tick, POLL_MS);
-    return () => clearInterval(intervalRef.current);
-  }, [fetchAll]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Derived stats ────────────────────────────────────────────────────── */
-  const totalJobs     = jobs.length;
-  const activeJobs    = jobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
-  const completedJobs = jobs.filter(j => j.status === 'completed').length;
-  const failedJobs    = jobs.filter(j => j.status === 'failed').length;
+  let totalJobs = 0, activeJobs = 0, completedJobs = 0, failedJobs = 0;
+  
+  if (storeStats) {
+    const v = storeStats.verification || {};
+    const a = storeStats.audit || {};
+    
+    activeJobs = (v.pending || 0) + (v.processing || 0) + (a.pending || 0) + (a.processing || 0);
+    completedJobs = (v.completed || 0) + (a.completed || 0);
+    failedJobs = (v.failed || 0) + (a.failed || 0);
+    totalJobs = activeJobs + completedJobs + failedJobs;
+  } else {
+    // fallback if stats not loaded
+    totalJobs     = jobs.length;
+    activeJobs    = jobs.filter(j => j.status === 'pending' || j.status === 'processing').length;
+    completedJobs = jobs.filter(j => j.status === 'completed').length;
+    failedJobs    = jobs.filter(j => j.status === 'failed').length;
+  }
 
   /* FIX #4 — normalised filter comparison */
   const visible = jobs.filter(j => {
@@ -193,7 +171,7 @@ export default function JobsPage() {
             </span>
           )}
           <button
-            onClick={() => fetchAll(false)}
+            onClick={() => window.location.reload()}
             className="pg-btn pg-btn-outline"
             style={{ padding: '7px 14px', gap: 6, fontSize: 12 }}
           >
