@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 import Container from '../layout/Container';
 import { fadeUp, staggerContainer, marqueeX, marqueeXReverse, viewportConfig } from '../../lib/motionVariants';
-import SectionGlow from '../landingpage/SectionGlow';
+
 
 function TestimonialCard({ name, role, company, review, rating }) {
   return (
@@ -105,7 +105,7 @@ export default function Testimonials({ testimonials = [] }) {
       aria-label="Customer testimonials"
       style={{ position: 'relative' }}
     >
-      <SectionGlow position="both" intensity="low" size="md" variations={{ leftTop: '70%', rightTop: '30%' }} />
+
       {/* Header */}
       <Container>
         <motion.div

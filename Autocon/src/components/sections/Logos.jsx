@@ -3,7 +3,6 @@
  * Duplicated list for seamless loop. aria-hidden on decorative content.
  */
 import React from 'react';
-import SectionGlow from '../landingpage/SectionGlow';
 
 const LOGOS = [
   { name: 'Ethereum',      emoji: '⟠' },
@@ -71,7 +70,7 @@ export default function Logos() {
       }}
     >
       <style>{marqueeStyle}</style>
-      <SectionGlow position="both" intensity="low" size="sm" variations={{ leftTop: '30%', rightTop: '40%' }} />
+
 
       <p className="sr-only">
         Supported technologies and partners: {LOGOS.map(l => l.name).join(', ')}

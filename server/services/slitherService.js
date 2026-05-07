@@ -34,17 +34,20 @@ async function runSlitherAnalysis(contractCode) {
         let slitherOutput;
 
         try {
-            // Attempt to parse stdout or stderr depending on where slither put the JSON
-            const outputString = stdout.trim() ? stdout : stderr;
+            // Slither writes JSON to stderr when run with --json -.
+            // stdout may contain progress text. Pick whichever stream has the JSON object.
+            const stdoutHasJson = stdout.includes('{');
+            const stderrHasJson = stderr.includes('{');
+            const outputString  = stderrHasJson ? stderr : (stdoutHasJson ? stdout : '');
+
             const jsonStart = outputString.indexOf('{');
             if (jsonStart !== -1) {
                 slitherOutput = JSON.parse(outputString.substring(jsonStart));
             } else {
-                throw new Error("No JSON found in Slither output");
+                throw new Error('No JSON found in Slither output');
             }
         } catch (parseError) {
-            // If Slither is not installed, it will fail here.
-            console.warn('[SlitherService] Failed to parse Slither output. Is Slither installed? Falling back.');
+            console.warn('[SlitherService] Failed to parse Slither output:', parseError.message);
             return []; // Return empty array so aggregation layer can fall back
         }
 

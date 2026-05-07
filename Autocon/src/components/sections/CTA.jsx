@@ -8,7 +8,7 @@ import { ArrowRight, Zap } from 'lucide-react';
 import Container from '../layout/Container';
 import Button from '../ui/Button';
 import { fadeUp, staggerContainer, floatYSlow, viewportConfig } from '../../lib/motionVariants';
-import SectionGlow from '../landingpage/SectionGlow';
+
 
 export default function CTA({ onGetStarted }) {
   return (
@@ -24,7 +24,7 @@ export default function CTA({ onGetStarted }) {
         borderBottom: '1px solid var(--lp-border-subtle)',
       }}
     >
-      <SectionGlow position="both" intensity="medium" size="lg" variations={{ leftTop: '30%', rightTop: '50%' }} />
+
       {/* Background glow mesh */}
       <motion.div
         variants={floatYSlow}

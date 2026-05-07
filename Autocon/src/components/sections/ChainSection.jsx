@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Check, X, Zap } from 'lucide-react';
 import Container from '../layout/Container';
 import { fadeUp, staggerContainer, viewportConfig } from '../../lib/motionVariants';
-import SectionGlow from '../landingpage/SectionGlow';
+
 
 const CHAINS = [
   { name: 'AutoCon', isPrimary: true, badge: 'Best Choice' },
@@ -205,7 +205,7 @@ export default function ChainSection() {
         paddingBottom: 'clamp(32px, 6vw, 60px)',
       }}
     >
-      <SectionGlow position="both" intensity="low" size="lg" variations={{ leftTop: '60%', rightTop: '30%' }} />
+
 
       <Container>
         {/* Header */}

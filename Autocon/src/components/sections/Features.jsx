@@ -11,7 +11,7 @@ import Container from '../layout/Container';
 import LandingCard from '../ui/LandingCard';
 import { fadeUp, staggerContainer, viewportConfig } from '../../lib/motionVariants';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
-import SectionGlow from '../landingpage/SectionGlow';
+
 
 const ICON_MAP = { Wand2, ShieldCheck, Globe, LayoutTemplate };
 
@@ -34,7 +34,7 @@ export default function Features({ features = [] }) {
       aria-label="Features section"
       style={{ position: 'relative', paddingTop: 'clamp(48px, 8vw, 80px)', paddingBottom: 'clamp(32px, 6vw, 60px)' }}
     >
-      <SectionGlow position="both" intensity="medium" size="md" variations={{ leftTop: '20%', rightTop: '60%' }} />
+
       <Container>
         {/* Section header */}
         <motion.div
