@@ -147,7 +147,7 @@ export default function TokenGenerator() {
 
             {/* Gas estimate (simple ETH cost for Token — no estimateGas fn) */}
             {estimatedCost && (
-              <Card className="flex items-center justify-between p-4 bg-sky-500/10 border-sky-500/20">
+              <Card className="flex items-center justify-between p-4 bg-[var(--primary-subtle)] border-[var(--primary)]/20">
                 <div className="flex items-center gap-3">
                   <span className="text-[22px]">⛽</span>
                   <div>
@@ -155,7 +155,7 @@ export default function TokenGenerator() {
                     <div className="text-[0.7rem] text-[var(--outline)]">Live {network.name} Gas Price</div>
                   </div>
                 </div>
-                <div className="font-mono text-lg font-bold text-sky-400">
+                <div className="font-mono text-lg font-bold text-[var(--primary)]">
                   {estimatedCost} {network.currencySymbol || 'ETH'}
                 </div>
               </Card>

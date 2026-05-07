@@ -296,8 +296,8 @@
   font-family: var(--db-mono); font-size: 10px; font-weight: 500;
   padding: 3px 9px; border-radius: 20px;
 }
-.pg-badge.green  { background: var(--db-acc-d);  color: var(--db-acc);  border: .5px solid rgba(93,169,233,.2); }
-.pg-badge.red    { background: var(--db-red-d);  color: var(--db-red);  border: .5px solid rgba(224,92,92,.2); }
+.pg-badge.green  { background: var(--db-acc-d);  color: var(--db-acc);  border: .5px solid hsla(14,100%,50%,.2); }
+.pg-badge.red    { background: var(--db-red-d);  color: var(--db-red);  border: .5px solid hsla(0,100%,50%,.2); }
 .pg-badge.amber  { background: rgba(245,166,35,.12); color: var(--db-amber); border: .5px solid rgba(245,166,35,.2); }
 .pg-badge.blue   { background: rgba(93,169,233,.12); color: var(--db-blue);  border: .5px solid rgba(93,169,233,.2); }
 .pg-badge.purple { background: rgba(182,181,216,.12); color: var(--db-lav);  border: .5px solid rgba(182,181,216,.2); }

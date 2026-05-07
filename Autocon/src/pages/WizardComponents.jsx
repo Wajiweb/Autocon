@@ -278,6 +278,11 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
     if (!contractData?.abi || !contractData?.bytecode) { toast.error('Generate the contract first'); return; }
     setDoneSteps([]); setErrorStepLocal(null); clearDeployError();
 
+    if (!window.ethereum) {
+      toast.error('MetaMask is not installed!');
+      return;
+    }
+
     try {
       setActiveStep('wallet');
       const provider = new ethers.BrowserProvider(window.ethereum);

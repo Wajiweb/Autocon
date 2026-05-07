@@ -2,24 +2,21 @@ import { useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { API_BASE } from '../../config';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AISuggestButton({ contractType, partialInputs, onSuggest }) {
   const [isOpen, setIsOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { authFetch } = useAuth();
 
   const handleSuggest = async () => {
     if (!description.trim()) return toast.error('Please enter a short description first.');
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('autocon_token');
-      const res = await fetch(`${API_BASE}/api/ai/suggest`, {
+      const res = await authFetch('/api/ai/suggest', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           contractType,
           userDescription: description,

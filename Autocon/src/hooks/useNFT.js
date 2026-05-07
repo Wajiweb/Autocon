@@ -139,6 +139,11 @@ const [formData, setFormData] = useState({
                 toast.success("Compiled successfully!", { id: 'recompile' });
             }
 
+            if (!window.ethereum) {
+                toast.error("MetaMask is not installed!");
+                setErrorStep(-1, "MetaMask missing");
+                return;
+            }
             const provider = new ethers.BrowserProvider(window.ethereum);
             const currentNetwork = await provider.getNetwork();
 

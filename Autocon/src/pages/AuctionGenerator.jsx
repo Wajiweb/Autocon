@@ -139,7 +139,7 @@ export default function AuctionGenerator() {
                     onClick={() => setFormData(prev => ({ ...prev, duration: p.value }))}
                     className={`px-4 py-2 rounded-xl text-[0.78rem] font-bold transition-all duration-200 border ${
                       formData.duration === p.value
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-500'
+                        ? 'border-[var(--primary)] bg-[var(--primary-subtle)] text-[var(--primary)]'
                         : 'border-[var(--outline-variant)] bg-[var(--surface-highest)] text-[var(--outline)] hover:border-[var(--outline)] hover:text-[var(--on-surface)]'
                     }`}
                   >

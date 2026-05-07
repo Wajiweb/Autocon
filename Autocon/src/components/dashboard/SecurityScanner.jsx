@@ -19,10 +19,8 @@ export default function SecurityScanner({ contractCode, onAuditResult }) {
         setIsExplaining(true);
         const toastId = toast.loading('🧠 AI is analyzing vulnerabilities...');
         try {
-            const token = localStorage.getItem('autocon_token');
-            const res = await fetch(`${API_BASE}/api/ai/audit-explain`, {
+            const res = await authFetch('/api/ai/audit-explain', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ vulnerabilities: auditData.vulnerabilities, contractCode })
             });
             const data = await res.json();

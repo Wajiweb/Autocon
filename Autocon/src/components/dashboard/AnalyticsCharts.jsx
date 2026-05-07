@@ -5,6 +5,7 @@ import {
   CategoryScale, LinearScale, BarElement, Title
 } from 'chart.js';
 import { usePlatformStore } from '../../store/usePlatformStore';
+import { useMemo } from 'react';
 import './styles/dashboard.css';
 
 // 1. Custom Plugin for Native Canvas Doughnut Center Text
@@ -43,26 +44,30 @@ export default function AnalyticsCharts({ deployments = [], networkName = 'Netwo
   const jobs = usePlatformStore(s => s.jobs) || [];
   const stats = usePlatformStore(s => s.stats);
 
+  const { tokens, nfts, auctions, months, monthlyCounts } = useMemo(() => {
+    const counts = {
+      tokens: deployments.filter(d => d._type === 'ERC-20').length,
+      nfts: deployments.filter(d => d._type === 'ERC-721').length,
+      auctions: deployments.filter(d => d._type === 'Auction').length,
+      months: [],
+      monthlyCounts: []
+    };
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      counts.months.push(d.toLocaleString('en-US', { month: 'short' }).toUpperCase());
+      counts.monthlyCounts.push(
+        deployments.filter(dep => {
+          const c = new Date(dep.createdAt);
+          return c.getMonth() === d.getMonth() && c.getFullYear() === d.getFullYear();
+        }).length
+      );
+    }
+    return counts;
+  }, [deployments]);
+
   if (deployments.length === 0 && jobs.length === 0 && !stats) return null;
-
-  const tokens   = deployments.filter(d => d._type === 'ERC-20').length;
-  const nfts     = deployments.filter(d => d._type === 'ERC-721').length;
-  const auctions = deployments.filter(d => d._type === 'Auction').length;
-
-  // Monthly counts for last 6 months
-  const months = [];
-  const monthlyCounts = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    months.push(d.toLocaleString('en-US', { month: 'short' }).toUpperCase());
-    monthlyCounts.push(
-      deployments.filter(dep => {
-        const c = new Date(dep.createdAt);
-        return c.getMonth() === d.getMonth() && c.getFullYear() === d.getFullYear();
-      }).length
-    );
-  }
 
   // Brand Colors
   const ORANGE = '#ff6b00';

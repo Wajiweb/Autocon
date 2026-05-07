@@ -156,8 +156,6 @@ ${functions}
 const saveToken = asyncHandler(async (req, res) => {
     const { name, symbol, contractAddress, ownerAddress, network, abi, sourceCode, compilerVersion, constructorArgs } = req.body;
 
-    console.log('[saveToken] Received fields:', { name, symbol, contractAddress, sourceCode: sourceCode?.substring(0, 50), compilerVersion, constructorArgs: constructorArgs?.substring(0, 20) });
-
     if (req.user.walletAddress !== ownerAddress.toLowerCase()) {
         throw new AppError('You can only save tokens for your own wallet.', 403, 'FORBIDDEN');
     }
@@ -172,8 +170,6 @@ const saveToken = asyncHandler(async (req, res) => {
         constructorArgs: constructorArgs || '',
     });
     await newToken.save();
-
-    console.log('[saveToken] Saved successfully with sourceCode length:', sourceCode?.length || 0);
 
     incrementDeployments(req.user.userId); // fire-and-forget, non-fatal
 

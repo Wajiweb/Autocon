@@ -40,9 +40,9 @@ export default function GasEstimateCard({
               {parseInt(gasEstimate.gasUnits).toLocaleString()}
             </p>
           </div>
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <div className="p-4 rounded-xl bg-[var(--primary-subtle)] border border-[var(--primary)]/20">
             <p className="text-[0.65rem] font-bold text-[var(--outline)] uppercase mb-1.5">Gas Price</p>
-            <p className="text-lg font-extrabold text-amber-500">
+            <p className="text-lg font-extrabold text-[var(--primary)]">
               {gasEstimate.gasPriceGwei} Gwei
             </p>
           </div>

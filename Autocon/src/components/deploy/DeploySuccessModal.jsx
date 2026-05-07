@@ -3,6 +3,7 @@ import { CheckCircle2, Copy, ExternalLink, X, SearchCode, Download, ShieldCheck 
 import toast from 'react-hot-toast';
 import { useABIExport } from '../../hooks/useExport';
 import TransactionStoryteller from '../dashboard/TransactionStoryteller';
+import { useAuth } from '../../context/AuthContext';
 import { API_BASE } from '../../config';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -36,18 +37,15 @@ export default function DeploySuccessModal({
   const [copied, setCopied] = useState(false);
   const [verifyState, setVerifyState] = useState('idle'); // idle, submitting, polling, verified, error
   const { downloadABI } = useABIExport();
+  const { authFetch } = useAuth();
 
   const pollVerificationStatus = async (jobId) => {
     const maxAttempts = 30; // 30 * 4s = 120s timeout
     let attempts = 0;
-    const token = localStorage.getItem('autocon_token');
-
     const poll = setInterval(async () => {
       attempts++;
       try {
-        const res = await fetch(`${API_BASE}/api/jobs/${jobId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await authFetch(`/api/jobs/${jobId}`);
         const json = await res.json();
         
         if (!json.success || !json.data) return;
@@ -93,11 +91,9 @@ export default function DeploySuccessModal({
 
     try {
       setVerifyState('submitting');
-      const token = localStorage.getItem('autocon_token');
 
-      const res = await fetch(`${API_BASE}/api/jobs/create`, {
+      const res = await authFetch('/api/jobs/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           type: 'verification',
           payload: {

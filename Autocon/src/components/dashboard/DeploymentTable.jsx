@@ -57,9 +57,9 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
   const { authFetch } = useAuth();
   const { verificationJobs, updateVerificationStatus, setVerificationJob, getVerificationJob } = useVerificationStore();
   useEffect(() => {
-    if (!search) { setSearchFilter(filteredDeployments); return; }
+    if (!search) { setSearchFilter(filteredDeployments || []); return; }
     const q = search.toLowerCase();
-    setSearchFilter(filteredDeployments.filter(d =>
+    setSearchFilter((filteredDeployments || []).filter(d =>
       d.name?.toLowerCase().includes(q) ||
       d.contractAddress?.toLowerCase().includes(q) ||
       d._type?.toLowerCase().includes(q)

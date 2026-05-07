@@ -35,7 +35,6 @@ export function usePlatformSync() {
             const data = await res.json();
             const items = data.success ? (data.data?.[key] ?? data[key]) : null;
             if (items) {
-              console.log('[usePlatformSync] Fetched', type, 'count:', items.length, 'first item has sourceCode:', items[0]?.sourceCode?.length > 0);
               items.forEach(item => allAssets.push({
                 ...item,
                 _type: type,
@@ -57,8 +56,11 @@ export function usePlatformSync() {
           });
         }
         
-        // Only update state if length changed to minimize re-renders (simple diff)
-        if (allAssets.length !== deploymentsRef.current.length || newAssets.length > 0) {
+        // Compare stringified versions of the relevant data subsets to check for true content updates (e.g. verified status changes)
+        const curData = JSON.stringify(deploymentsRef.current.map(d => ({ id: d._id, v: d.verified, s: d.status })));
+        const newData = JSON.stringify(allAssets.map(d => ({ id: d._id, v: d.verified, s: d.status })));
+
+        if (curData !== newData || newAssets.length > 0 || allAssets.length !== deploymentsRef.current.length) {
            setDeployments(allAssets);
         }
 

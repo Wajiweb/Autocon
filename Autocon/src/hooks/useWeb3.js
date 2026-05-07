@@ -119,6 +119,11 @@ export const useWeb3 = () => {
         toast.success("Compiled successfully!", { id: 'recompile' });
       }
 
+      if (!window.ethereum) {
+        toast.error("MetaMask is not installed!");
+        setErrorStep(-1, "MetaMask missing");
+        return;
+      }
         const provider = new ethers.BrowserProvider(window.ethereum);
         const currentNetwork = await provider.getNetwork();
 
@@ -158,8 +163,6 @@ export const useWeb3 = () => {
       const iface = new ethers.Interface(finalAbi);
       const encodedArgs = iface.encodeDeploy([formData.ownerAddress, formData.supply]);
       const constructorArgsHex = encodedArgs.startsWith('0x') ? encodedArgs.slice(2) : encodedArgs;
-
-      console.log('[useWeb3] Saving token with sourceCode length:', generatedCode?.length, 'contract:', deployed);
 
       // Save to database with source code artifacts
       try {
