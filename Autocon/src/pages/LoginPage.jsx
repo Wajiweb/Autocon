@@ -266,7 +266,7 @@ export default function LoginPage() {
                         fontSize: '0.72rem',
                         lineHeight: 1.5,
                     }}>
-                        AutoCon Platform | Sepolia | Polygon | BNB Testnet
+                        AutoCon Platform | Sepolia | BNB Testnet
                     </p>
                 </div>
             </div>

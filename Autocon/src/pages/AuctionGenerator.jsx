@@ -261,6 +261,7 @@ export default function AuctionGenerator() {
         )}
       </div>
 
+      {/* Bug 9 fix: forward sourceCode + compilerVersion for in-modal verification */}
       <DeploySuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
@@ -272,6 +273,8 @@ export default function AuctionGenerator() {
         contractName={formData.name || 'Auction'}
         receipt={deploymentReceipt}
         provider={providerInstance}
+        sourceCode={generatedCode || null}
+        compilerVersion="v0.8.20+commit.a1b79de6"
       />
 
       <AIChatPanel

@@ -12,17 +12,17 @@ import { fadeUp, staggerContainer, viewportConfig } from '../../lib/motionVarian
 const CHAINS = [
   { name: 'AutoCon', isPrimary: true, badge: 'Best Choice' },
   { name: 'Ethereum', isPrimary: false, badge: null },
-  { name: 'Polygon', isPrimary: false, badge: null },
   { name: 'BNB Chain', isPrimary: false, badge: null },
+  { name: 'Manual Dev', isPrimary: false, badge: null },
 ];
 
 const ROWS = [
   { feature: 'No-Code UI',         values: [true,  false, false, false] },
   { feature: 'AI Security Audit',  values: [true,  false, false, false] },
   { feature: 'Multi-Chain Deploy', values: [true,  false, true,  false] },
-  { feature: 'Gas Optimization',   values: [true,  false, true,  true]  },
-  { feature: 'Free Tier',          values: [true,  false, false, true] },
-  { feature: 'Instant Deploy',     values: [true,  false, true,  true]  },
+  { feature: 'Gas Optimization',   values: [true,  false, true,  false] },
+  { feature: 'Free Tier',          values: [true,  false, true,  false] },
+  { feature: 'Instant Deploy',     values: [true,  false, true,  false] },
 ];
 
 function FeatureIcon({ val, isPrimary }) {

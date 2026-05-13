@@ -38,14 +38,14 @@ export function useABIExport() {
 export function usePDFExport() {
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const generatePDF = async (filename = 'AutoCon_Audit_Report.pdf') => {
+  const generatePDF = async (filename = 'AutoCon_Audit_Report.pdf', targetId = 'pdf-audit-report') => {
     setIsGenerating(true);
     const loadingToast = toast.loading('Generating PDF Report...');
 
     try {
-      const element = document.getElementById('pdf-audit-report');
+      const element = document.getElementById(targetId);
       if (!element) {
-        throw new Error('Audit report template not found in DOM');
+        throw new Error('Report template not found in DOM');
       }
 
       // High-resolution canvas render

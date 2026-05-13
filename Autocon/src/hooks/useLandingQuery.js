@@ -26,7 +26,7 @@ export const DEFAULT_STATS = {
 export const DEFAULT_FEATURES = [
   { id: 'no-code',   icon: 'Wand2',         title: 'No-Code Deploy',      description: 'Generate production-ready smart contracts in minutes — zero Solidity experience required.'         },
   { id: 'ai-audit',  icon: 'ShieldCheck',   title: 'AI Security Audit',   description: 'Every contract is automatically audited by our Gemini-powered AI before deployment.'             },
-  { id: 'multi-chain',icon: 'Globe',        title: 'Multi-Chain Support', description: 'Deploy on Sepolia, Polygon Amoy, and BNB testnet from a single unified interface.'              },
+  { id: 'multi-chain',icon: 'Globe',        title: 'Multi-Chain Support', description: 'Deploy on Sepolia and BNB testnet from a single unified interface.'              },
   { id: 'templates', icon: 'LayoutTemplate',title: 'Template Library',    description: 'Start from battle-tested contract templates for tokens, NFTs, and auctions.'                     },
 ];
 

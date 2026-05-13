@@ -10,7 +10,6 @@ import { useAuth } from '../../context/AuthContext';
 const EXPLORER_URLS = {
   sepolia: 'https://sepolia.etherscan.io',
   mainnet: 'https://etherscan.io',
-  amoy: 'https://amoy.polygonscan.com',
   polygon: 'https://polygonscan.com',
   bsc: 'https://bscscan.com',
   'bsc-testnet': 'https://testnet.bscscan.com',
@@ -18,7 +17,7 @@ const EXPLORER_URLS = {
 
 function getExplorerUrl(network) {
   const n = (network || '').toLowerCase();
-  if (n.includes('amoy') || n.includes('polygon') && n.includes('test')) return EXPLORER_URLS.amoy;
+
   if (n.includes('polygon')) return EXPLORER_URLS.polygon;
   if (n.includes('bnb') || n.includes('bsc') && n.includes('test')) return EXPLORER_URLS['bsc-testnet'];
   if (n.includes('bsc') || n.includes('bnb')) return EXPLORER_URLS.bsc;
@@ -281,7 +280,7 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
                           <a
                             href={(() => {
                               const n = (item.network || '').toLowerCase();
-                              if (n.includes('amoy') || n.includes('polygon')) return `https://amoy.polygonscan.com/address/${item.contractAddress}`;
+
                               if (n.includes('bnb') || n.includes('bsc')) return `https://testnet.bscscan.com/address/${item.contractAddress}`;
                               return `https://sepolia.etherscan.io/address/${item.contractAddress}`;
                             })()}

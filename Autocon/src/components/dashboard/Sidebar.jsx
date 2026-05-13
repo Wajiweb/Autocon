@@ -23,12 +23,17 @@ const NAV_GROUPS = [
       { label: 'AI Assistant',     path: '/ai-chat',   icon: '🤖' },
       { label: 'Activity Monitor', path: '/jobs',      icon: '◎' },
       { label: 'Analytics',        path: '/analytics', icon: '◑' },
+      /* Fix 2: /templates + /ast existed as routes but had no sidebar entry.
+         (architect-review: orphaned routes — unreachable without direct URL) */
+      { label: 'Templates',        path: '/templates', icon: '⊞' },
+      { label: 'AST Explorer',     path: '/ast',       icon: '⋮⋮' },
       { label: 'Profile',          path: '/profile',   icon: '⊙' },
     ],
   },
 ];
 
-export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
+
+export default function Sidebar({ isMobileOpen, setIsMobileOpen, isCollapsed, setIsCollapsed }) {
   const { walletAddress } = useWallet();
   const { network } = useNetwork();
   const [blockNum, setBlockNum] = useState(8241036);
@@ -54,31 +59,43 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
         />
       )}
 
-      <aside className={`db-sidebar${isMobileOpen ? ' mobile-open' : ''}`}>
+      <aside className={`db-sidebar${isMobileOpen ? ' mobile-open' : ''}${isCollapsed ? ' collapsed' : ''}`}>
         {/* Logo */}
         <div className="db-sb-logo">
           <div className="db-logo-mark">AC</div>
-          <div>
-            <div className="db-logo-name">AutoCon</div>
-            <div className="db-logo-tag">v2.4 · Blockchain Studio</div>
-          </div>
+          {!isCollapsed && (
+            <div>
+              <div className="db-logo-name">AutoCon</div>
+              <div className="db-logo-tag">v2.4 · Blockchain Studio</div>
+            </div>
+          )}
+          <button 
+            className="db-sidebar-toggle" 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {isCollapsed ? '»' : '«'}
+          </button>
         </div>
 
         {/* Nav */}
         <nav className="db-sb-nav">
           {NAV_GROUPS.map((group) => (
             <React.Fragment key={group.label}>
-              <div className="db-nav-group-label">{group.label}</div>
+              <div className="db-nav-group-label">
+                {isCollapsed ? '•••' : group.label}
+              </div>
               {group.items.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
                   className={({ isActive }) => `db-nav-link${isActive ? ' active' : ''}`}
                   onClick={() => setIsMobileOpen?.(false)}
+                  title={isCollapsed ? item.label : undefined}
                 >
                   <span className="db-nav-icon">{item.icon}</span>
-                  {item.label}
-                  {item.badge != null && (
+                  {!isCollapsed && item.label}
+                  {!isCollapsed && item.badge != null && (
                     <span className="db-nav-badge">{item.badge}</span>
                   )}
                 </NavLink>
@@ -90,26 +107,30 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
         {/* Bottom */}
         <div className="db-sb-bottom">
           {/* Wallet chip */}
-          <div className="db-wallet-chip">
-            <div className="db-wc-label">Connected Wallet</div>
-            <div className="db-wc-addr">
-              {shortAddr}
-              <button
-                className="db-wc-copy"
-                onClick={() => {
-                  if (walletAddress) navigator.clipboard.writeText(walletAddress);
-                  toast.success('Address copied');
-                }}
-                title="Copy address"
-              >
-                ⎘
-              </button>
+          <div className="db-wallet-chip" style={{ padding: isCollapsed ? '10px 5px' : '11px 13px', textAlign: isCollapsed ? 'center' : 'left' }}>
+            {!isCollapsed && <div className="db-wc-label">Connected Wallet</div>}
+            <div className="db-wc-addr" style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
+              {!isCollapsed ? shortAddr : <span style={{ fontSize: '18px' }}>👛</span>}
+              {!isCollapsed && (
+                <button
+                  className="db-wc-copy"
+                  onClick={() => {
+                    if (walletAddress) navigator.clipboard.writeText(walletAddress);
+                    toast.success('Address copied');
+                  }}
+                  title="Copy address"
+                >
+                  ⎘
+                </button>
+              )}
             </div>
-            <div className="db-net-row">
-              <div className="db-net-dot" style={{ background: network?.color || '#22c55e', boxShadow: `0 0 6px ${network?.color || '#22c55e'}` }} />
-              <span className="db-net-name">{network?.name || 'Sepolia Testnet'}</span>
-              <span className="db-net-block">#{blockNum.toLocaleString()}</span>
-            </div>
+            {!isCollapsed && (
+              <div className="db-net-row">
+                <div className="db-net-dot" style={{ background: network?.color || '#22c55e', boxShadow: `0 0 6px ${network?.color || '#22c55e'}` }} />
+                <span className="db-net-name">{network?.name || 'Sepolia Testnet'}</span>
+                <span className="db-net-block">#{blockNum.toLocaleString()}</span>
+              </div>
+            )}
           </div>
 
         </div>

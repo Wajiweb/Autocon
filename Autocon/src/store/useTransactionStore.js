@@ -117,7 +117,7 @@ function explorerBaseUrl(network) {
     const n = (network || '').toLowerCase();
     if (n.includes('sepolia'))    return 'https://sepolia.etherscan.io';
     if (n.includes('mainnet'))    return 'https://etherscan.io';
-    if (n.includes('amoy'))       return 'https://amoy.polygonscan.com';
+
     if (n.includes('bnb') || n.includes('bsc')) return 'https://testnet.bscscan.com';
     return null;
 }

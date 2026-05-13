@@ -5,9 +5,11 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { fireConfetti } from '../utils/confetti';
+import { classifyError, walletGuard } from '../utils/classifyError';
 import { useWallet } from './useWallet';
 import { useContractStore } from '../store/useContractStore';
 import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
+import { useDraftPersistence } from './useDraftPersistence';
 
 export const useAuction = () => {
     const { authFetch } = useAuth();
@@ -31,6 +33,8 @@ const [formData, setFormData] = useState({
     const [gasEstimate, setGasEstimate] = useState(null);
     const [isEstimating, setIsEstimating] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    /* Phase 4: draft persistence — survives browser refresh / navigation */
+    const { clearDraft } = useDraftPersistence('autocon_draft_auction', formData, setFormData);
 
     const { connectWallet: baseConnectWallet } = useWallet();
 
@@ -129,6 +133,14 @@ const [formData, setFormData] = useState({
                 toast.success("Compiled successfully!", { id: 'recompile' });
             }
 
+            /* Phase 4: walletGuard — check MetaMask exists before BrowserProvider.
+               security-auditor: validate at every trust boundary. */
+            const guard = walletGuard();
+            if (!guard.ok) {
+                toast.error(guard.error);
+                setErrorStep(-1, guard.error);
+                return;
+            }
             const provider = new ethers.BrowserProvider(window.ethereum);
             const currentNetwork = await provider.getNetwork();
 
@@ -241,12 +253,15 @@ const [formData, setFormData] = useState({
             setGeneratedCode('');
             setGasEstimate(null);
             
+            /* Phase 4: clear localStorage draft on successful deploy */
+            clearDraft();
+
             setShowSuccessModal(true);
 
             return deployedAddress;
         } catch (_err) {
-            console.error('[useAuction] deploy:', _err.message);
-            const msg = _err?.reason || _err?.message || 'Deployment failed.';
+            /* Phase 4: use classifyError for human-readable messages — consistent with useWeb3/useNFT */
+            const msg = classifyError(_err);
             const currentStep = useTransactionStore.getState().step;
             setErrorStep(currentStep >= 0 ? currentStep : 0, msg);
             toast.error(msg);

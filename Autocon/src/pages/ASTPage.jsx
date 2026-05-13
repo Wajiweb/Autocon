@@ -2,6 +2,9 @@ import { useLocation } from 'react-router-dom';
 import { normalizeAST, countNodes, nodeColor } from '../utils/astUtils';
 import ASTGraph from '../components/dashboard/ASTGraph';
 import ASTSummaryTree from '../components/dashboard/ASTSummaryTree';
+import ASTReportTemplate from '../components/dashboard/ASTReportTemplate';
+import { usePDFExport } from '../hooks/useExport';
+import { Download } from 'lucide-react';
 import '../components/dashboard/styles/dashboard.css';
 
 const NODE_TYPES = [
@@ -14,6 +17,7 @@ const NODE_TYPES = [
 
 export default function ASTPage() {
   const { state } = useLocation();
+  const { generatePDF, isGenerating: isExportingPDF } = usePDFExport();
   const rawAST    = state?.ast ?? null;
 
   if (!rawAST) {
@@ -51,9 +55,24 @@ export default function ASTPage() {
           <div className="pg-title">AST Graph <em>X-Ray</em></div>
           <div className="pg-sub">Visual map of your compiled Solidity contract structure</div>
         </div>
-        <span className="pg-badge green" style={{ fontSize: 12, padding: '5px 14px' }}>
-          {total} nodes
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span className="pg-badge green" style={{ fontSize: 12, padding: '5px 14px' }}>
+            {total} nodes
+          </span>
+          <ASTReportTemplate 
+            ast={normalized} 
+            dateStr={new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} 
+          />
+          <button
+            onClick={() => generatePDF('AutoCon_AST_Report.pdf', 'pdf-ast-report')}
+            disabled={isExportingPDF}
+            className="pg-btn pg-btn-outline"
+            style={{ gap: 7, padding: '5px 14px', fontSize: 12 }}
+          >
+            {isExportingPDF ? <div className="pg-spinner" style={{ width: 12, height: 12 }} /> : <Download size={12} />}
+            {isExportingPDF ? 'Generating…' : 'Export PDF'}
+          </button>
+        </div>
       </div>
 
       {/* Legend */}

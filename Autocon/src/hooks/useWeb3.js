@@ -5,10 +5,11 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { fireConfetti } from '../utils/confetti';
-import { classifyError, deployWithTimeout } from '../utils/classifyError';
+import { classifyError, deployWithTimeout, walletGuard } from '../utils/classifyError';
 import { useWallet } from './useWallet';
 import { useContractStore } from '../store/useContractStore';
 import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
+import { useDraftPersistence } from './useDraftPersistence';
 
 export const useWeb3 = () => {
   const { authFetch } = useAuth();
@@ -27,6 +28,8 @@ export const useWeb3 = () => {
   const [ast, setAst] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [estimatedCost, setEstimatedCost] = useState(null);
+  /* Phase 4: draft persistence — survives browser refresh / navigation */
+  const { clearDraft } = useDraftPersistence('autocon_draft_token', formData, setFormData);
 
   const { connectWallet: baseConnectWallet } = useWallet();
 
@@ -119,6 +122,15 @@ export const useWeb3 = () => {
         toast.success("Compiled successfully!", { id: 'recompile' });
       }
 
+      /* Phase 4: walletGuard — check MetaMask exists before constructing BrowserProvider.
+         Prevents opaque "Cannot read properties of undefined" crash.
+         security-auditor: validate at every trust boundary. */
+      const guard = walletGuard();
+      if (!guard.ok) {
+        toast.error(guard.error);
+        setErrorStep(-1, guard.error);
+        return;
+      }
         const provider = new ethers.BrowserProvider(window.ethereum);
         const currentNetwork = await provider.getNetwork();
 
@@ -159,7 +171,8 @@ export const useWeb3 = () => {
       const encodedArgs = iface.encodeDeploy([formData.ownerAddress, formData.supply]);
       const constructorArgsHex = encodedArgs.startsWith('0x') ? encodedArgs.slice(2) : encodedArgs;
 
-      console.log('[useWeb3] Saving token with sourceCode length:', generatedCode?.length, 'contract:', deployed);
+      /* Phase 4: removed console.log — security-auditor: no source code
+         length or contract address leakage in production deploy paths. */
 
       // Save to database with source code artifacts
       try {
@@ -213,6 +226,9 @@ export const useWeb3 = () => {
         toast.error("Failed to queue verification.");
       }
 
+      /* Phase 4: clear localStorage draft on successful deploy */
+      clearDraft();
+
       // Reset form after successful deployment
       setFormData(prev => ({ ...prev, name: '', symbol: '', supply: '1000000' }));
       setGeneratedCode('');
@@ -224,7 +240,7 @@ export const useWeb3 = () => {
       return deployed;
 
     } catch (err) {
-      console.error('[useWeb3] deploy:', err.message);
+      /* Phase 4: removed console.error — classifyError surfaces message to user via toast */
       const message = classifyError(err);
       const currentStep = useTransactionStore.getState().step;
       setErrorStep(currentStep >= 0 ? currentStep : 0, message);

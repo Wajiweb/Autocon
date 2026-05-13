@@ -157,7 +157,8 @@
     .meta-pill.addr:hover { background: rgba(96,165,250,.2); }
     .net-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--acc); animation: pulse 2s ease infinite; }
 
-/* Live stats bar inside hero */
+
+    /* ── Hero stats bar ─────────────────────────────────── */
     .hero-stats {
       display: flex; justify-content: center; gap: 0;
       margin-top: 20px;
@@ -170,48 +171,26 @@
     }
 
     .hs-item {
-      flex: 1; text-align: center; padding: 14px 10px;
-      border-right: .5px solid var(--br);
-    }
-
-    @media (min-width: 640px) {
-      .hs-item { padding: 16px 12px; }
-    }
-
-    .hs-item:last-child { border-right: none; }
-    .hs-val { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--t1); }
-
-    @media (min-width: 640px) {
-      .hs-val { font-size: 20px; }
-    }
-
-    .hs-lbl { font-size: 10px; color: var(--t3); margin-top: 4px; text-transform: uppercase; letter-spacing: .07em; }
-
-    @media (min-width: 640px) {
-      .hs-lbl { font-size: 11px; }
-    }
-
-    @media (min-width: 640px) {
-      .hero-stats { margin-top: 22px; }
-    }
-
-    .hs-item {
       flex: 1; text-align: center; padding: 10px 6px;
       border-right: .5px solid var(--br);
     }
 
     @media (min-width: 640px) {
-      .hs-item { padding: 12px 8px; }
+      .hs-item { padding: 14px 10px; }
     }
 
     .hs-item:last-child { border-right: none; }
     .hs-val { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--t1); }
 
     @media (min-width: 640px) {
-      .hs-val { font-size: 16px; }
+      .hs-val { font-size: 18px; }
     }
 
-    .hs-lbl { font-size: 9px; color: var(--t3); margin-top: 2px; text-transform: uppercase; letter-spacing: .07em; }
+    .hs-lbl { font-size: 9px; color: var(--t3); margin-top: 3px; text-transform: uppercase; letter-spacing: .07em; }
+
+    @media (min-width: 640px) {
+      .hs-lbl { font-size: 11px; }
+    }
 
     /* ── Connect wallet bar ─────────────────────────────── */
     .connect-bar {
@@ -534,12 +513,23 @@ try {
 /* ── Provider / Signer ── */
 let provider, signer, rwContract, roContract;
 
+/* ── Bug 5 fix: expose the short address as a JS const so copyAddr()
+   can restore it accurately after the 'Copied!' flash.
+   (systematic-debugging: stale closure — setTimeout callback captured
+   the literal %%CONTRACT_ADDRESS_SHORT%% placeholder before server
+   substitution was applied to the JS string; now using a const) ── */
+const SHORT_ADDR = `${CONTRACT_ADDRESS.slice(0, 6)}…${CONTRACT_ADDRESS.slice(-4)}`;
+
+/* ── Bug 7 fix: silentRead was calling loadHeroStats() before
+   the awaited roContract assignment resolved in some browsers.
+   Now we assign first, then call loadHeroStats. ── */
 async function silentRead() {
   try {
     if (!window.ethereum) return;
-    provider  = new ethers.BrowserProvider(window.ethereum);
+    provider   = new ethers.BrowserProvider(window.ethereum);
     roContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-    loadHeroStats();
+    await roContract.getAddress(); // warm up the connection
+    await loadHeroStats();
   } catch(_) {}
 }
 silentRead();
@@ -629,8 +619,12 @@ checkNetworkMismatch();
 function copyAddr() {
   navigator.clipboard.writeText(CONTRACT_ADDRESS).then(() => {
     const el = document.querySelector('.meta-pill.addr');
+    if (!el) return;
     el.textContent = '✅ Copied!';
-    setTimeout(() => el.textContent = '📋 %%CONTRACT_ADDRESS_SHORT%%', 1800);
+    // Bug 5 fix: use SHORT_ADDR const instead of the literal %%CONTRACT_ADDRESS_SHORT%%
+    // which would appear verbatim (the server-side replacement only runs once at render time,
+    // not inside a setTimeout that fires 1800ms later in the user's browser)
+    setTimeout(() => { el.textContent = `📋 ${SHORT_ADDR}`; }, 1800);
   }).catch(() => {});
 }
 

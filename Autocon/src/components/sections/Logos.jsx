@@ -6,7 +6,7 @@ import React from 'react';
 
 const LOGOS = [
   { name: 'Ethereum',      emoji: '⟠' },
-  { name: 'Polygon',       emoji: '⬡' },
+  { name: 'Hardhat',        emoji: '⛑️' },
   { name: 'BNB Chain',     emoji: '◆' },
   { name: 'Avalanche',     emoji: '▲' },
   { name: 'Chainlink',     emoji: '⬡' },

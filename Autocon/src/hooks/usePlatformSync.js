@@ -10,6 +10,12 @@ export function usePlatformSync() {
   const { setDeployments, setJobs, setStats, setSyncStatus, deployments, jobs } = usePlatformStore();
   const deploymentsRef = useRef(deployments);
   const jobsRef = useRef(jobs);
+  /* Phase 3 fix: authFetch from context may be a new reference each render.
+     Store it in a ref so the polling interval always calls the latest version
+     without needing authFetch in the effect dependency array (which would
+     tear down + restart the interval on every render). */
+  const authFetchRef = useRef(authFetch);
+  useEffect(() => { authFetchRef.current = authFetch; }, [authFetch]);
 
   // Keep refs up to date to avoid dependency cycle in setInterval
   useEffect(() => { deploymentsRef.current = deployments; }, [deployments]);
@@ -31,11 +37,11 @@ export function usePlatformSync() {
         
         await Promise.all(fetches.map(async ({ url, key, type }) => {
           try {
-            const res = await authFetch(url);
+            const res = await authFetchRef.current(url);
             const data = await res.json();
             const items = data.success ? (data.data?.[key] ?? data[key]) : null;
             if (items) {
-              console.log('[usePlatformSync] Fetched', type, 'count:', items.length, 'first item has sourceCode:', items[0]?.sourceCode?.length > 0);
+              /* Phase 3: removed console.log that leaked sourceCode metadata on every poll */
               items.forEach(item => allAssets.push({
                 ...item,
                 _type: type,
@@ -109,5 +115,8 @@ export function usePlatformSync() {
     // Poll
     const intervalId = setInterval(fetchAll, POLL_INTERVAL_MS);
     return () => clearInterval(intervalId);
-  }, [user, authFetch, setDeployments, setJobs, setStats, setSyncStatus]);
+  }, [user, setDeployments, setJobs, setStats, setSyncStatus]);
+  /* Phase 3: removed authFetch from deps — it's accessed via authFetchRef.current
+     to prevent the polling interval from restarting on every render where
+     authFetch reference changes. (react-component-performance: stable intervals) */
 }

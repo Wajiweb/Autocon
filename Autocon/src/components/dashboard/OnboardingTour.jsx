@@ -22,6 +22,9 @@ export default function OnboardingTour() {
             popover: { title: 'Wallet & Network', description: 'Switch networks easily and see your active MetaMask connection.', side: "right", align: 'start' }
           },
           {
+            popover: { title: 'Command Palette', description: 'Press Cmd+K (or Ctrl+K) anywhere to instantly jump between generators and pages.', align: 'center' }
+          },
+          {
             popover: { title: 'Ready to build!', description: 'Go ahead and deploy your first smart contract.', align: 'center' }
           }
         ],

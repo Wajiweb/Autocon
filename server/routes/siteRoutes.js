@@ -4,6 +4,22 @@ const path = require('path');
 
 const router = express.Router();
 
+/**
+ * Security: HTML-escape all values injected into the template.
+ * Prevents XSS via crafted name/network/type query parameters.
+ * (security-auditor skill: input validation at every injection point)
+ */
+function escapeHtml(str) {
+    if (typeof str !== 'string') return '';
+    return str
+        .replace(/&/g,  '&amp;')
+        .replace(/</g,  '&lt;')
+        .replace(/>/g,  '&gt;')
+        .replace(/"/g,  '&quot;')
+        .replace(/'/g,  '&#x27;')
+        .replace(/\//g, '&#x2F;');
+}
+
 // 1. Load HTML Template at startup (cache)
 const templatePath = path.join(__dirname, '../templates/MiniSiteTemplate.html');
 let SITE_TEMPLATE = '';
@@ -109,34 +125,54 @@ router.get('/view', async (req, res) => {
         }
 
         const abiString = JSON.stringify(minimalAbi);
-        const shortAddr = `${contractAddress.substring(0, 6)}...${contractAddress.substring(38)}`;
+        // Bug 3 fix: slice(-4) is correct regardless of address length; substring(38) is fragile
+        const shortAddr = `${contractAddress.substring(0, 6)}...${contractAddress.slice(-4)}`;
 
-        // 3. Inject all tokens into the template
+        // 3. Inject all tokens — Bug 1 fix: escape all user-supplied strings before injection (XSS prevention)
+        //    contractAddress is validated as Ethereum hex by ethers.js, safe to inject directly
+        //    abiString is server-generated JSON, not user input — safe
+        //    contractEmoji/contractDesc are hardcoded per type — safe
         htmlContent = htmlContent
-            .replace(/%%PROJECT_NAME%%/g,         name)
-            .replace(/%%CONTRACT_ADDRESS%%/g,     contractAddress)
-            .replace(/%%CONTRACT_ADDRESS_SHORT%%/g, shortAddr)
-            .replace(/%%NETWORK_NAME%%/g,         network)
-            .replace(/%%SMART_CONTRACT_ABI%%/g,   abiString)
-            .replace(/%%CONTRACT_TYPE%%/g,        normalizedType)
-            .replace(/%%CONTRACT_CATEGORY%%/g,    contractCategory)
-            .replace(/%%CONTRACT_EMOJI%%/g,       contractEmoji)
-            .replace(/%%CONTRACT_DESC%%/g,        contractDesc);
+            .replace(/%%PROJECT_NAME%%/g,           escapeHtml(name))
+            .replace(/%%CONTRACT_ADDRESS%%/g,       contractAddress)
+            .replace(/%%CONTRACT_ADDRESS_SHORT%%/g, escapeHtml(shortAddr))
+            .replace(/%%NETWORK_NAME%%/g,           escapeHtml(network))
+            .replace(/%%SMART_CONTRACT_ABI%%/g,     abiString)
+            .replace(/%%CONTRACT_TYPE%%/g,          escapeHtml(normalizedType))
+            .replace(/%%CONTRACT_CATEGORY%%/g,      contractCategory)
+            .replace(/%%CONTRACT_EMOJI%%/g,         contractEmoji)
+            .replace(/%%CONTRACT_DESC%%/g,          contractDesc);
 
-        // 4. Send with permissive CSP so MetaMask works
+        // 4. Bug 2 fix: Tightened CSP — minimum required for MetaMask + ethers.js from cdnjs
+        //    (security-auditor skill: principle of least privilege, no wildcard default-src)
         res.setHeader('Content-Security-Policy',
-            "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
-            "script-src * 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; " +
-            "connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; " +
-            "frame-src *; style-src * 'unsafe-inline';"
+            "default-src 'none'; " +
+            "script-src 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
+            "style-src 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; " +
+            "font-src https://fonts.gstatic.com; " +
+            "connect-src https: wss:; " +
+            "img-src 'self' data: https:; " +
+            "frame-src 'none';"
         );
         res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
         res.setHeader('Content-Type', 'text/html');
         return res.send(htmlContent);
 
     } catch (error) {
-        console.error('❌ Mini-Site View Error:', error);
-        res.status(500).json({ success: false, error: 'Internal server error during site viewing.' });
+        /* Phase 5: structured error log \u2014 no raw error/stack exposed in production.
+           security-auditor: never log raw Error objects to stdout in production
+           as they may contain internal path info or stack frames. */
+        console.error(JSON.stringify({
+            level: 'ERROR',
+            timestamp: new Date().toISOString(),
+            context: 'siteRoutes.view',
+            message: error.message,
+            stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined,
+        }));
+        // Return a friendly HTML error page instead of a JSON 500 blob
+        if (!res.headersSent) {
+            res.status(500).send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Error | AutoCon</title><style>body{background:#07090a;color:#f0f2f1;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}.box{text-align:center;padding:40px}.box h1{font-size:48px;margin-bottom:12px}.box p{color:rgba(240,242,241,0.55);font-size:16px;max-width:380px;margin:0 auto 24px}.box a{color:#ff6b00;text-decoration:none;font-weight:600}</style></head><body><div class="box"><h1>⚠️</h1><p>Something went wrong loading this contract page. The contract address or parameters may be invalid.</p><a href="javascript:history.back()">← Go Back</a></div></body></html>`);
+        }
     }
 });
 

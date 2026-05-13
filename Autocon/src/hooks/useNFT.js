@@ -6,8 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { useWallet } from './useWallet';
 import { fireConfetti } from '../utils/confetti';
+import { classifyError, walletGuard } from '../utils/classifyError';
 import { useContractStore } from '../store/useContractStore';
 import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
+import { useDraftPersistence } from './useDraftPersistence';
 
 export const useNFT = () => {
     const { authFetch } = useAuth();
@@ -28,6 +30,8 @@ const [formData, setFormData] = useState({
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [gasEstimate, setGasEstimate] = useState(null);
     const [isEstimating, setIsEstimating] = useState(false);
+    /* Phase 4: draft persistence — survives browser refresh / navigation */
+    const { clearDraft } = useDraftPersistence('autocon_draft_nft', formData, setFormData);
 
     const { connectWallet: baseConnectWallet } = useWallet();
 
@@ -139,6 +143,14 @@ const [formData, setFormData] = useState({
                 toast.success("Compiled successfully!", { id: 'recompile' });
             }
 
+            /* Phase 4: walletGuard — check MetaMask exists before BrowserProvider.
+               security-auditor: validate at every trust boundary. */
+            const guard = walletGuard();
+            if (!guard.ok) {
+                toast.error(guard.error);
+                setErrorStep(-1, guard.error);
+                return;
+            }
             const provider = new ethers.BrowserProvider(window.ethereum);
             const currentNetwork = await provider.getNetwork();
 
@@ -248,12 +260,16 @@ const [formData, setFormData] = useState({
             }
 
 
+            /* Phase 4: clear localStorage draft on successful deploy */
+            clearDraft();
+
             setShowSuccessModal(true);
             return deployed;
 
         } catch (_err) {
-            console.error('[useNFT] deploy:', _err.message);
-            const msg = _err?.reason || _err?.message || 'Deployment failed. Do you have enough testnet ETH?';
+            /* Phase 4: use classifyError (same as useWeb3) for human-readable messages.
+               fp-async: consistent error handling pattern across all 3 deploy hooks. */
+            const msg = classifyError(_err);
             const currentStep = useTransactionStore.getState().step;
             setErrorStep(currentStep >= 0 ? currentStep : 0, msg);
             toast.error(msg);

@@ -15,7 +15,7 @@ const FAQS = [
   },
   {
     q: 'Which blockchains are supported?',
-    a: 'Currently AutoCon supports Sepolia (Ethereum testnet), Polygon Amoy, and BNB testnet. Mainnet support is on the roadmap.',
+    a: 'Currently AutoCon supports Sepolia (Ethereum testnet) and BNB testnet. Mainnet support is on the roadmap.',
   },
   {
     q: 'How does the AI audit work?',

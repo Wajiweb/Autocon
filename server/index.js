@@ -48,22 +48,48 @@ Sentry.setupExpressErrorHandler(app);
 app.use(helmet());
 
 // ─── SECURITY: Strict CORS Configuration ───
-const allowedOrigins = (
-    process.env.ALLOWED_ORIGINS ||
-    'http://localhost:5173,http://127.0.0.1:5173'
-)
-    .split(',')
-    .map(origin => origin.trim());
+const isProduction = process.env.NODE_ENV === 'production';
+const allowedOrigins = new Set(
+    (
+        process.env.ALLOWED_ORIGINS ||
+        'http://localhost:5173,http://127.0.0.1:5173'
+    )
+        .split(',')
+        .map(origin => origin.trim().replace(/\/$/, ''))
+        .filter(Boolean)
+);
+
+const isPrivateDevOrigin = (origin) => {
+    if (isProduction) return false;
+
+    try {
+        const { protocol, hostname } = new URL(origin);
+        if (!['http:', 'https:'].includes(protocol)) return false;
+
+        return (
+            hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname === '::1' ||
+            hostname.startsWith('192.168.') ||
+            hostname.startsWith('10.') ||
+            /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
+        );
+    } catch {
+        return false;
+    }
+};
 
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (mobile apps, curl, etc in dev)
-        if (!origin && process.env.NODE_ENV !== 'production') {
+        if (!origin && !isProduction) {
             return callback(null, true);
         }
-        if (allowedOrigins.includes(origin)) {
+        const normalizedOrigin = origin?.replace(/\/$/, '');
+        if (allowedOrigins.has(normalizedOrigin) || isPrivateDevOrigin(normalizedOrigin)) {
             callback(null, true);
         } else {
+            console.warn(`CORS rejected origin: ${origin || 'unknown'}`);
             callback(new Error('Not allowed by CORS'));
         }
     },
@@ -73,8 +99,8 @@ app.use(cors({
     maxAge: 86400 // Cache preflight for 24h
 }));
 
-// ─── Body Parser ───
-app.use(express.json({ limit: '1mb' }));
+/* Phase 5: raised limit 1mb→5mb — Solidity source+ABI+bytecode can exceed 1MB */
+app.use(express.json({ limit: '5mb' }));
 
 // ─── SECURITY: Rate Limiting (global) ───
 app.use(generalLimiter);
@@ -132,8 +158,11 @@ app.get('/api/deployments/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Deployment not found.' });
         }
 
-        const ownerAddr = doc.ownerAddress;
-        if (req.user.walletAddress !== ownerAddr.toLowerCase()) {
+        /* Phase 5: normalize ownerAddr to lowercase — MetaMask returns checksummed
+           addresses; auth.js stores lowercase. Without this, legitimate owners
+           could get a false 403 depending on how address was saved to DB. */
+        const ownerAddr = (doc.ownerAddress || '').toLowerCase();
+        if (req.user.walletAddress !== ownerAddr) {
             return res.status(403).json({ success: false, error: 'Unauthorized.' });
         }
 

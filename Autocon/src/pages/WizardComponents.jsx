@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { useWallet } from '../hooks/useWallet';
 import { ethers } from 'ethers';
 import { useWizardStore } from '../store/useWizardStore';
+import Editor from '@monaco-editor/react';
+import { NETWORKS as CONTEXT_NETWORKS, useNetwork } from '../context/NetworkContext';
 
 const STEPS = ['Select Type', 'Parameters', 'Review', 'Deploy'];
 
@@ -15,11 +17,12 @@ export const CONTRACT_TYPES = [
   { id: 'Auction', icon: '◉', name: 'Auction',        tag: 'English Bid', desc: 'Trustless on-chain auction with reserve price, anti-snipe and time extension.' },
 ];
 
-export const NETWORKS = [
-  { id: 'sepolia',     name: 'Sepolia',      color: '#627eea', explorer: 'https://sepolia.etherscan.io' },
-  { id: 'amoy',        name: 'Polygon Amoy', color: '#8247e5', explorer: 'https://amoy.polygonscan.com' },
-  { id: 'bnb testnet', name: 'BNB Testnet',  color: '#f0b90b', explorer: 'https://testnet.bscscan.com' },
-];
+export const NETWORKS = Object.values(CONTEXT_NETWORKS).map(n => ({
+  id: n.key,
+  name: n.name,
+  color: n.color,
+  explorer: n.explorer
+}));
 
 export const API_ENDPOINT  = { ERC20: '/api/token/generate-token', ERC721: '/api/nft/generate',    Auction: '/api/auction/generate' };
 export const SAVE_ENDPOINT = { ERC20: '/api/token/save-token',     ERC721: '/api/nft/save',         Auction: '/api/auction/save' };
@@ -199,6 +202,57 @@ export function StepReview({ type, params, code, isGenerating, onGenerate }) {
   const features = Object.entries(params).filter(([k, v]) => typeof v === 'boolean' && v).map(([k]) => k.replace(/^(is|has)/, ''));
   const typeMeta = CONTRACT_TYPES.find(t => t.id === type);
 
+  // Advanced inline linting for Monaco
+  const handleEditorDidMount = (editor, monaco) => {
+    if (!code) return;
+    const model = editor.getModel();
+    
+    // Simple regex-based linting for common Solidity anti-patterns
+    const markers = [];
+    const lines = code.split('\n');
+    
+    lines.forEach((line, i) => {
+      // Check for tx.origin
+      let match = line.match(/tx\.origin/);
+      if (match) {
+        markers.push({
+          severity: monaco.MarkerSeverity.Warning,
+          message: 'Avoid using tx.origin for authorization due to phishing risks. Prefer msg.sender.',
+          startLineNumber: i + 1,
+          startColumn: match.index + 1,
+          endLineNumber: i + 1,
+          endColumn: match.index + 1 + match[0].length,
+        });
+      }
+      // Check for selfdestruct
+      match = line.match(/selfdestruct/);
+      if (match) {
+        markers.push({
+          severity: monaco.MarkerSeverity.Error,
+          message: 'selfdestruct is deprecated and considered dangerous.',
+          startLineNumber: i + 1,
+          startColumn: match.index + 1,
+          endLineNumber: i + 1,
+          endColumn: match.index + 1 + match[0].length,
+        });
+      }
+      // Check for pragma solidity ^0.8.0 (Recommend fixing versions)
+      match = line.match(/pragma solidity \^0\.8\.\d+;/);
+      if (match) {
+         markers.push({
+          severity: monaco.MarkerSeverity.Info,
+          message: 'Floating pragma detected. It is recommended to lock the compiler version for production deployments.',
+          startLineNumber: i + 1,
+          startColumn: match.index + 1,
+          endLineNumber: i + 1,
+          endColumn: match.index + 1 + match[0].length,
+        });
+      }
+    });
+
+    monaco.editor.setModelMarkers(model, "solidity-linter", markers);
+  };
+
   return (
     <div className="wz-card">
       <div className="wz-card-title">Review Your Contract</div>
@@ -230,16 +284,37 @@ export function StepReview({ type, params, code, isGenerating, onGenerate }) {
       </div>
 
       {!code ? (
-        <button className="wz-btn wz-btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 14 }} onClick={onGenerate} disabled={isGenerating}>
-          {isGenerating ? <><span className="wz-ds-spin" style={{ width: 16, height: 16 }} /> Compiling…</> : '⚡ Generate Contract'}
+        <button className="wz-btn wz-btn-primary magnetic-btn glass-btn" style={{ width: '100%', justifyContent: 'center', padding: '16px', fontSize: 15, fontWeight: 700 }} onClick={onGenerate} disabled={isGenerating}>
+          {isGenerating ? <><span className="wz-ds-spin" style={{ width: 16, height: 16 }} /> Compiling & Scanning…</> : '⚡ Generate & Audit Contract'}
         </button>
       ) : (
         <>
-          <div className="wz-alert info">✓ Contract compiled — ready for deployment</div>
-          <button className="wz-btn wz-btn-ghost" style={{ marginBottom: 12, fontSize: 12 }} onClick={() => setShowCode(s => !s)}>
-            {showCode ? '▲ Hide' : '▼ View'} Solidity Code
+          <div className="wz-alert info" style={{ background: 'rgba(16,185,129,.1)', border: '1px solid rgba(16,185,129,.3)' }}>
+            ✓ Contract compiled & validated — ready for deployment
+          </div>
+          <button className="wz-btn wz-btn-ghost glass-btn" style={{ marginBottom: 12, fontSize: 13, background: 'rgba(255,255,255,0.03)' }} onClick={() => setShowCode(s => !s)}>
+            {showCode ? '▲ Hide' : '▼ View Code & Linting'}
           </button>
-          {showCode && <div className="wz-code-preview">{code}</div>}
+          {showCode && (
+            <div className="wz-code-preview" style={{ padding: 0, overflow: 'hidden', height: 400, border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Editor
+                height="400px"
+                language="solidity"
+                theme="vs-dark"
+                value={code}
+                onMount={handleEditorDidMount}
+                options={{
+                  readOnly: true,
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  fontFamily: 'var(--db-mono)',
+                  scrollBeyondLastLine: false,
+                  smoothScrolling: true,
+                  padding: { top: 16, bottom: 16 }
+                }}
+              />
+            </div>
+          )}
         </>
       )}
     </div>
@@ -259,11 +334,12 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
   const { authFetch } = useAuth();
   const { walletAddress, connectWallet } = useWallet();
   const { setDeployResult, setDeployError, clearDeployError, addDeployedContract, session } = useWizardStore();
+  const { selectedNetwork } = useNetwork();
 
   const [activeStep, setActiveStep] = useState(null);
   const [doneSteps, setDoneSteps]   = useState([]);
   const [errorStep, setErrorStepLocal] = useState(null);
-  const [selNet, setSelNet]         = useState('sepolia');
+  const [selNet, setSelNet]         = useState(selectedNetwork || 'sepolia');
 
   const deployResult = session.deployResult;
   const deployError  = session.deployError;
@@ -405,8 +481,8 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <button
-          className="wz-btn wz-btn-primary"
-          style={{ width: '100%', justifyContent: 'center', padding: 14, fontSize: 14 }}
+          className="wz-btn wz-btn-primary magnetic-btn glass-btn"
+          style={{ width: '100%', justifyContent: 'center', padding: '16px', fontSize: 15, fontWeight: 700 }}
           onClick={handleDeploy}
           disabled={!walletAddress || !contractData?.abi || !!activeStep}
         >
@@ -415,8 +491,8 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
             : '🚀 Deploy Contract'}
         </button>
         <button
-          className="wz-btn wz-btn-ghost"
-          style={{ width: '100%', justifyContent: 'center', padding: 14, fontSize: 14, background: 'var(--surface-highest)' }}
+          className="wz-btn wz-btn-ghost glass-btn"
+          style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: 14, background: 'rgba(255,255,255,0.03)' }}
           onClick={() => navigate('/audit', { state: { code: contractData?.sourceCode || '', type } })}
           disabled={!contractData?.abi || !!activeStep}
         >

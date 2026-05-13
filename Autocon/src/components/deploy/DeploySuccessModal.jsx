@@ -287,8 +287,7 @@ export default function DeploySuccessModal({
                 }}
               >
                 <ExternalLink size={15} />
-                {explorerUrl.includes('polygon') ? 'View on Polygonscan'
-                  : explorerUrl.includes('bscscan') ? 'View on BscScan'
+                {explorerUrl.includes('bscscan') ? 'View on BscScan'
                   : 'View on Etherscan'}
               </a>
 

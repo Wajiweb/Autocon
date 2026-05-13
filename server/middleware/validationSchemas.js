@@ -238,28 +238,14 @@ const schemas = {
  */
 function validate(schema, source = 'body') {
     return (req, res, next) => {
-        console.log('Incoming request:', {
-            method: req.method,
-            path: req.originalUrl,
-            body: req[source],
-        });
-
+        /* Phase 5: removed console.log of req.body — security-auditor:
+           logging full request bodies (incl. Solidity source code) to stdout
+           is an information-disclosure vulnerability in production.
+           Validation failures are already captured by the centralized errorHandler. */
         const { error, value } = schema.validate(req[source], {
             abortEarly: false,      // Collect ALL errors, not just first
             stripUnknown: true,     // Remove unrecognized keys silently
             convert: true,          // Coerce types (e.g. "123" → 123)
-        });
-
-        const details = error
-            ? error.details.map(d => ({
-                field: d.path.join('.'),
-                message: d.message.replace(/['"]/g, ''),
-            }))
-            : [];
-
-        console.log('Validation result:', {
-            valid: !error,
-            details,
         });
 
         if (error) {

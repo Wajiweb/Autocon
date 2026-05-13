@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -7,43 +7,83 @@ import { NetworkProvider } from './context/NetworkContext';
 import { WalletProvider } from './hooks/useWallet';
 import Sidebar from './components/dashboard/Sidebar';
 import Navbar from './components/dashboard/Navbar';
-import LoginPage from './pages/LoginPage';
-import TokenGenerator from './pages/TokenGenerator';
-import Dashboard from './pages/Dashboard';
-import AuditPage from './pages/AuditPage';
-import NFTGenerator from './pages/NFTGenerator';
-import AuctionGenerator from './pages/AuctionGenerator';
-import TemplateLibrary from './pages/TemplateLibrary';
-import ProfilePage from './pages/ProfilePage';
-import LandingPage from './pages/LandingPage';
-
-import ASTPage from './pages/ASTPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import JobsPage from './pages/JobsPage';
-import AIChatPage from './pages/AIChatPage';
-import ContractWizard from './pages/ContractWizard';
 import OnboardingTour from './components/dashboard/OnboardingTour';
 import { usePlatformSync } from './hooks/usePlatformSync';
+import ErrorBoundary from './components/ui/ErrorBoundary';
+
+// Phase 6: Code Splitting — Lazy load all page routes
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const TokenGenerator = lazy(() => import('./pages/TokenGenerator'));
+const NFTGenerator = lazy(() => import('./pages/NFTGenerator'));
+const AuctionGenerator = lazy(() => import('./pages/AuctionGenerator'));
+const AuditPage = lazy(() => import('./pages/AuditPage'));
+const TemplateLibrary = lazy(() => import('./pages/TemplateLibrary'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const ASTPage = lazy(() => import('./pages/ASTPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const JobsPage = lazy(() => import('./pages/JobsPage'));
+const AIChatPage = lazy(() => import('./pages/AIChatPage'));
+const ContractWizard = lazy(() => import('./pages/ContractWizard'));
+import CommandPalette from './components/ui/CommandPalette';
+
+/**
+ * ProtectedRoute — Fix 3: Auth guard.
+ * (architect-review: all routes were publicly accessible without auth check)
+ * Redirects unauthenticated users to "/" which resolves to LandingPage.
+ */
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return null; // AppContent's loading spinner handles the wait
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+  return children;
+}
+
+/**
+ * GuardedPage — Fix 3 + 4: auth guard + route-level error isolation.
+ * (react-patterns skill §7: error boundaries at route/feature level)
+ * A crash in one page now only collapses that route, not the whole app shell.
+ */
+function GuardedPage({ children }) {
+  return (
+    <ProtectedRoute>
+      <ErrorBoundary>
+        <Suspense fallback={
+          <div className="min-h-[50vh] flex flex-col items-center justify-center gap-4">
+            <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid var(--primary-subtle)', borderTopColor: 'var(--primary)', animation: 'spin-slow 1s linear infinite' }} />
+            <p className="text-sm" style={{ color: 'var(--on-surface-variant)' }}>Loading page...</p>
+          </div>
+        }>
+          {children}
+        </Suspense>
+      </ErrorBoundary>
+    </ProtectedRoute>
+  );
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
 
   return (
     <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/tokens" element={<TokenGenerator />} />
-        <Route path="/nfts" element={<NFTGenerator />} />
-        <Route path="/auctions" element={<AuctionGenerator />} />
-        <Route path="/audit" element={<AuditPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/templates" element={<TemplateLibrary />} />
-        <Route path="/ast" element={<ASTPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/jobs"      element={<JobsPage />} />
-        <Route path="/ai-chat"   element={<AIChatPage />} />
-        <Route path="/create"    element={<ContractWizard />} />
-      </Routes>
+      {/* Public redirect */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+      {/* All protected routes — auth guarded + error isolated per GuardedPage */}
+      <Route path="/dashboard" element={<GuardedPage><Dashboard /></GuardedPage>} />
+      <Route path="/tokens"    element={<GuardedPage><TokenGenerator /></GuardedPage>} />
+      <Route path="/nfts"      element={<GuardedPage><NFTGenerator /></GuardedPage>} />
+      <Route path="/auctions"  element={<GuardedPage><AuctionGenerator /></GuardedPage>} />
+      <Route path="/audit"     element={<GuardedPage><AuditPage /></GuardedPage>} />
+      <Route path="/profile"   element={<GuardedPage><ProfilePage /></GuardedPage>} />
+      <Route path="/templates" element={<GuardedPage><TemplateLibrary /></GuardedPage>} />
+      <Route path="/ast"       element={<GuardedPage><ASTPage /></GuardedPage>} />
+      <Route path="/analytics" element={<GuardedPage><AnalyticsPage /></GuardedPage>} />
+      <Route path="/jobs"      element={<GuardedPage><JobsPage /></GuardedPage>} />
+      <Route path="/ai-chat"   element={<GuardedPage><AIChatPage /></GuardedPage>} />
+      <Route path="/create"    element={<GuardedPage><ContractWizard /></GuardedPage>} />
+    </Routes>
   );
 }
 
@@ -51,6 +91,7 @@ function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   usePlatformSync();
 
@@ -65,19 +106,30 @@ function AppContent() {
 
   if (!isAuthenticated) {
     if (showLogin) {
-      return <LoginPage />;
+      return (
+        <Suspense fallback={<div className="min-h-screen bg-[color:var(--bg)]" />}>
+          <LoginPage />
+        </Suspense>
+      );
     }
-    return <LandingPage onLoginClick={() => setShowLogin(true)} />;
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-[color:var(--bg)]" />}>
+        <LandingPage onLoginClick={() => setShowLogin(true)} />
+      </Suspense>
+    );
   }
 
   // Main App Layout
   return (
-    <div className="dashboard-theme dashboard-app">
+    <div className={`dashboard-theme dashboard-app ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <CommandPalette />
       <OnboardingTour />
       {/* Fixed sidebar */}
       <Sidebar
         isMobileOpen={isMobileMenuOpen}
         setIsMobileOpen={setIsMobileMenuOpen}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
       />
 
       {/* Main column, offset by sidebar width */}

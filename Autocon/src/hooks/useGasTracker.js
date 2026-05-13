@@ -7,6 +7,7 @@ import { ethers } from 'ethers';
  */
 export function useGasTracker() {
   const [gasPriceGwei, setGasPriceGwei] = useState(null);
+  const [blockNumber, setBlockNumber] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState('average'); // 'cheap', 'average', 'expensive'
 
@@ -34,6 +35,9 @@ export function useGasTracker() {
         const gwei = Number(ethers.formatUnits(currentGasWei, 'gwei'));
         setGasPriceGwei(gwei);
 
+        const blockNum = await provider.getBlockNumber();
+        setBlockNumber(blockNum);
+
         // Determine status thresholds based on general network feel
         if (gwei < 15) {
           setStatus('cheap');
@@ -59,5 +63,5 @@ export function useGasTracker() {
     return () => clearInterval(intervalId);
   }, []); // Remove network dependency so it just uses the global provider
 
-  return { gasPriceGwei, status, isLoading };
+  return { gasPriceGwei, status, isLoading, blockNumber };
 }

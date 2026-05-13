@@ -1,6 +1,43 @@
 import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
+/**
+ * AnimatedDashboardCard
+ *
+ * Phase 2 refactor — design-spells + simplify-code + frontend-design:
+ *  - Replaced raw `accentColor` hex prop with semantic `variant` prop.
+ *  - Eliminated `hexToRgb()` dead-code utility (only needed for hex → shadow).
+ *  - Replaced Tailwind arbitrary hex values (bg-[#0a0a0a]) with CSS token refs.
+ *  - All colours now sourced from the unified design system (index.css :root).
+ *
+ * Design-spells rules respected:
+ *  - spring animations preserved (60fps, GPU-accelerated via framer-motion)
+ *  - background glow micro-interaction preserved
+ *  - `useReducedMotion` prefers-reduced-motion respected
+ */
+
+// Maps variant → CSS custom properties from the design system (index.css)
+const VARIANT_MAP = {
+  primary: {
+    color:       'var(--primary)',                         // hsl(25 100% 50%) — orange
+    borderAlpha: 'color-mix(in srgb, var(--primary) 20%, transparent)',
+    glowBg:      'color-mix(in srgb, var(--primary) 12%, transparent)',
+    shadowGlow:  'var(--shadow-glow)',                     // pre-defined in :root
+  },
+  blue: {
+    color:       'var(--ai-accent)',                       // #60a5fa
+    borderAlpha: 'color-mix(in srgb, var(--ai-accent) 20%, transparent)',
+    glowBg:      'color-mix(in srgb, var(--ai-accent) 12%, transparent)',
+    shadowGlow:  '0 15px 35px -10px color-mix(in srgb, var(--ai-accent) 15%, transparent)',
+  },
+  green: {
+    color:       'var(--success)',                         // #34d399
+    borderAlpha: 'color-mix(in srgb, var(--success) 20%, transparent)',
+    glowBg:      'color-mix(in srgb, var(--success) 12%, transparent)',
+    shadowGlow:  '0 15px 35px -10px color-mix(in srgb, var(--success) 15%, transparent)',
+  },
+};
+
 export function AnimatedDashboardCard({
   title,
   mainValue,
@@ -10,19 +47,16 @@ export function AnimatedDashboardCard({
   rightLabel,
   rightValue,
   rightSub,
-  accentColor = "#ff6b00",
+  /** Semantic variant — replaces raw `accentColor` hex prop. */
+  variant = "primary",
   enableAnimations = true,
   delayOffset = 0,
 }) {
   const shouldReduceMotion = useReducedMotion();
   const shouldAnimate = enableAnimations && !shouldReduceMotion;
 
-  // Convert hex to rgb for glow shadows
-  const hexToRgb = (hex) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '255, 107, 0';
-  };
-  const rgbAccent = hexToRgb(accentColor);
+  // Resolve variant tokens (fall back to 'primary' for unknown values)
+  const tokens = VARIANT_MAP[variant] ?? VARIANT_MAP.primary;
 
   const containerVariants = {
     hidden: { opacity: 0, y: 15, scale: 0.98 },
@@ -44,23 +78,24 @@ export function AnimatedDashboardCard({
       variants={shouldAnimate ? containerVariants : {}}
     >
       <motion.div
-        className="bg-[#0a0a0a]/80 border rounded-xl overflow-hidden relative backdrop-blur-xl h-full flex flex-col"
+        className="border rounded-xl overflow-hidden relative backdrop-blur-xl h-full flex flex-col"
         style={{ 
-          borderColor: `rgba(${rgbAccent}, 0.2)`,
-          boxShadow: `0 15px 35px -10px rgba(${rgbAccent}, 0.05), inset 0 1px 0 rgba(255,255,255,0.05)` 
+          background: 'var(--surface-low)',
+          borderColor: tokens.borderAlpha,
+          boxShadow: `${tokens.shadowGlow}, inset 0 1px 0 rgba(255,255,255,0.05)` 
         }}
       >
-        {/* Background glow for professional look */}
+        {/* Background glow — design-spells: GPU-accelerated blur micro-interaction */}
         <div 
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[200px] rounded-full blur-[70px] pointer-events-none" 
-          style={{ backgroundColor: `rgba(${rgbAccent}, 0.12)` }}
+          style={{ backgroundColor: tokens.glowBg }}
         />
 
         {/* Top / Middle Section - Main Value */}
         <div className="relative px-6 pt-6 pb-2 flex flex-col items-center justify-center flex-1 z-20">
             <motion.div 
               className="text-[10px] font-semibold tracking-[0.2em] mb-1.5 uppercase text-center"
-              style={{ color: accentColor }}
+              style={{ color: tokens.color }}
               initial={shouldAnimate ? { opacity: 0, y: -5 } : {}}
               animate={shouldAnimate ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: delayOffset + 0.2, type: "spring" }}
@@ -77,22 +112,26 @@ export function AnimatedDashboardCard({
             </motion.div>
         </div>
 
-        {/* Bottom Section (Natural flow, not absolute) */}
+        {/* Bottom Section */}
         {hasLowerThird && (
-          <div className="relative px-5 pb-5 pt-4 flex justify-between w-full z-20 mt-4 border-t border-white/5 bg-[#050505]/30">
+          <div
+            className="relative px-5 pb-5 pt-4 flex justify-between w-full z-20 mt-4 border-t"
+            style={{ background: 'var(--bg)', borderColor: 'var(--outline-subtle)' }}
+          >
             {/* Left Section */}
             {leftLabel && (
               <div className="flex flex-col items-start gap-1">
                 <div className="flex items-center gap-1.5">
                   <motion.div
                     className="w-1 h-2.5 rounded-full"
-                    style={{ backgroundColor: accentColor }}
+                    style={{ backgroundColor: tokens.color }}
                     initial={shouldAnimate ? { opacity: 0, scaleY: 0 } : {}}
                     animate={shouldAnimate ? { opacity: 1, scaleY: 1 } : {}}
                     transition={{ delay: delayOffset + 0.3 }}
                   />
                   <motion.div
-                    className="text-[9px] font-medium text-gray-400 uppercase tracking-widest whitespace-nowrap"
+                    className="text-[9px] font-medium uppercase tracking-widest whitespace-nowrap"
+                    style={{ color: 'var(--on-surface-variant)' }}
                     initial={shouldAnimate ? { opacity: 0, x: -5 } : {}}
                     animate={shouldAnimate ? { opacity: 1, x: 0 } : {}}
                     transition={{ delay: delayOffset + 0.4 }}
@@ -112,7 +151,7 @@ export function AnimatedDashboardCard({
                   </motion.div>
                   <motion.div
                     className="text-[9px] font-medium mt-1 uppercase tracking-wider leading-none"
-                    style={{ color: accentColor }}
+                    style={{ color: tokens.color }}
                     initial={shouldAnimate ? { opacity: 0 } : {}}
                     animate={shouldAnimate ? { opacity: 1 } : {}}
                     transition={{ delay: delayOffset + 0.6 }}
@@ -128,7 +167,8 @@ export function AnimatedDashboardCard({
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-1.5">
                   <motion.div
-                    className="text-[9px] font-medium text-gray-400 uppercase tracking-widest whitespace-nowrap"
+                    className="text-[9px] font-medium uppercase tracking-widest whitespace-nowrap"
+                    style={{ color: 'var(--on-surface-variant)' }}
                     initial={shouldAnimate ? { opacity: 0, x: 5 } : {}}
                     animate={shouldAnimate ? { opacity: 1, x: 0 } : {}}
                     transition={{ delay: delayOffset + 0.4 }}
@@ -137,7 +177,7 @@ export function AnimatedDashboardCard({
                   </motion.div>
                   <motion.div
                     className="w-1 h-2.5 rounded-full"
-                    style={{ backgroundColor: accentColor }}
+                    style={{ backgroundColor: tokens.color }}
                     initial={shouldAnimate ? { opacity: 0, scaleY: 0 } : {}}
                     animate={shouldAnimate ? { opacity: 1, scaleY: 1 } : {}}
                     transition={{ delay: delayOffset + 0.3 }}
@@ -155,7 +195,7 @@ export function AnimatedDashboardCard({
                   </motion.div>
                   <motion.div
                     className="text-[9px] font-medium mt-1 uppercase tracking-wider leading-none"
-                    style={{ color: accentColor }}
+                    style={{ color: tokens.color }}
                     initial={shouldAnimate ? { opacity: 0 } : {}}
                     animate={shouldAnimate ? { opacity: 1 } : {}}
                     transition={{ delay: delayOffset + 0.6 }}

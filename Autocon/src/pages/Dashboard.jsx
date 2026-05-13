@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
@@ -7,7 +7,8 @@ import ChartModal from '../components/dashboard/ChartModal';
 import AnalyticsCharts from '../components/dashboard/AnalyticsCharts';
 import useSelectedCoin from '../hooks/useSelectedCoin';
 import '../components/dashboard/styles/dashboard.css';
-import OnboardingTour from '../components/dashboard/OnboardingTour';
+/* Phase 3: useCounter extracted to src/hooks/useCounter.js (react-patterns: hooks in hooks/) */
+import { useCounter } from '../hooks/useCounter';
 import DeploymentTable from '../components/dashboard/DeploymentTable';
 import Sparkline from '../components/ui/Sparkline';
 import { exportDeploymentsCSV, exportDeploymentsPDF } from '../utils/exportUtils';
@@ -15,27 +16,8 @@ import { Button } from '../components/ui/Button';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { AnimatedDashboardCard } from '../components/ui/animated-dashboard-card';
 
-/* ─── Counter animation ─────────────────────────────── */
-function useCounter(target, delay = 300) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (target === 0) { setVal(0); return; }
-      const dur = 700, start = performance.now();
-      const tick = (now) => {
-        const t = Math.min((now - start) / dur, 1);
-        const ease = 1 - Math.pow(1 - t, 3);
-        setVal(Math.round(ease * target));
-        if (t < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    }, delay);
-    return () => clearTimeout(timeout);
-  }, [target, delay]);
-  return val;
-}
-
 /* ─── Main Dashboard ────────────────────────────────── */
+
 export default function Dashboard() {
   const { user, authFetch } = useAuth();
   const { network } = useNetwork();
@@ -46,7 +28,11 @@ export default function Dashboard() {
 
 
 
-  const executeDelete = async (item) => {
+  /* Phase 3 — react-component-performance:
+     useCallback: executeDelete was a new function reference every render.
+     DeploymentTable receiving a new handler on each render busts any React.memo
+     optimizations inside it. Stable reference via useCallback. */
+  const executeDelete = useCallback(async (item) => {
     const tid = toast.loading('Removing from registry…');
     const endpoint = {
       'ERC-721': `/api/nft/delete/${item._id}`,
@@ -60,7 +46,7 @@ export default function Dashboard() {
         toast.success('Deployment removed!', { id: tid });
       }
     } catch (_) { toast.error('Failed to delete.', { id: tid }); }
-  };
+  }, [authFetch, setDeployments]);
 
   const handleDelete = (item) => {
     toast((t) => (
@@ -85,9 +71,15 @@ export default function Dashboard() {
   const nftCount     = deployments.filter(d => d._type === 'ERC-721').length;
   const auctionCount = deployments.filter(d => d._type === 'Auction').length;
 
-  const filteredDeployments = activeFilter === 'all'
-    ? deployments
-    : deployments.filter(d => d._type === activeFilter);
+  /* Phase 3 — react-component-performance:
+     useMemo: filteredDeployments was recomputed on EVERY render (any state change).
+     Now recomputes only when deployments array reference or activeFilter changes. */
+  const filteredDeployments = useMemo(
+    () => activeFilter === 'all'
+      ? deployments
+      : deployments.filter(d => d._type === activeFilter),
+    [deployments, activeFilter]
+  );
 
   // Animated counters
   const totalCount   = useCounter(deployments.length, 300);
@@ -96,7 +88,9 @@ export default function Dashboard() {
 
   return (
     <>
-      <OnboardingTour />
+      {/* OnboardingTour is mounted at App level (App.jsx) — NOT here.
+          Previously double-mounted, causing driver.js to init twice per /dashboard visit.
+          architect-review: one component, one mount point — SRP. */}
       <div className="db-content">
 
         {/* ── Page Header ── */}
@@ -125,7 +119,10 @@ export default function Dashboard() {
 
         {/* ── Status Banner ── */}
         <section className="mb-8">
-          <div className="flex items-center justify-between p-4 px-6 rounded-2xl border border-white/5 bg-[#0a0a0a]/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] db-enter db-enter-2 transition-transform hover:scale-[1.01]">
+          <div
+            className="flex items-center justify-between p-4 px-6 rounded-2xl border border-white/5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] db-enter db-enter-2 transition-transform hover:scale-[1.01]"
+            style={{ background: 'var(--surface-low)' }}
+          >
             <div className="flex items-center gap-4">
               <div className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -133,21 +130,21 @@ export default function Dashboard() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-white tracking-wide">Systems Online</h3>
-                <p className="text-[11px] text-gray-400 mt-0.5 tracking-wide">All services operational · Wallet {shortAddr || 'not connected'}</p>
+                <p className="text-[11px] mt-0.5 tracking-wide" style={{ color: 'var(--on-surface-variant)' }}>All services operational · Wallet {shortAddr || 'not connected'}</p>
               </div>
             </div>
             <div className="flex gap-8 text-right">
               <div>
                 <p className="text-lg font-mono font-semibold text-white leading-none">{deployments.length}</p>
-                <p className="text-[10px] uppercase tracking-wider text-gray-500 mt-1">Contracts</p>
+                <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: 'var(--on-surface-muted)' }}>Contracts</p>
               </div>
               <div>
                 <p className="text-lg font-mono font-semibold text-white leading-none">{auctionCount}</p>
-                <p className="text-[10px] uppercase tracking-wider text-gray-500 mt-1">Auctions</p>
+                <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: 'var(--on-surface-muted)' }}>Auctions</p>
               </div>
               <div>
-                <p className="text-lg font-mono font-semibold text-emerald-400 leading-none">99.9%</p>
-                <p className="text-[10px] uppercase tracking-wider text-gray-500 mt-1">Uptime</p>
+                <p className="text-lg font-mono font-semibold leading-none" style={{ color: 'var(--success)' }}>99.9%</p>
+                <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: 'var(--on-surface-muted)' }}>Uptime</p>
               </div>
             </div>
           </div>
@@ -156,10 +153,11 @@ export default function Dashboard() {
         {/* ── Stat Cards ── */}
         <section className="mb-8">
           <div className="db-enter db-enter-3 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Phase 2: accentColor hex props → semantic variant prop (design system tokens) */}
             <AnimatedDashboardCard 
               title="TOTAL DEPLOYMENTS"
               mainValue={totalCount.toString()}
-              accentColor="#ff6b00"
+              variant="primary"
               delayOffset={0}
               leftLabel="Network"
               leftValue="Sepolia"
@@ -171,7 +169,7 @@ export default function Dashboard() {
             <AnimatedDashboardCard 
               title="FUNGIBLE TOKENS"
               mainValue={tokenCounted.toString()}
-              accentColor="#3b82f6"
+              variant="blue"
               delayOffset={0.15}
               leftLabel="Standard"
               leftValue="ERC-20"
@@ -183,7 +181,7 @@ export default function Dashboard() {
             <AnimatedDashboardCard 
               title="DIGITAL ASSETS"
               mainValue={(nftCounted + auctionCount).toString()}
-              accentColor="#22c55e"
+              variant="green"
               delayOffset={0.3}
               leftLabel="Collections"
               leftValue={nftCounted.toString()}

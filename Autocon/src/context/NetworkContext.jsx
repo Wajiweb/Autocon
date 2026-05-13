@@ -18,20 +18,7 @@ export const NETWORKS = {
         faucet:         'https://sepoliafaucet.com',
         layer:          'L1 Testnet',
     },
-    amoy: {
-        key:            'amoy',
-        name:           'Polygon Amoy',
-        chainId:        '0x13882',
-        chainIdDecimal: 80002,
-        rpcUrl:         'https://rpc-amoy.polygon.technology',
-        explorer:       'https://amoy.polygonscan.com',
-        currency:       'MATIC',
-        currencySymbol: 'MATIC',
-        icon:           '🟣',
-        color:          '#8b5cf6',
-        faucet:         'https://faucet.polygon.technology',
-        layer:          'L2 Testnet',
-    },
+
     bnbTestnet: {
         key:            'bnbTestnet',
         name:           'BNB Testnet',

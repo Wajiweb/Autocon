@@ -267,7 +267,9 @@ async function listJobs(req, res) {
         });
 
     } catch (err) {
-        console.error('[listJobs] Aggregation error:', err.message);
+        /* Phase 5: use structured logJobFailure instead of raw console.error
+           to prevent unstructured stack trace leakage and enable log aggregation. */
+        logJobFailure('listJobs', null, err.message, 0);
         // Return empty result instead of 500 to prevent dashboard breakage
         return res.json({
             success: true,
@@ -325,7 +327,8 @@ async function getJobStats(req, res) {
         return res.json({ success: true, stats });
 
     } catch (err) {
-        console.error('[getJobStats] Aggregation error:', err.message);
+        /* Phase 5: structured logging — consistent with logJobFailure pattern */
+        logJobFailure('getJobStats', null, err.message, 0);
         // Return default stats instead of 500 to prevent dashboard breakage
         return res.json({
             success: true,

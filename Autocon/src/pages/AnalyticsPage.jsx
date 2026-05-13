@@ -68,7 +68,7 @@ const tooltipStyle = {
 export default function AnalyticsPage() {
   const { user, authFetch } = useAuth();
   const { network } = useNetwork();
-  const { gasPriceGwei, status } = useGasTracker();
+  const { gasPriceGwei, status, blockNumber } = useGasTracker();
   const { deployments, isInitialLoad } = usePlatformStore();
   const isLoading = isInitialLoad;
   const [timeRange, setTimeRange] = useState(6); // months
@@ -125,6 +125,25 @@ export default function AnalyticsPage() {
   // Avg deploys/month (non-zero months)
   const activeMonths = monthlyCounts.filter(v => v > 0).length;
   const avgPerMonth  = activeMonths ? (total / activeMonths).toFixed(1) : '0';
+
+  // Deployment Density (Day of Week vs Hour of Day)
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const densityMap = Array(7).fill(0).map(() => Array(24).fill(0));
+  let maxDensity = 0;
+  deployments.forEach(d => {
+    const date = new Date(d.createdAt);
+    const day = date.getDay();
+    const hour = date.getHours();
+    densityMap[day][hour]++;
+    if (densityMap[day][hour] > maxDensity) maxDensity = densityMap[day][hour];
+  });
+
+  const getDensityColor = (count) => {
+    if (count === 0) return 'rgba(255, 255, 255, 0.02)';
+    const intensity = Math.max(0.2, count / (maxDensity || 1));
+    // PRIMARY = #5DA9E9 which is rgb(93, 169, 233)
+    return `rgba(93, 169, 233, ${intensity})`; 
+  };
 
   /* ── Chart datasets ── */
   const donutData = {
@@ -313,18 +332,78 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* ── Gas Analytics Card ── */}
+          {/* ── Row 3: Deployment Density Heatmap ── */}
           <div className="pg-card db-enter db-enter-5" style={{ padding: 22, marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', marginBottom: 4 }}>Deployment Density</div>
+            <div style={{ fontSize: 11, color: 'var(--db-t3)', marginBottom: 20 }}>Activity heatmap by day of week and hour of day (Local Time)</div>
+            
+            <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '40px repeat(24, minmax(20px, 1fr))', gap: 4, minWidth: 600 }}>
+                {/* Header Row (Hours) */}
+                <div />
+                {Array.from({ length: 24 }).map((_, h) => (
+                  <div key={h} style={{ fontSize: 9, color: 'var(--db-t3)', textAlign: 'center' }}>
+                    {h % 2 === 0 ? `${h}h` : ''}
+                  </div>
+                ))}
+                
+                {/* Heatmap Grid */}
+                {daysOfWeek.map((dayName, d) => (
+                  <div style={{ display: 'contents' }} key={dayName}>
+                    <div style={{ fontSize: 10, color: 'var(--db-t2)', alignSelf: 'center', textAlign: 'right', paddingRight: 8 }}>
+                      {dayName}
+                    </div>
+                    {densityMap[d].map((count, h) => (
+                      <div
+                        key={`${d}-${h}`}
+                        title={`${dayName} at ${h}:00 - ${count} deployments`}
+                        style={{
+                          aspectRatio: '1 / 1',
+                          borderRadius: 4,
+                          background: getDensityColor(count),
+                          border: count > 0 ? '1px solid rgba(255,255,255,0.05)' : '1px solid transparent',
+                          transition: 'transform 0.1s, opacity 0.2s',
+                          cursor: 'crosshair'
+                        }}
+                        onMouseEnter={(e) => {
+                           if (count > 0) e.target.style.transform = 'scale(1.15)';
+                           e.target.style.opacity = '0.8';
+                        }}
+                        onMouseLeave={(e) => {
+                           if (count > 0) e.target.style.transform = 'scale(1)';
+                           e.target.style.opacity = '1';
+                        }}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Legend */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginTop: 12, fontSize: 10, color: 'var(--db-t3)' }}>
+              <span>Less</span>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: getDensityColor(0) }} />
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: getDensityColor(Math.max(1, maxDensity * 0.25)) }} />
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: getDensityColor(Math.max(2, maxDensity * 0.5)) }} />
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: getDensityColor(Math.max(3, maxDensity * 0.75)) }} />
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: getDensityColor(maxDensity || 4) }} />
+              <span>More</span>
+            </div>
+          </div>
+
+          {/* ── Gas Analytics Card ── */}
+          <div className="pg-card db-enter db-enter-6" style={{ padding: 22, marginBottom: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', marginBottom: 4 }}>⛽ Gas Usage Analytics</div>
             <div style={{ fontSize: 11, color: 'var(--db-t3)', marginBottom: 20 }}>Live gas prices and estimated historical spend</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
               {[
                 { label: 'Live Gas Price', value: gasPriceGwei ? `${Math.round(gasPriceGwei)} Gwei` : '…', color: gasStatusColor, desc: `Status: ${status}` },
+                { label: 'Latest Block', value: blockNumber ? `#${blockNumber}` : '…', color: PRIMARY, desc: 'Real-time chain sync' },
                 { label: 'Est. Total Gas', value: `${(estGasUnits / 1_000_000).toFixed(1)}M units`, color: PRIMARY, desc: `~${estCostEth} ETH at current price` },
                 { label: 'Avg Gas / Deploy', value: total > 0 ? `${((estGasUnits / total) / 1_000_000).toFixed(1)}M` : '—', color: AMBER, desc: 'Estimated gas units' },
                 { label: 'Cheapest Type', value: 'ERC-20', color: SUCCESS, desc: '~1.5M gas units' },
                 { label: 'Most Expensive', value: 'ERC-721', color: PINK, desc: '~2.2M gas units' },
-                { label: 'Network', value: network.name, color: network.color || PRIMARY, desc: network.currencySymbol || 'ETH' },
               ].map(item => (
                 <div key={item.label} style={{ padding: '14px 16px', borderRadius: 10, background: 'var(--db-s2)', border: '1px solid var(--db-br)' }}>
                   <div style={{ fontSize: 10, color: 'var(--db-t3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 6 }}>{item.label}</div>
@@ -336,7 +415,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* ── Admin Insights ── */}
-          <div className="pg-card db-enter db-enter-6" style={{ padding: 22 }}>
+          <div className="pg-card db-enter db-enter-7" style={{ padding: 22 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)' }}>🔐 Admin Insights</div>
               <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(93,169,233,.12)', color: 'var(--primary)', border: '1px solid rgba(93,169,233,.2)', fontWeight: 700 }}>Advanced</span>

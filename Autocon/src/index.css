@@ -419,6 +419,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   flex-direction: column;
   min-width: 0;
   height: 100dvh;
+  transition: margin-left 0.3s ease;
 }
 
 .dashboard-scroll-region {

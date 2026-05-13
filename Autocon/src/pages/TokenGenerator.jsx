@@ -184,6 +184,9 @@ export default function TokenGenerator() {
         )}
       </div>
 
+      {/* Bug 9 fix: pass sourceCode + compilerVersion so the in-modal
+          "Verify on Explorer" button can submit the verification job.
+          (systematic-debugging: props existed on modal but were never forwarded) */}
       <DeploySuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
@@ -195,6 +198,8 @@ export default function TokenGenerator() {
         contractName={formData.name || 'Token'}
         receipt={deploymentReceipt}
         provider={providerInstance}
+        sourceCode={generatedCode || null}
+        compilerVersion="v0.8.20+commit.a1b79de6"
       />
 
       <AIChatPanel
