@@ -42,6 +42,7 @@ export default function ContractWizard() {
 
   const handleTypeSelect = (id) => {
     setContractType(id);
+    goTo(1);
   };
 
   const handleNext = () => {

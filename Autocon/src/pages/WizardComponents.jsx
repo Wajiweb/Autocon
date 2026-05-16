@@ -385,6 +385,7 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
   const [doneSteps, setDoneSteps]   = useState([]);
   const [errorStep, setErrorStepLocal] = useState(null);
   const [selNet, setSelNet]         = useState(selectedNetwork || 'sepolia');
+  const [minedContract, setMinedContract] = useState(null); // { address, txHash, txData, constructorArgs }
 
   const deployResult = session.deployResult;
   const deployError  = session.deployError;
@@ -398,7 +399,52 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
     if (!walletAddress) { toast.error('Connect your wallet first'); return; }
     if (!contractData?.abi) { toast.error('Generate the contract first'); return; }
     if (!contractData?.bytecode) { toast.error('Contract bytecode expired after page refresh. Please go back and regenerate.'); return; }
-    setDoneSteps([]); setErrorStepLocal(null); clearDeployError();
+
+    // If we already mined but save failed, retry only the save step
+    if (minedContract && errorStep === 'save') {
+      setErrorStepLocal(null);
+      clearDeployError();
+      setActiveStep('save');
+      try {
+        const { address, txHash, txData, constructorArgs } = minedContract;
+        const base = {
+          contractAddress: address,
+          ownerAddress: walletAddress,
+          network: selNet.toLowerCase(),
+          abi: contractData.abi,
+          sourceCode: code,
+          compilerVersion: 'v0.8.20+commit.a1b79de6',
+          constructorArgs
+        };
+        const payload = type === 'ERC20'
+          ? { ...base, name: params.name, symbol: params.symbol }
+          : type === 'ERC721'
+          ? { ...base, name: params.name, symbol: params.symbol, maxSupply: Number(params.maxSupply), mintPrice: params.mintPrice, baseURI: params.baseURI }
+          : { ...base, name: params.name, itemName: params.itemName, itemDescription: params.itemDescription, duration: Number(params.duration), minimumBid: params.minimumBid };
+
+        const saveRes  = await authFetch(SAVE_ENDPOINT[type], { method: 'POST', body: JSON.stringify(payload) });
+        const saveData = await saveRes.json();
+        if (!saveData.success) throw new Error(saveData.error || 'Save failed');
+
+        const result = { address, txHash, network: selNet, type, name: params.name, savedAt: Date.now() };
+        setDeployResult(result);
+        addDeployedContract(result);
+        setMinedContract(null);
+        setActiveStep(null);
+        onSuccess(result);
+        toast.success('Contract deployed!');
+      } catch (err) {
+        const msg = err.shortMessage || err.message || 'Save failed';
+        setErrorStepLocal('save');
+        setActiveStep(null);
+        setDeployError(msg);
+        toast.error(msg);
+      }
+      return;
+    }
+
+    // Full deploy flow
+    setDoneSteps([]); setErrorStepLocal(null); clearDeployError(); setMinedContract(null);
 
     try {
       setActiveStep('wallet');
@@ -463,8 +509,7 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
       const addr = await contract.getAddress();
       markDone('mine');
 
-      setActiveStep('save');
-      
+      // Store mined contract info for potential save retry
       const txData = contract.deploymentTransaction()?.data || '';
       let constructorArgs = '';
       const bytecode = contractData.bytecode;
@@ -473,11 +518,14 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
       if (strippedTxData.startsWith(strippedBytecode)) {
         constructorArgs = strippedTxData.slice(strippedBytecode.length);
       }
+      setMinedContract({ address: addr, txHash, txData, constructorArgs });
 
+      setActiveStep('save');
+      
       const base = { 
         contractAddress: addr, 
         ownerAddress: walletAddress, 
-        network: selNet, 
+        network: selNet.toLowerCase(), 
         abi: contractData.abi,
         sourceCode: code,
         compilerVersion: 'v0.8.20+commit.a1b79de6',
@@ -497,17 +545,19 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
       const result = { address: addr, txHash, network: selNet, type, name: params.name, savedAt: Date.now() };
       setDeployResult(result);
       addDeployedContract(result);
+      setMinedContract(null);
       setActiveStep(null);
       onSuccess(result);
       toast.success('Contract deployed!');
     } catch (err) {
       const msg = err.shortMessage || err.message || 'Deployment failed';
-      setErrorStepLocal(activeStep);
+      // Preserve completed steps — don't reset wallet/confirm/mine if save fails
+      setErrorStepLocal('save');
       setActiveStep(null);
       setDeployError(msg);
       toast.error(msg);
     }
-  }, [walletAddress, contractData, params, type, selNet, authFetch, activeStep, code]);
+  }, [walletAddress, contractData, params, type, selNet, authFetch, code, minedContract, errorStep]);
 
   /* ── Success Screen ─────────────────────────────────── */
   if (deployResult) {
@@ -548,7 +598,7 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
         <div className="wz-alert error" style={{ marginBottom: 18, flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
           <div style={{ fontWeight: 700 }}><X size={14} strokeWidth={3} /> Deployment Failed</div>
           <div style={{ fontSize: 11 }}>{deployError}</div>
-          <button className="btn btn-ghost btn-sm" style={{ marginTop: 4 }} onClick={() => { setDoneSteps([]); setErrorStepLocal(null); clearDeployError(); }}>
+          <button className="btn btn-ghost btn-sm" style={{ marginTop: 4 }} onClick={() => { setErrorStepLocal(null); clearDeployError(); }}>
             <RotateCcw size={12} strokeWidth={2} /> Retry
           </button>
         </div>

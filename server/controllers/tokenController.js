@@ -161,12 +161,15 @@ const saveToken = asyncHandler(async (req, res) => {
         throw new AppError('You can only save tokens for your own wallet.', 403, 'FORBIDDEN');
     }
 
+    const NETWORK_MAP = { sepolia: 'Sepolia', mainnet: 'Mainnet', amoy: 'Amoy', 'polygon amoy': 'Amoy', 'bnb testnet': 'BNBTestnet', bnbtestnet: 'BNBTestnet', 'bsc testnet': 'BNBTestnet' };
+    const safeNetwork = NETWORK_MAP[(network || 'sepolia').toLowerCase()] || 'Sepolia';
+
     const newToken = new Contract({
         userId: req.user.userId,
         contractType: 'ERC20',
         name, symbol, contractAddress,
         ownerAddress: ownerAddress.toLowerCase(),
-        network:      network || 'Sepolia',
+        network:      safeNetwork,
         abi:          abi || null,
         sourceCode:     sourceCode || '',
         compilerVersion: compilerVersion || 'v0.8.20+commit.a1b79de6',
