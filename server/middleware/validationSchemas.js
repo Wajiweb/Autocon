@@ -63,8 +63,8 @@ const schemas = {
         symbol:       symbol.required(),
         baseURI:      Joi.string().uri().optional().allow(''),
         maxSupply:    Joi.number().integer().positive().max(1000000).required(),
-        mintPrice:    Joi.string().pattern(/^\d+(\.\d+)?$/).required()
-            .messages({ 'string.pattern.base': 'mintPrice must be a positive decimal number (e.g. "0.05")' }),
+        mintPrice:    Joi.string().pattern(/^\d*\.?\d+$/).required()
+            .messages({ 'string.pattern.base': 'mintPrice must be a valid number (e.g. "0.05" or ".05")' }),
         ownerAddress: eth.address.required(),
         isRevealed:   Joi.boolean().optional(),
         isBurnable:   Joi.boolean().optional(),
@@ -79,9 +79,10 @@ const schemas = {
         // Duration is sent in seconds from the frontend (e.g. 3600 = 1 hour)
         duration:        Joi.number().integer().min(60).max(2592000).required()
             .messages({ 'number.min': 'Duration must be at least 1 minute (60 seconds)', 'number.max': 'Duration cannot exceed 30 days (2,592,000 seconds)' }),
-        minimumBid:      Joi.string().pattern(/^\d+(\.\d+)?$/).required(),
+        minimumBid:      Joi.string().pattern(/^\d*\.?\d+$/).required()
+            .messages({ 'string.pattern.base': 'minimumBid must be a valid number (e.g. "0.01" or ".01")' }),
         ownerAddress:    eth.address.required(),
-        reservePrice:    Joi.string().pattern(/^\d+(\.\d+)?$/).optional().allow(''),
+        reservePrice:    Joi.string().pattern(/^\d*\.?\d+$/).optional().allow(''),
         hasExtension:    Joi.boolean().optional(),
         hasAntiSnipe:    Joi.boolean().optional(),
     }),
@@ -171,7 +172,7 @@ const schemas = {
         ownerAddress:    eth.address.required(),
         network:         eth.network.optional().default('sepolia'),
         maxSupply:       Joi.number().integer().positive().optional(),
-        mintPrice:       Joi.string().pattern(/^\d+(\.\d+)?$/).optional(),
+        mintPrice:       Joi.string().pattern(/^\d*\.?\d+$/).optional(),
         baseURI:         Joi.string().optional().allow(''),
         abi:             Joi.array().optional(),
         sourceCode:      Joi.string().optional().allow(''),
@@ -187,7 +188,7 @@ const schemas = {
         ownerAddress:    eth.address.required(),
         network:         eth.network.optional().default('sepolia'),
         duration:        Joi.number().integer().optional(),
-        minimumBid:      Joi.string().pattern(/^\d+(\.\d+)?$/).optional(),
+        minimumBid:      Joi.string().pattern(/^\d*\.?\d+$/).optional(),
         sourceCode:      Joi.string().optional().allow(''),
         compilerVersion: Joi.string().optional().allow(''),
         constructorArgs: Joi.string().optional().allow(''),
