@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import JobStatusBadge from '../components/dashboard/JobStatusBadge';
 import { usePlatformStore } from '../store/usePlatformStore';
+import { Flag, Sparkles, Clock, Settings, Check, X, RefreshCw, AlertTriangle, Activity, CheckCircle, XCircle } from 'lucide-react';
 import '../components/dashboard/styles/dashboard.css';
 
 /* ─── localStorage keys ─────────────────────────────────────────────────── */
@@ -11,8 +12,8 @@ const MAX_JOBS  = 50;   // Performance guard — only show/track last 50 jobs
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 const TYPE_META = {
-  audit:        { label: 'Security Audit',         icon: '⚑', color: '#a78bfa' },
-  verification: { label: 'Contract Verification',  icon: '✦', color: '#60a5fa' },
+  audit:        { label: 'Security Audit',         icon: <Flag size={14} />, color: '#a78bfa' },
+  verification: { label: 'Contract Verification',  icon: <Sparkles size={14} />, color: '#60a5fa' },
 };
 
 const STATUS_STYLE = {
@@ -23,10 +24,10 @@ const STATUS_STYLE = {
 };
 
 const ICON = {
-  pending:    '⏳',
-  processing: '⚙',
-  completed:  '✓',
-  failed:     '✕',
+  pending:    <Clock size={14} />,
+  processing: <Settings size={14} className="animate-spin" />,
+  completed:  <Check size={14} />,
+  failed:     <X size={14} />,
 };
 
 function relTime(iso) {
@@ -175,16 +176,16 @@ export default function JobsPage() {
             className="pg-btn pg-btn-outline"
             style={{ padding: '7px 14px', gap: 6, fontSize: 12 }}
           >
-            ↻ Refresh
+            <RefreshCw size={12} /> Refresh
           </button>
         </div>
       </div>
 
       {/* ── Stat cards ── */}
       <div className="db-stat-row db-enter db-enter-2" style={{ marginBottom: 20 }}>
-        <StatCard label="Total Jobs"     value={totalJobs}     icon="◈" accent="var(--db-acc)"   />
-        <StatCard label="Active"         value={activeJobs}    icon="⚙" accent="var(--db-amber)" />
-        <StatCard label="Completed"      value={completedJobs} icon="✓" accent="#34d399"         />
+        <StatCard label="Total Jobs"     value={totalJobs}     icon={<Activity size={18} />} accent="var(--db-acc)"   />
+        <StatCard label="Active"         value={activeJobs}    icon={<Settings size={18} className="animate-spin" />} accent="var(--db-amber)" />
+        <StatCard label="Completed"      value={completedJobs} icon={<CheckCircle size={18} />} accent="#34d399"         />
       </div>
 
       {/* ── Per-type stats from backend ── */}
@@ -273,14 +274,14 @@ export default function JobsPage() {
                 textAlign: 'center', padding: '40px 0',
                 color: '#f87171', fontSize: 13, fontFamily: 'var(--db-font)',
               }}>
-                ⚠ {error}
+                <AlertTriangle size={14} style={{ marginRight: 6 }} /> {error}
               </div>
             )}
 
             {/* Empty state */}
             {!loading && !error && visible.length === 0 && (
               <div style={{ textAlign: 'center', padding: '52px 0' }}>
-                <div style={{ fontSize: 32, marginBottom: 12, opacity: .4 }}>◈</div>
+                <div style={{ fontSize: 32, marginBottom: 12, opacity: .4, display: 'flex', justifyContent: 'center' }}><Activity size={40} /></div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--db-t2)', marginBottom: 6, fontFamily: 'var(--db-font)' }}>
                   {jobs.length === 0 ? 'No background jobs yet' : 'No jobs match this filter'}
                 </div>
@@ -342,18 +343,18 @@ export default function JobsPage() {
                             )}
                             {status === 'completed' && job.resultSummary?.isVerified && (
                               <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 700, background: 'rgba(52,211,153,.1)', color: '#34d399', border: '.5px solid rgba(52,211,153,.25)' }}>
-                                ✓ Verified
+                                <Check size={12} /> Verified
                               </span>
                             )}
                             {/* FIX #5 — always show error pill on failed */}
                             {status === 'failed' && (
                               <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 700, background: 'rgba(248,113,113,.1)', color: '#f87171', border: '.5px solid rgba(248,113,113,.25)' }}>
-                                ✕ Failed
+                                <X size={12} /> Failed
                               </span>
                             )}
                           </div>
                           <div style={{ fontFamily: 'var(--db-mono)', fontSize: 10, color: 'var(--db-t3)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                            <span title={job.jobId}>ID: {job.jobId.slice(0, 16)}…</span>
+                            <span title={job.jobId}>ID: {job.jobId.slice(0, 16)}...</span>
                             <span>Created {relTime(job.createdAt)}</span>
                             {job.completedAt && <span>Finished {relTime(job.completedAt)}</span>}
                             {job.attempts > 1 && <span style={{ color: '#f59e0b' }}>Attempts: {job.attempts}</span>}
@@ -409,8 +410,8 @@ export default function JobsPage() {
                           </div>
                           {/* FIX #5 — Full error detail in panel */}
                           {job.error && (
-                            <div style={{ padding: '8px 12px', borderRadius: 6, background: 'rgba(239,68,68,.08)', border: '.5px solid rgba(239,68,68,.2)', color: '#fca5a5', fontSize: 11, lineHeight: 1.5 }}>
-                              ✕ {job.error}
+                            <div style={{ padding: '8px 12px', borderRadius: 6, background: 'rgba(239,68,68,.08)', border: '.5px solid rgba(239,68,68,.2)', color: '#fca5a5', fontSize: 11, lineHeight: 1.5, display: 'flex', alignItems: 'center' }}>
+                                <XCircle size={14} style={{ marginRight: 6, flexShrink: 0 }} /> {job.error}
                             </div>
                           )}
                           {status === 'completed' && job.resultSummary?.reportId && (

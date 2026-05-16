@@ -1,5 +1,8 @@
-import { useState } from 'react';
-import Editor from '@monaco-editor/react';
+import React, { useState, Suspense, lazy } from 'react';
+const Editor = lazy(() => import('@monaco-editor/react'));
+import { 
+    Clock, Save, History, Check, AlertTriangle, RefreshCw, Copy
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useContractStore } from '../../store/useContractStore';
 
@@ -69,7 +72,7 @@ export default function CodeViewer({ style = {} }) {
                               borderRadius: '8px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px',
                               boxShadow: '0 4px 16px rgba(0,0,0,0.4)'
                           }}>
-                              <button onClick={() => { saveSnapshot(); toast.success("Snapshot saved ✅"); setShowHistory(false); }} style={{...menuBtnStyle, color: '#10b981'}}>
+                              <button onClick={() => { saveSnapshot(); toast.success("Snapshot saved"); setShowHistory(false); }} style={{...menuBtnStyle, color: '#10b981'}}>
                                   + Save Snapshot
                               </button>
                               <hr style={{ borderColor: 'var(--surface)', margin: '4px 0' }}/>
@@ -86,32 +89,40 @@ export default function CodeViewer({ style = {} }) {
               </>
           )}
           <button onClick={handleCopy} style={btnStyle}>
-            {copied ? 'Copied ✓' : 'Copy'}
+            {copied ? (
+              <span className="flex items-center gap-1">
+                <Check size={12} /> Copied
+              </span>
+            ) : 'Copy'}
           </button>
       </div>
 
       {isEditingEnabled && (
         <div style={{ position: 'absolute', bottom: 10, right: 10, zIndex: 10, background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', padding: '4px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, border: '1px solid rgba(245, 158, 11, 0.4)' }}>
-          ⚠️ Manual Edit Mode Active
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={14} className="text-amber-500" /> Manual Edit Mode Active
+          </div>
         </div>
       )}
 
-      <Editor
-        height="400px"
-        language="solidity"
-        theme="vs-dark"
-        value={generatedCode}
-        onChange={handleEditorChange}
-        options={{
-          readOnly: !isEditingEnabled,
-          minimap: { enabled: false },
-          fontSize: 13,
-          fontFamily: 'var(--db-mono)',
-          scrollBeyondLastLine: false,
-          smoothScrolling: true,
-          padding: { top: 40 } // Increased padding to avoid top right buttons
-        }}
-      />
+      <Suspense fallback={<div style={{height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)'}}>Loading Editor...</div>}>
+        <Editor
+          height="400px"
+          language="solidity"
+          theme="vs-dark"
+          value={generatedCode}
+          onChange={handleEditorChange}
+          options={{
+            readOnly: !isEditingEnabled,
+            minimap: { enabled: false },
+            fontSize: 13,
+            fontFamily: 'var(--db-mono)',
+            scrollBeyondLastLine: false,
+            smoothScrolling: true,
+            padding: { top: 40 } // Increased padding to avoid top right buttons
+          }}
+        />
+      </Suspense>
     </div>
   );
 }

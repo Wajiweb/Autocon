@@ -1,23 +1,66 @@
 /**
  * Logos.jsx — Infinite horizontal partner/chain logo marquee
+ * Uses real CDN-hosted brand logos with emoji fallback on error.
  * Duplicated list for seamless loop. aria-hidden on decorative content.
  */
 import React from 'react';
+import { 
+  Globe, 
+  Hammer, 
+  Layers, 
+  Mountain, 
+  Link as LinkIcon, 
+  Shield, 
+  Wallet, 
+  Code 
+} from 'lucide-react';
 
 const LOGOS = [
-  { name: 'Ethereum',      emoji: '⟠' },
-  { name: 'Hardhat',        emoji: '⛑️' },
-  { name: 'BNB Chain',     emoji: '◆' },
-  { name: 'Avalanche',     emoji: '▲' },
-  { name: 'Chainlink',     emoji: '⬡' },
-  { name: 'OpenZeppelin',  emoji: '🛡' },
-  { name: 'MetaMask',      emoji: '🦊' },
-  { name: 'Solidity',      emoji: '◎' },
+  {
+    name: 'Ethereum',
+    img: 'https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=040',
+    fallback: Globe,
+  },
+  {
+    name: 'Hardhat',
+    img: 'https://hardhat.org/favicon.ico',
+    fallback: Hammer,
+  },
+  {
+    name: 'BNB Chain',
+    img: 'https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=040',
+    fallback: Layers,
+  },
+  {
+    name: 'Avalanche',
+    img: 'https://cryptologos.cc/logos/avalanche-avax-logo.svg?v=040',
+    fallback: Mountain,
+  },
+  {
+    name: 'Chainlink',
+    img: 'https://cryptologos.cc/logos/chainlink-link-logo.svg?v=040',
+    fallback: LinkIcon,
+  },
+  {
+    name: 'OpenZeppelin',
+    img: 'https://avatars.githubusercontent.com/u/20820676?s=200&v=4',
+    fallback: Shield,
+  },
+  {
+    name: 'MetaMask',
+    img: 'https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg',
+    fallback: Wallet,
+  },
+  {
+    name: 'Solidity',
+    img: 'https://docs.soliditylang.org/en/latest/_static/logo.svg',
+    fallback: Code,
+  },
 ];
 
 const marqueeStyle = `
   @keyframes scroll {
-    0% { transform: translateX(0); }
+    0%   { transform: translateX(0); }
     100% { transform: translateX(-50%); }
   }
   .marquee-track {
@@ -30,7 +73,9 @@ const marqueeStyle = `
   }
 `;
 
-function LogoItem({ name, emoji }) {
+function LogoItem({ name, img, fallback }) {
+  const [imgFailed, setImgFailed] = React.useState(false);
+
   return (
     <div
       aria-hidden="true"
@@ -48,7 +93,27 @@ function LogoItem({ name, emoji }) {
         userSelect:   'none',
       }}
     >
-      <span style={{ fontSize: '1.1rem' }}>{emoji}</span>
+      {!imgFailed ? (
+        <img
+          src={img}
+          alt=""
+          loading="lazy"
+          width="24"
+          height="24"
+          onError={() => setImgFailed(true)}
+          style={{
+            display: 'block',
+            width: '24px',
+            height: '24px',
+            objectFit: 'contain',
+            filter: 'brightness(1.1)',
+          }}
+        />
+      ) : (
+        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(14 100% 50%)' }}>
+          {React.createElement(fallback, { size: 20 })}
+        </span>
+      )}
       <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'hsl(14 100% 50%)', letterSpacing: '-0.01em' }}>
         {name}
       </span>
@@ -71,7 +136,6 @@ export default function Logos() {
     >
       <style>{marqueeStyle}</style>
 
-
       <p className="sr-only">
         Supported technologies and partners: {LOGOS.map(l => l.name).join(', ')}
       </p>
@@ -89,12 +153,8 @@ export default function Logos() {
       }} />
 
       {/* Marquee wrapper */}
-      <div style={{ 
-        display: 'flex',
-        width: '100%',
-        overflow: 'hidden',
-      }}>
-        {/* Marquee track with duplicated content */}
+      <div style={{ display: 'flex', width: '100%', overflow: 'hidden' }}>
+        {/* Marquee track — duplicated for seamless loop */}
         <div className="marquee-track">
           {[...LOGOS, ...LOGOS].map((logo, i) => (
             <LogoItem key={`${logo.name}-${i}`} {...logo} />

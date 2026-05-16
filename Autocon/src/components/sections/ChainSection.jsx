@@ -4,16 +4,20 @@
  */
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, Zap } from 'lucide-react';
+import { Check, X, Zap, Globe, Layers } from 'lucide-react';
 import Container from '../layout/Container';
 import { fadeUp, staggerContainer, viewportConfig } from '../../lib/motionVariants';
 
 
 const CHAINS = [
-  { name: 'AutoCon', isPrimary: true, badge: 'Best Choice' },
-  { name: 'Ethereum', isPrimary: false, badge: null },
-  { name: 'BNB Chain', isPrimary: false, badge: null },
-  { name: 'Manual Dev', isPrimary: false, badge: null },
+  { name: 'AutoCon',    isPrimary: true,  badge: 'Best Choice',
+    logo: null /* rendered as monogram */ },
+  { name: 'Ethereum',  isPrimary: false, badge: null,
+    logo: 'https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=040' },
+  { name: 'BNB Chain', isPrimary: false, badge: null,
+    logo: 'https://cryptologos.cc/logos/bnb-bnb-logo.svg?v=040' },
+  { name: 'Manual Dev',isPrimary: false, badge: null,
+    logo: null /* rendered as code icon */ },
 ];
 
 const ROWS = [
@@ -61,6 +65,68 @@ function FeatureIcon({ val, isPrimary }) {
     }}>
       <X size={14} color="hsl(240 5% 65%)" strokeWidth={2} />
     </div>
+  );
+}
+
+function ChainLogo({ chain, isPrimary }) {
+  const [imgFailed, setImgFailed] = React.useState(false);
+
+  // AutoCon — orange monogram
+  if (isPrimary) {
+    return (
+      <div style={{
+        width: 36, height: 36, borderRadius: '50%',
+        background: 'linear-gradient(135deg, hsl(14 100% 50%) 0%, hsl(25 90% 45%) 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '0.8rem', fontWeight: 900, color: '#000',
+        boxShadow: '0 2px 12px hsla(14, 100%, 50%, 0.5)',
+        letterSpacing: '-0.03em',
+      }}>
+        AC
+      </div>
+    );
+  }
+
+  // Manual Dev — generic code bracket icon
+  if (!chain.logo) {
+    return (
+      <div style={{
+        width: 36, height: 36, borderRadius: '50%',
+        background: 'hsla(240, 10%, 25%, 1)',
+        border: '1px solid hsla(0, 0%, 100%, 0.08)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '1rem', color: 'hsl(240 5% 65%)',
+      }}>
+        {'</>'}
+      </div>
+    );
+  }
+
+  // Real CDN logo with icon fallback
+  return imgFailed ? (
+    <div style={{
+      width: 36, height: 36, borderRadius: '50%',
+      background: 'hsla(240, 10%, 18%, 1)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: 'hsl(14 100% 60%)',
+    }}>
+      {chain.name === 'Ethereum' ? <Globe size={20} /> : <Layers size={20} />}
+    </div>
+  ) : (
+    <img
+      src={chain.logo}
+      alt={chain.name}
+      width="36"
+      height="36"
+      onError={() => setImgFailed(true)}
+      style={{
+        width: 36, height: 36, borderRadius: '50%',
+        objectFit: 'contain',
+        background: chain.name === 'Ethereum' ? 'transparent' : 'hsla(44, 100%, 95%, 1)',
+        padding: chain.name === 'BNB Chain' ? '4px' : '0',
+        filter: 'brightness(1.05)',
+      }}
+    />
   );
 }
 
@@ -135,6 +201,10 @@ function ColumnCard({ chain, columnIndex, rows }) {
             </span>
           </div>
         )}
+
+        {/* Logo / monogram */}
+        <ChainLogo chain={chain} isPrimary={isPrimary} />
+
         <div style={{
           fontSize: '0.9rem',
           fontWeight: 700,

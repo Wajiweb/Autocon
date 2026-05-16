@@ -91,25 +91,17 @@ export default function LoginPage() {
                     padding: '44px 40px',
                 }}>
                     <div style={{
-                        width: '88px', height: '88px',
-                        borderRadius: '22px', margin: '0 auto 28px',
+                        width: '100%',
+                        maxWidth: '220px',
+                        margin: '0 auto 28px',
                         overflow: 'hidden',
-                        boxShadow: 'var(--shadow-glow)',
-                        border: '1px solid var(--primary-muted)',
                     }}>
                         <img
-                            src="/autocon-logo.png"
+                            src="/autocon-logo-new.png"
                             alt="AutoCon"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            style={{ width: '100%', height: 'auto', display: 'block' }}
                         />
                     </div>
-
-                    <h1 style={{
-                        fontSize: '1.9rem', fontWeight: 900,
-                        color: 'var(--on-surface)', marginBottom: '8px', letterSpacing: '-0.04em',
-                    }}>
-                        AutoCon
-                    </h1>
                     <p style={{
                         color: 'var(--on-surface-variant)', fontSize: '0.9rem',
                         marginBottom: '24px', lineHeight: 1.65,
@@ -199,7 +191,7 @@ export default function LoginPage() {
                     >
                         {isConnecting ? (
                             <>
-                                <svg style={{ animation: 'spin-slow 1s linear infinite', width: 20, height: 20 }} viewBox="0 0 24 24" fill="none">
+                                <svg className="animate-spin" style={{ width: 20, height: 20 }} viewBox="0 0 24 24" fill="none">
                                     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
                                     <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                                 </svg>

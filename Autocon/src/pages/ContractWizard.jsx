@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useWizardStore } from '../store/useWizardStore';
@@ -10,6 +10,7 @@ import '../components/dashboard/styles/dashboard.css';
 export default function ContractWizard() {
   const { authFetch } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Wizard global state
   const { session, drafts, setStep, setContractType, setParams, setGenerated, resetSession, saveDraft, loadDraft, deleteDraft } = useWizardStore();
@@ -17,6 +18,18 @@ export default function ContractWizard() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
+
+  // Handle ?type= query param to act as unified engine
+  useEffect(() => {
+    const typeQuery = searchParams.get('type');
+    if (typeQuery && CONTRACT_TYPES.find(t => t.id === typeQuery)) {
+      setContractType(typeQuery);
+      if (step === 0) setStep(1, 'forward');
+      // Clean URL so it doesn't re-trigger on reload
+      searchParams.delete('type');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, setContractType, setStep, step]);
 
   // Auto-save draft on params or step change
   useEffect(() => {
@@ -79,12 +92,12 @@ export default function ContractWizard() {
       {/* Top action bar */}
       <div style={{ position: 'absolute', top: 20, right: 30, display: 'flex', gap: 10, zIndex: 10 }}>
         {drafts.length > 0 && (
-          <button className="db-btn" onClick={() => setShowDrafts(!showDrafts)}>
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowDrafts(!showDrafts)}>
             {showDrafts ? 'Close Drafts' : `Drafts (${drafts.length})`}
           </button>
         )}
         {(step > 0 || deployResult) && (
-          <button className="db-btn" onClick={startNew}>+ New Contract</button>
+          <button className="btn btn-secondary btn-sm" onClick={startNew}>+ New Contract</button>
         )}
       </div>
 
@@ -103,8 +116,8 @@ export default function ContractWizard() {
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Step {d.step + 1} • Last updated {new Date(d.lastUpdated).toLocaleString()}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="wz-btn wz-btn-primary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={() => { loadDraft(d.id); setShowDrafts(false); }}>Resume</button>
-                      <button className="wz-btn wz-btn-ghost" style={{ padding: '6px 12px', fontSize: 11, color: 'var(--error)', borderColor: 'rgba(220,38,38,.2) !important' }} onClick={() => deleteDraft(d.id)}>Delete</button>
+                      <button className="btn btn-primary btn-sm" onClick={() => { loadDraft(d.id); setShowDrafts(false); }}>Resume</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => deleteDraft(d.id)}>Delete</button>
                     </div>
                   </div>
                 );
@@ -125,23 +138,23 @@ export default function ContractWizard() {
             {step === 0 && <StepType selected={contractType} onSelect={handleTypeSelect} />}
             {step === 1 && <StepParams type={contractType} params={params} onChange={setParams} errors={validate(contractType, params)} />}
             {step === 2 && <StepReview type={contractType} params={params} code={generatedCode} isGenerating={isGenerating} onGenerate={handleGenerate} />}
-            {step === 3 && <StepDeploy type={contractType} params={params} contractData={contractData} onSuccess={() => {}} />}
+            {step === 3 && <StepDeploy type={contractType} params={params} contractData={contractData} code={generatedCode} onSuccess={() => {}} />}
           </div>
         </div>
 
         <div className="wz-nav">
-          <button className="wz-btn wz-btn-ghost" onClick={step === 0 ? () => navigate('/dashboard') : handleBack}>
+          <button className="btn btn-ghost" onClick={step === 0 ? () => navigate('/dashboard') : handleBack}>
             {step === 0 ? '← Dashboard' : '← Back'}
           </button>
           
           {step < 3 && (
-            <button className="wz-btn wz-btn-primary" onClick={handleNext}>
+            <button className="btn btn-primary" onClick={handleNext}>
               {step === 2 && !generatedCode ? 'Generate First' : step === 2 ? 'Proceed to Deploy →' : 'Continue →'}
             </button>
           )}
           
           {step === 3 && deployResult && (
-            <button className="wz-btn wz-btn-ghost" onClick={() => navigate('/dashboard')}>Go to Dashboard →</button>
+            <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>Go to Dashboard →</button>
           )}
         </div>
       </div>

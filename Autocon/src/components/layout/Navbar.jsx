@@ -98,29 +98,11 @@ export default function Navbar({ onConnect }) {
               flexShrink:    0,
             }}
           >
-            <span
-              style={{
-                width:         '36px',
-                height:        '36px',
-                borderRadius:  '10px',
-                background:    'var(--lp-accent)',
-                display:       'flex',
-                alignItems:    'center',
-                justifyContent:'center',
-              }}
-            >
-              <Zap size={20} color="var(--surface)" strokeWidth={2.5} />
-            </span>
-            <span
-              style={{
-                fontSize:    '1.15rem',
-                fontWeight:  800,
-                color:       'var(--lp-text-primary)',
-                letterSpacing: '-0.03em',
-              }}
-            >
-              Auto<span style={{ color: 'var(--lp-accent)' }}>Con</span>
-            </span>
+            <img 
+              src="/autocon-logo-new.png" 
+              alt="AutoCon" 
+              style={{ height: '36px', width: 'auto', display: 'block' }} 
+            />
           </button>
 
           {/* Desktop Nav Links */}

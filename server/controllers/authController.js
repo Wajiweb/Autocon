@@ -123,6 +123,7 @@ const signup = asyncHandler(async (req, res) => {
     }
 
     const nonce = getSignupNonce(lowerAddress);
+    signupNonces.delete(lowerAddress); // Invalidate immediately to prevent replay attacks
     verifyWalletSignature(buildAuthMessage(nonce), signature, lowerAddress);
 
     let user;
@@ -134,7 +135,6 @@ const signup = asyncHandler(async (req, res) => {
         }
         throw err;
     }
-    signupNonces.delete(lowerAddress);
 
     const token = signToken(lowerAddress);
 
@@ -161,10 +161,12 @@ const login = asyncHandler(async (req, res) => {
         throw new AppError('User not found, please sign up', 404, 'USER_NOT_FOUND');
     }
 
-    verifyWalletSignature(buildAuthMessage(user.nonce), signature, lowerAddress);
+    const currentNonce = user.nonce;
+    await user.regenerateNonce(); // Invalidate immediately to prevent replay attacks
+
+    verifyWalletSignature(buildAuthMessage(currentNonce), signature, lowerAddress);
 
     const token = signToken(lowerAddress);
-    await user.regenerateNonce();
 
     return res.json({
         success: true,

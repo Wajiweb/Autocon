@@ -54,7 +54,7 @@ export const useWeb3 = () => {
       if (data.success && data.data) {
         setGeneratedCode(data.data.contractCode, 'Token', { abi: data.data.abi, bytecode: data.data.bytecode });
         setAst(data.data.ast ?? null);
-        toast.success("Contract Compiled & Ready! 🚀", { id: loadingToast });
+        toast.success("Contract Compiled & Ready!", { id: loadingToast });
         await calculateGas(data.data.abi, data.data.bytecode); // ⛽ Fetch dynamic estimate
       } else {
         toast.error(data.error || "Compilation failed.", { id: loadingToast });
@@ -135,9 +135,41 @@ export const useWeb3 = () => {
         const currentNetwork = await provider.getNetwork();
 
       if (Number(currentNetwork.chainId) !== network.chainIdDecimal) {
-        toast.error(`Please switch MetaMask to ${network.name}!`);
-        setErrorStep(-1, `Wrong network: expected ${network.name}`);
-        return;
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: ethers.toBeHex(network.chainIdDecimal) }],
+          });
+        } catch (switchError) {
+          if (switchError.code === 4902) {
+            try {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [
+                  {
+                    chainId: ethers.toBeHex(network.chainIdDecimal),
+                    chainName: network.name,
+                    rpcUrls: [network.rpcUrl],
+                    nativeCurrency: {
+                      name: network.currency,
+                      symbol: network.currencySymbol,
+                      decimals: 18,
+                    },
+                    blockExplorerUrls: [network.explorer],
+                  },
+                ],
+              });
+            } catch (addError) {
+              toast.error(`Please add ${network.name} to MetaMask!`);
+              setErrorStep(-1, `Failed to add network: ${network.name}`);
+              return;
+            }
+          } else {
+            toast.error(`Please switch MetaMask to ${network.name}!`);
+            setErrorStep(-1, `Wrong network: expected ${network.name}`);
+            return;
+          }
+        }
       }
 
       const signer = await provider.getSigner();
@@ -145,7 +177,7 @@ export const useWeb3 = () => {
 
       setStep(1); // Step 1: Awaiting wallet signature
       setStatus('pending');
-      toast('Confirm transaction in MetaMask 🦊', { icon: '👆' });
+      toast('Confirm transaction in MetaMask', { icon: '💳' });
 
       const contract = await deployWithTimeout(() => factory.deploy(formData.ownerAddress, formData.supply));
 
@@ -191,7 +223,7 @@ export const useWeb3 = () => {
 
         const saveData = await saveRes.json();
         if (saveData.success) {
-          toast.success("Saved to Dashboard Registry!", { icon: '☁️' });
+          toast.success("Saved to Dashboard Registry!");
         }
       } catch (_error) {
         toast.error("Failed to save to database.");
@@ -218,7 +250,7 @@ export const useWeb3 = () => {
 
         const verifyData = await verifyRes.json();
         if (verifyData.success) {
-          toast.success("Verification job queued! ✅", { id: verifyToast });
+          toast.success("Verification job queued!", { id: verifyToast });
         } else {
           toast.error("Verification failed: " + (verifyData.error || 'Unknown error'), { id: verifyToast });
         }

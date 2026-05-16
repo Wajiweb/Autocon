@@ -1,84 +1,68 @@
 /**
- * Button.jsx — Landing Page Button Primitive
- * Variants: primary | secondary | ghost
- * Supports: href (renders <a>), onClick, disabled, children, aria-label
+ * Button.jsx — Standardized Dashboard Button Component
+ * Variants: primary | secondary | ghost | danger
+ * Sizes: sm | md | lg
+ * Supports: loading state, href (renders <a>), onClick, disabled, framer-motion interactions
  */
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
-const styles = {
-  base: {
-    display:        'inline-flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    gap:            '8px',
-    borderRadius:   '12px',
-    fontFamily:     '"Inter", sans-serif',
-    fontWeight:     700,
-    fontSize:       '0.95rem',
-    cursor:         'pointer',
-    border:         'none',
-    outline:        'none',
-    textDecoration: 'none',
-    willChange:     'transform',
-    padding:        '13px 28px',
-    transition:     'background 0.2s, color 0.2s, border-color 0.2s',
-  },
-  primary: {
-    background: 'var(--lp-accent)',
-    color:      'var(--surface)',
-  },
-  secondary: {
-    background:  'transparent',
-    color:       'var(--lp-text-primary)',
-    border:      '1.5px solid var(--lp-border)',
-  },
-  ghost: {
-    background:  'var(--lp-accent-soft)',
-    color:       'var(--lp-accent)',
-    border:      '1.5px solid var(--lp-accent)',
-  },
-  disabled: {
-    opacity:       0.45,
-    cursor:        'not-allowed',
-    pointerEvents: 'none',
-  },
-};
-
-function Button({
+export function Button({
   children,
   variant   = 'primary',
+  size      = 'md',
   href,
   onClick,
   disabled  = false,
+  loading   = false,
   className = '',
   style     = {},
   'aria-label': ariaLabel,
   ...rest
 }) {
-  const combined = {
-    ...styles.base,
-    ...styles[variant],
-    ...(disabled ? styles.disabled : {}),
-    ...style,
-  };
+  const baseClass = 'btn';
+  const variantClass = `btn-${variant}`;
+  const sizeClass = `btn-${size}`;
+  const loadingClass = loading ? 'btn-loading' : '';
+  
+  const combinedClasses = [
+    baseClass,
+    variantClass,
+    sizeClass,
+    loadingClass,
+    className
+  ].filter(Boolean).join(' ');
 
   const motionProps = {
-    whileHover: disabled ? {} : { scale: 1.04, transition: { duration: 0.18 } },
-    whileTap:   disabled ? {} : { scale: 0.97 },
+    whileHover: (disabled || loading) ? {} : { scale: 1.02, transition: { duration: 0.18 } },
+    whileTap:   (disabled || loading) ? {} : { scale: 0.98 },
   };
+
+  const content = (
+    <>
+      {loading && <Loader2 className="btn-spinner" size={16} />}
+      <span className="btn-content" style={{ opacity: loading ? 0 : 1 }}>
+        {children}
+      </span>
+    </>
+  );
 
   if (href) {
     return (
       <motion.a
         href={href}
-        style={combined}
-        className={className}
+        className={combinedClasses}
+        style={style}
         aria-label={ariaLabel}
+        onClick={(e) => {
+          if (disabled || loading) e.preventDefault();
+          else if (onClick) onClick(e);
+        }}
         {...motionProps}
         {...rest}
       >
-        {children}
+        {content}
       </motion.a>
     );
   }
@@ -86,18 +70,16 @@ function Button({
   return (
     <motion.button
       onClick={onClick}
-      disabled={disabled}
-      style={combined}
-      className={className}
+      disabled={disabled || loading}
+      className={combinedClasses}
+      style={style}
       aria-label={ariaLabel}
       {...motionProps}
       {...rest}
     >
-      {children}
+      {content}
     </motion.button>
   );
 }
 
 export default Button;
-// Named export for backward compatibility with dashboard imports using { Button }
-export { Button };

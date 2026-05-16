@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, memo, useMemo } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import './styles/dashboard.css';
 
 /* ─── Sparkline helpers (unchanged from original) ────────────────────── */
@@ -38,15 +39,7 @@ function makeSpark(data, w, h, color) {
 
 /* ─── Trend arrow SVG ────────────────────────────────────────────────── */
 function TrendArrow({ up }) {
-  return up ? (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ display: 'inline' }}>
-      <path d="M6 2L10 8H2L6 2Z" fill="#22c55e"/>
-    </svg>
-  ) : (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ display: 'inline' }}>
-      <path d="M6 10L2 4H10L6 10Z" fill="#ef4444"/>
-    </svg>
-  );
+  return up ? <TrendingUp size={12} className="text-emerald-500" /> : <TrendingDown size={12} className="text-rose-500" />;
 }
 
 /* ─── Individual market row — MEMOIZED to prevent full-table re-renders ─ */
@@ -94,14 +87,13 @@ const MarketRow = memo(function MarketRow({ token, price, change, flashing, hist
   }, [flashing]);
 
   const coinColor = token.iconColor;
-  const coinBg    = `${coinColor}28`;
+  const coinBg    = `${coinColor}22`;
 
   return (
     <div
       ref={rowRef}
       className={`mkt-row ${isUp ? 'up' : 'dn'}`}
       style={{ animationDelay: animDelay }}
-      /* ── ALL ORIGINAL CLICK LOGIC PRESERVED ── */
       onClick={() => onClick && onClick({ ...token, price, change })}
       role="button"
       tabIndex={0}
@@ -113,8 +105,24 @@ const MarketRow = memo(function MarketRow({ token, price, change, flashing, hist
 
       {/* Coin identity */}
       <div className="mkt-col-asset">
-        <div className="mkt-avatar" style={{ background: coinBg, color: coinColor }}>
-          {token.symbol.slice(0, 2)}
+        <div className="mkt-avatar" style={{ background: coinBg, border: `1px solid ${coinColor}33` }}>
+          {token.logo ? (
+            <img
+              src={token.logo}
+              alt={token.symbol}
+              className="mkt-avatar-img"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <span
+            className="mkt-avatar-fallback"
+            style={{ color: coinColor, display: token.logo ? 'none' : 'flex' }}
+          >
+            {token.symbol.slice(0, 2)}
+          </span>
         </div>
         <div className="mkt-asset-names">
           <span className="mkt-name">{token.name}</span>
@@ -138,7 +146,7 @@ const MarketRow = memo(function MarketRow({ token, price, change, flashing, hist
       {/* Trend direction arrow (large) */}
       <div className="mkt-col-trend">
         <span className={`mkt-trend-arrow ${isUp ? 'up' : 'dn'}`}>
-          {isUp ? '▲' : '▼'}
+          {isUp ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
         </span>
       </div>
 

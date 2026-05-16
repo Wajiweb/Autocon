@@ -71,6 +71,11 @@ async function runSlitherAnalysis(contractCode) {
         }
 
     } catch (err) {
+        if (err.code === 'ENOENT') {
+            const msg = 'Slither is not installed on the server. Install with: pip3 install slither-analyzer';
+            console.error('[SlitherService]', msg);
+            throw new Error(msg);
+        }
         console.error('[SlitherService] Execution error:', err.message);
     } finally {
         // Clean up temp file

@@ -1,5 +1,6 @@
 import { useState, useEffect, memo } from 'react';
 import { useGasTracker } from '../../hooks/useGasTracker';
+import { Fuel } from 'lucide-react';
 import './styles/dashboard.css';
 
 /* ══════════════════════════════════════════════════════
@@ -79,7 +80,9 @@ const GasWidget = memo(function GasWidget() {
       </div>
 
       {/* Fuel icon */}
-      <span style={{ fontSize: 12, opacity: .7 }}>⛽</span>
+      <span style={{ display: 'flex', alignItems: 'center', opacity: .7, color: 'var(--db-t3)' }}>
+        <Fuel size={14} />
+      </span>
     </div>
   );
 });

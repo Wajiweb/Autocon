@@ -142,19 +142,37 @@ async function submitToEtherscan(payload) {
     if (!chainId) throw new Error(`Unsupported network: "${network}"`);
     if (!apiKey)  throw new Error('ETHERSCAN_API_KEY not configured');
 
-    const standardJsonCode = buildStandardJsonInput(sourceCode);
+    // Attempt to build standard JSON with resolved OpenZeppelin dependencies
+    let useStandardJson = false;
+    let standardJsonCode = null;
+    try {
+        standardJsonCode = buildStandardJsonInput(sourceCode);
+        // Only use standard JSON if we resolved more than just the main contract
+        const parsed = JSON.parse(standardJsonCode);
+        useStandardJson = Object.keys(parsed.sources).length > 1;
+    } catch (e) {
+        console.warn('[VerificationWorker] Standard JSON build failed, falling back to single-file:', e.message);
+        useStandardJson = false;
+    }
 
     const params = new URLSearchParams();
     params.append('apikey',          apiKey);
     params.append('module',          'contract');
     params.append('action',          'verifysourcecode');
     params.append('contractaddress', contractAddress);
-    params.append('sourceCode',      standardJsonCode);
-    params.append('codeformat',      'solidity-standard-json-input');
-    params.append('contractname',    `contract.sol:${contractName}`);
-    params.append('compilerversion', compilerVersion);
 
-    // Etherscan standard JSON ignores optimization/runs params directly, but keeping them doesn't hurt.
+    if (useStandardJson && standardJsonCode) {
+        params.append('sourceCode',      standardJsonCode);
+        params.append('codeformat',      'solidity-standard-json-input');
+        params.append('contractname',    `contract.sol:${contractName}`);
+    } else {
+        // Fall back to single-file format — Etherscan resolves imports server-side
+        params.append('sourceCode',      sourceCode);
+        params.append('codeformat',      'solidity-single-file');
+        params.append('contractname',    contractName);
+    }
+
+    params.append('compilerversion', compilerVersion);
     params.append('optimizationUsed', '1');
     params.append('runs',            '200');
 
@@ -162,7 +180,6 @@ async function submitToEtherscan(payload) {
         const clean = constructorArgs.startsWith('0x')
             ? constructorArgs.slice(2)
             : constructorArgs;
-        // Etherscan API uses 'constructorArguements' (their own spelling) in form params
         params.append('constructorArguements', clean);
     }
 

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, Copy, ExternalLink, X, SearchCode, Download, ShieldCheck } from 'lucide-react';
+import { 
+    CheckCircle, CheckCircle2, Share2, ExternalLink, Globe, Lock, ShieldCheck, 
+    ArrowRight, Copy, ChevronRight, Check, PartyPopper, XCircle, SearchCode, Download, X 
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useABIExport } from '../../hooks/useExport';
 import TransactionStoryteller from '../dashboard/TransactionStoryteller';
@@ -56,7 +59,7 @@ export default function DeploySuccessModal({
         if (job.status === 'completed') {
           clearInterval(poll);
           setVerifyState('verified');
-          toast.success('Contract Verified on Explorer! 🛡️');
+          toast.success('Contract Verified on Explorer!', { icon: <ShieldCheck size={16} className="text-emerald-500" /> });
         } else if (job.status === 'failed') {
           clearInterval(poll);
           setVerifyState('error');
@@ -238,7 +241,9 @@ export default function DeploySuccessModal({
               color: 'var(--on-surface)', marginBottom: '6px',
               letterSpacing: '-0.02em'
             }}>
-              {contractType} Deployed! 🎉
+              <div className="flex items-center gap-2">
+                {contractType} Deployed! <PartyPopper size={24} className="text-[var(--primary)]" />
+              </div>
             </h2>
             <p style={{
               fontSize: '0.85rem', color: '#666',
@@ -345,9 +350,13 @@ export default function DeploySuccessModal({
                 >
                   {verifyState === 'idle' && <><ShieldCheck size={16} /> Verify Source Code</>}
                   {verifyState === 'submitting' && 'Submitting to Etherscan...'}
-                  {verifyState === 'polling' && '⏳ Polling Status (Takes ~20s)...'}
+                  {verifyState === 'polling' && 'Polling Status (Takes ~20s)...'}
                   {verifyState === 'verified' && <><CheckCircle2 size={16} /> Verified Successfully</>}
-                  {verifyState === 'error' && '❌ Verification Failed - Retry'}
+                  {verifyState === 'error' && (
+                    <div className="flex items-center gap-2">
+                      <XCircle size={14} /> Verification Failed - Retry
+                    </div>
+                  )}
                 </button>
               </div>
             )}

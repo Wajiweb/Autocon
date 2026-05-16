@@ -177,53 +177,76 @@ label, .label-text {
 }
 
 /* ─── Buttons ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-inter);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  text-decoration: none;
+  will-change: transform;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, opacity 0.2s;
+  position: relative;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Global focus-visible ring — WCAG 2.1 AA keyboard navigation */
+.btn:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Sizes */
+.btn-sm { padding: 8px 16px; font-size: 0.8rem; border-radius: var(--radius-sm); }
+.btn-md { padding: 12px 24px; font-size: 0.9rem; }
+.btn-lg { padding: 16px 32px; font-size: 1rem; border-radius: var(--radius-lg); }
+
+/* Loading State */
+.btn-loading {
+  pointer-events: none;
+}
+.btn-spinner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  animation: spin 1s linear infinite;
+}
+
+/* Variants */
 .btn-primary {
   background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-md);
-  padding: 13px 28px;
+  color: hsl(0 0% 7%);
   font-weight: 700;
-  font-size: 0.9rem;
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
   letter-spacing: -0.01em;
-  transition: background 0.2s;
 }
 .btn-primary:hover    { background: var(--primary-hover); }
 .btn-primary:active   { opacity: 0.9; }
-.btn-primary:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  background: var(--surface-highest);
-  color: var(--on-surface-muted);
-}
 
 .btn-secondary {
   background: transparent;
   color: var(--on-surface);
-  border: 1px solid var(--outline);
-  border-radius: var(--radius-md);
-  padding: 11px 22px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  border: 1.5px solid var(--outline);
 }
 .btn-secondary:hover { background: var(--surface-high); border-color: var(--on-surface-muted); }
 
 .btn-ghost {
-  background: transparent;
+  background: var(--primary-muted);
   color: var(--primary);
-  border: 1px solid var(--primary-muted);
-  border-radius: var(--radius-md);
-  padding: 10px 20px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  border: 1.5px solid var(--primary-muted);
 }
 .btn-ghost:hover { background: var(--primary-subtle); border-color: var(--primary); }
 
@@ -231,13 +254,6 @@ label, .label-text {
   background: rgba(248, 113, 113, 0.08);
   color: var(--error);
   border: 1px solid rgba(248, 113, 113, 0.2);
-  border-radius: var(--radius-sm);
-  padding: 8px 16px;
-  font-weight: 600;
-  font-size: 0.8rem;
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
 }
 .btn-danger:hover { background: rgba(248, 113, 113, 0.15); border-color: rgba(248, 113, 113, 0.45); }
 
@@ -460,6 +476,21 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (max-width: 768px) {
   .dashboard-main-shell { margin-left: 0; }
   .dashboard-theme .container { padding-inline: 16px; }
+}
+
+/* ─── Loading States ─── */
+.spinner {
+  border-radius: 50%;
+  border: 3px solid var(--primary-subtle);
+  border-top-color: var(--primary);
+  animation: spin 1s linear infinite;
+}
+.spinner-sm { width: 16px; height: 16px; border-width: 2px; }
+.spinner-md { width: 40px; height: 40px; border-width: 3px; }
+.spinner-lg { width: 48px; height: 48px; border-width: 4px; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ─── Utility ─── */

@@ -1,4 +1,3 @@
-/* WizardComponents.jsx — Stepper, Steps 1-4, helper components */
 import { useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -6,15 +5,22 @@ import { useAuth } from '../context/AuthContext';
 import { useWallet } from '../hooks/useWallet';
 import { ethers } from 'ethers';
 import { useWizardStore } from '../store/useWizardStore';
-import Editor from '@monaco-editor/react';
 import { NETWORKS as CONTEXT_NETWORKS, useNetwork } from '../context/NetworkContext';
+import { 
+  Coins, Image as ImageIcon, Gavel, Wallet, ClipboardCheck, 
+  Pickaxe, Save, Check, X, Zap, Flag, ExternalLink, 
+  PartyPopper, CheckCircle, RotateCcw, Copy 
+} from 'lucide-react';
+import React, { Suspense, lazy } from 'react';
+
+const Editor = lazy(() => import('@monaco-editor/react'));
 
 const STEPS = ['Select Type', 'Parameters', 'Review', 'Deploy'];
 
 export const CONTRACT_TYPES = [
-  { id: 'ERC20',   icon: '⬡', name: 'ERC-20 Token',   tag: 'Fungible',    desc: 'Mintable, burnable & pausable fungible tokens with tax and anti-whale support.' },
-  { id: 'ERC721',  icon: '⬢', name: 'NFT Collection', tag: 'ERC-721',     desc: 'Full NFT collection with reveal mechanics, enumerable supply and IPFS metadata.' },
-  { id: 'Auction', icon: '◉', name: 'Auction',        tag: 'English Bid', desc: 'Trustless on-chain auction with reserve price, anti-snipe and time extension.' },
+  { id: 'ERC20',   icon: Coins, name: 'ERC-20 Token',   tag: 'Fungible',    desc: 'Mintable, burnable & pausable fungible tokens with tax and anti-whale support.' },
+  { id: 'ERC721',  icon: ImageIcon, name: 'NFT Collection', tag: 'ERC-721',     desc: 'Full NFT collection with reveal mechanics, enumerable supply and IPFS metadata.' },
+  { id: 'Auction', icon: Gavel, name: 'Auction',        tag: 'English Bid', desc: 'Trustless on-chain auction with reserve price, anti-snipe and time extension.' },
 ];
 
 export const NETWORKS = Object.values(CONTEXT_NETWORKS).map(n => ({
@@ -60,7 +66,7 @@ export function Stepper({ current }) {
         return (
           <div key={label} className="wz-step" style={{ flex: i < STEPS.length - 1 ? 1 : 'none' }}>
             <div className="wz-step-inner">
-              <div className={`wz-step-circle ${s}`}>{i < current ? '✓' : i + 1}</div>
+              <div className={`wz-step-circle ${s}`}>{i < current ? <Check size={14} strokeWidth={3} /> : i + 1}</div>
               <div className={`wz-step-label ${s}`}>{label}</div>
             </div>
             {i < STEPS.length - 1 && (
@@ -82,14 +88,17 @@ export function StepType({ selected, onSelect }) {
       <div className="wz-card-title">What would you like to create?</div>
       <div className="wz-card-sub">Choose a contract type. Your progress auto-saves so you can return anytime.</div>
       <div className="wz-type-grid">
-        {CONTRACT_TYPES.map(t => (
-          <div key={t.id} className={`wz-type-card${selected === t.id ? ' selected' : ''}`} onClick={() => onSelect(t.id)}>
-            <span className="wz-type-icon">{t.icon}</span>
-            <div className="wz-type-name">{t.name}</div>
-            <div className="wz-type-desc">{t.desc}</div>
-            <span className="wz-type-tag">{t.tag}</span>
-          </div>
-        ))}
+        {CONTRACT_TYPES.map(t => {
+          const Icon = t.icon;
+          return (
+            <div key={t.id} className={`wz-type-card${selected === t.id ? ' selected' : ''}`} onClick={() => onSelect(t.id)}>
+              <span className="wz-type-icon"><Icon size={32} strokeWidth={1.5} /></span>
+              <div className="wz-type-name">{t.name}</div>
+              <div className="wz-type-desc">{t.desc}</div>
+              <span className="wz-type-tag">{t.tag}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -198,7 +207,9 @@ function SummaryRow({ label, value }) {
 }
 
 export function StepReview({ type, params, code, isGenerating, onGenerate }) {
-  const [showCode, setShowCode] = useState(false);
+  const { setGeneratedCode } = useWizardStore();
+  const [activeTab, setActiveTab] = useState('summary');
+  const [isEditing, setIsEditing] = useState(false);
   const features = Object.entries(params).filter(([k, v]) => typeof v === 'boolean' && v).map(([k]) => k.replace(/^(is|has)/, ''));
   const typeMeta = CONTRACT_TYPES.find(t => t.id === type);
 
@@ -253,69 +264,103 @@ export function StepReview({ type, params, code, isGenerating, onGenerate }) {
     monaco.editor.setModelMarkers(model, "solidity-linter", markers);
   };
 
+  const handleGenerateClick = async () => {
+    await onGenerate();
+    // Only switch to code tab if generation actually succeeded, handled manually by user usually, but we can optimistically switch.
+    // The parent manages state, so we can just let them click it or auto-switch.
+    setActiveTab('code');
+  };
+
   return (
     <div className="wz-card">
       <div className="wz-card-title">Review Your Contract</div>
       <div className="wz-card-sub">Verify all details before generating. Go back to make changes.</div>
 
-      {/* Human-readable summary */}
-      <div style={{ background: 'var(--surface-elevated)', border: '.5px solid var(--border-dark)', borderRadius: 12, padding: '18px 20px', marginBottom: 20 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 14 }}>Contract Summary</div>
-        <div className="wz-review-grid">
-          <SummaryRow label="Type"        value={typeMeta?.name} />
-          <SummaryRow label="Name"        value={params.name} />
-          <SummaryRow label="Symbol"      value={params.symbol} />
-          <SummaryRow label="Supply"      value={params.supply && Number(params.supply).toLocaleString()} />
-          <SummaryRow label="Max Supply"  value={params.maxSupply && Number(params.maxSupply).toLocaleString()} />
-          <SummaryRow label="Mint Price"  value={params.mintPrice && `${params.mintPrice} ETH`} />
-          <SummaryRow label="Min Bid"     value={params.minimumBid && `${params.minimumBid} ETH`} />
-          <SummaryRow label="Duration"    value={params.duration && `${Math.round(params.duration/3600)}h (${(params.duration/86400).toFixed(1)}d)`} />
-          <SummaryRow label="Reserve"     value={params.reservePrice && `${params.reservePrice} ETH`} />
-          <SummaryRow label="Item"        value={params.itemName} />
-        </div>
-        {features.length > 0 && (
-          <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--text-muted)', marginBottom: 8 }}>Enabled Features</div>
-            <div className="wz-feature-chips">
-              {features.map(f => <span key={f} className="wz-chip">{f}</span>)}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {!code ? (
-        <button className="wz-btn wz-btn-primary magnetic-btn glass-btn" style={{ width: '100%', justifyContent: 'center', padding: '16px', fontSize: 15, fontWeight: 700 }} onClick={onGenerate} disabled={isGenerating}>
-          {isGenerating ? <><span className="wz-ds-spin" style={{ width: 16, height: 16 }} /> Compiling & Scanning…</> : '⚡ Generate & Audit Contract'}
-        </button>
-      ) : (
-        <>
-          <div className="wz-alert info" style={{ background: 'rgba(16,185,129,.1)', border: '1px solid rgba(16,185,129,.3)' }}>
-            ✓ Contract compiled & validated — ready for deployment
-          </div>
-          <button className="wz-btn wz-btn-ghost glass-btn" style={{ marginBottom: 12, fontSize: 13, background: 'rgba(255,255,255,0.03)' }} onClick={() => setShowCode(s => !s)}>
-            {showCode ? '▲ Hide' : '▼ View Code & Linting'}
+      {code && (
+        <div style={{ display: 'flex', gap: 16, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: 10 }}>
+          <button 
+            onClick={() => setActiveTab('summary')} 
+            style={{ background: 'none', border: 'none', color: activeTab === 'summary' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: '4px 8px', transition: 'color 0.2s', borderBottom: activeTab === 'summary' ? '2px solid var(--primary)' : '2px solid transparent' }}
+          >
+            Configuration Summary
           </button>
-          {showCode && (
-            <div className="wz-code-preview" style={{ padding: 0, overflow: 'hidden', height: 400, border: '1px solid rgba(255,255,255,0.08)' }}>
-              <Editor
-                height="400px"
-                language="solidity"
-                theme="vs-dark"
-                value={code}
-                onMount={handleEditorDidMount}
-                options={{
-                  readOnly: true,
-                  minimap: { enabled: false },
-                  fontSize: 13,
-                  fontFamily: 'var(--db-mono)',
-                  scrollBeyondLastLine: false,
-                  smoothScrolling: true,
-                  padding: { top: 16, bottom: 16 }
-                }}
-              />
+          <button 
+            onClick={() => setActiveTab('code')} 
+            style={{ background: 'none', border: 'none', color: activeTab === 'code' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: '4px 8px', transition: 'color 0.2s', borderBottom: activeTab === 'code' ? '2px solid var(--primary)' : '2px solid transparent' }}
+          >
+            Smart Contract Code
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'summary' && (
+        <div style={{ background: 'var(--surface-elevated)', border: '.5px solid var(--border-dark)', borderRadius: 12, padding: '18px 20px', marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 14 }}>Contract Summary</div>
+          <div className="wz-review-grid">
+            <SummaryRow label="Type"        value={typeMeta?.name} />
+            <SummaryRow label="Name"        value={params.name} />
+            <SummaryRow label="Symbol"      value={params.symbol} />
+            <SummaryRow label="Supply"      value={params.supply && Number(params.supply).toLocaleString()} />
+            <SummaryRow label="Max Supply"  value={params.maxSupply && Number(params.maxSupply).toLocaleString()} />
+            <SummaryRow label="Mint Price"  value={params.mintPrice && `${params.mintPrice} ETH`} />
+            <SummaryRow label="Min Bid"     value={params.minimumBid && `${params.minimumBid} ETH`} />
+            <SummaryRow label="Duration"    value={params.duration && `${Math.round(params.duration/3600)}h (${(params.duration/86400).toFixed(1)}d)`} />
+            <SummaryRow label="Reserve"     value={params.reservePrice && `${params.reservePrice} ETH`} />
+            <SummaryRow label="Item"        value={params.itemName} />
+          </div>
+          {features.length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--text-muted)', marginBottom: 8 }}>Enabled Features</div>
+              <div className="wz-feature-chips">
+                {features.map(f => <span key={f} className="wz-chip">{f}</span>)}
+              </div>
             </div>
           )}
-        </>
+        </div>
+      )}
+
+      {!code && activeTab === 'summary' && (
+        <button className="btn btn-primary btn-lg magnetic-btn glass-btn" style={{ width: '100%' }} onClick={handleGenerateClick} disabled={isGenerating}>
+          {isGenerating ? <><span className="wz-ds-spin" style={{ width: 16, height: 16 }} /> Compiling & Scanning…</> : <><Zap size={18} strokeWidth={2} /> Generate & Audit Contract</>}
+        </button>
+      )}
+      
+      {code && activeTab === 'summary' && (
+         <div className="wz-alert info" style={{ background: 'rgba(16,185,129,.1)', border: '1px solid rgba(16,185,129,.3)' }}>
+           <CheckCircle size={16} strokeWidth={2} /> Contract compiled & validated — ready for deployment. Switch to the <strong>Code</strong> tab to review.
+         </div>
+      )}
+
+      {activeTab === 'code' && code && (
+        <div className="wz-code-preview" style={{ padding: 0, overflow: 'hidden', height: 400, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={() => setIsEditing(!isEditing)} 
+              style={{ background: isEditing ? 'rgba(245,158,11,0.2)' : 'var(--surface)', border: isEditing ? '1px solid rgba(245,158,11,0.4)' : '1px solid var(--surface)', color: isEditing ? '#f59e0b' : '#e2e8f0', padding: '4px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'var(--db-font)', fontWeight: 600 }}
+            >
+              {isEditing ? 'Disable Edit Mode' : 'Developer Edit Mode'}
+            </button>
+          </div>
+          <Suspense fallback={<div style={{height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)'}}>Loading Editor...</div>}>
+            <Editor
+              height="400px"
+              language="solidity"
+              theme="vs-dark"
+              value={code}
+              onChange={(val) => { if(isEditing) setGeneratedCode(val); }}
+              onMount={handleEditorDidMount}
+              options={{
+                readOnly: !isEditing,
+                minimap: { enabled: false },
+                fontSize: 13,
+                fontFamily: 'var(--db-mono)',
+                scrollBeyondLastLine: false,
+                smoothScrolling: true,
+                padding: { top: 40, bottom: 16 }
+              }}
+            />
+          </Suspense>
+        </div>
       )}
     </div>
   );
@@ -323,13 +368,13 @@ export function StepReview({ type, params, code, isGenerating, onGenerate }) {
 
 /* ── Step 4: Deploy ───────────────────────────────────── */
 const DEPLOY_STEPS_DEF = [
-  { id: 'wallet',  icon: '👛', name: 'Connect Wallet',      sub: 'Authorise MetaMask to sign' },
-  { id: 'confirm', icon: '📋', name: 'Confirm Transaction', sub: 'Review & approve in MetaMask' },
-  { id: 'mine',    icon: '⛏️', name: 'Mining Block',        sub: 'Waiting for on-chain confirmation' },
-  { id: 'save',    icon: '💾', name: 'Saving to Registry',  sub: 'Persisting to your account' },
+  { id: 'wallet',  icon: Wallet, name: 'Connect Wallet',      sub: 'Authorise MetaMask to sign' },
+  { id: 'confirm', icon: ClipboardCheck, name: 'Confirm Transaction', sub: 'Review & approve in MetaMask' },
+  { id: 'mine',    icon: Pickaxe, name: 'Mining Block',        sub: 'Waiting for on-chain confirmation' },
+  { id: 'save',    icon: Save, name: 'Saving to Registry',  sub: 'Persisting to your account' },
 ];
 
-export function StepDeploy({ type, params, contractData, onSuccess }) {
+export function StepDeploy({ type, params, contractData, code, onSuccess }) {
   const navigate = useNavigate();
   const { authFetch } = useAuth();
   const { walletAddress, connectWallet } = useWallet();
@@ -351,12 +396,54 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
 
   const handleDeploy = useCallback(async () => {
     if (!walletAddress) { toast.error('Connect your wallet first'); return; }
-    if (!contractData?.abi || !contractData?.bytecode) { toast.error('Generate the contract first'); return; }
+    if (!contractData?.abi) { toast.error('Generate the contract first'); return; }
+    if (!contractData?.bytecode) { toast.error('Contract bytecode expired after page refresh. Please go back and regenerate.'); return; }
     setDoneSteps([]); setErrorStepLocal(null); clearDeployError();
 
     try {
       setActiveStep('wallet');
       const provider = new ethers.BrowserProvider(window.ethereum);
+
+      // Switch MetaMask to the selected network before deploying
+      const targetNetwork = Object.values(CONTEXT_NETWORKS).find(n => n.key === selNet);
+      if (targetNetwork) {
+        const currentNetwork = await provider.getNetwork();
+        const targetChainId = BigInt(targetNetwork.chainIdDecimal);
+        if (currentNetwork.chainId !== targetChainId) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: targetNetwork.chainId }],
+            });
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              try {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [{
+                    chainId: targetNetwork.chainId,
+                    chainName: targetNetwork.name,
+                    rpcUrls: [targetNetwork.rpcUrl],
+                    blockExplorerUrls: [targetNetwork.explorer],
+                    nativeCurrency: {
+                      name: targetNetwork.currency,
+                      symbol: targetNetwork.currencySymbol,
+                      decimals: 18,
+                    },
+                  }],
+                });
+              } catch (addError) {
+                throw new Error(`Failed to add ${targetNetwork.name} to MetaMask. Please add it manually.`);
+              }
+            } else if (switchError.code === 4001) {
+              throw new Error(`Network switch rejected. Please switch to ${targetNetwork.name} in MetaMask.`);
+            } else {
+              throw switchError;
+            }
+          }
+        }
+      }
+
       const signer   = await provider.getSigner();
       markDone('wallet');
 
@@ -377,7 +464,25 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
       markDone('mine');
 
       setActiveStep('save');
-      const base = { contractAddress: addr, ownerAddress: walletAddress, network: selNet, abi: contractData.abi };
+      
+      const txData = contract.deploymentTransaction()?.data || '';
+      let constructorArgs = '';
+      const bytecode = contractData.bytecode;
+      const strippedTxData = txData.startsWith('0x') ? txData.slice(2) : txData;
+      const strippedBytecode = bytecode.startsWith('0x') ? bytecode.slice(2) : bytecode;
+      if (strippedTxData.startsWith(strippedBytecode)) {
+        constructorArgs = strippedTxData.slice(strippedBytecode.length);
+      }
+
+      const base = { 
+        contractAddress: addr, 
+        ownerAddress: walletAddress, 
+        network: selNet, 
+        abi: contractData.abi,
+        sourceCode: code,
+        compilerVersion: 'v0.8.20+commit.a1b79de6',
+        constructorArgs
+      };
       const payload = type === 'ERC20'
         ? { ...base, name: params.name, symbol: params.symbol }
         : type === 'ERC721'
@@ -394,7 +499,7 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
       addDeployedContract(result);
       setActiveStep(null);
       onSuccess(result);
-      toast.success('🎉 Contract deployed!');
+      toast.success('Contract deployed!');
     } catch (err) {
       const msg = err.shortMessage || err.message || 'Deployment failed';
       setErrorStepLocal(activeStep);
@@ -402,7 +507,7 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
       setDeployError(msg);
       toast.error(msg);
     }
-  }, [walletAddress, contractData, params, type, selNet, authFetch, activeStep]);
+  }, [walletAddress, contractData, params, type, selNet, authFetch, activeStep, code]);
 
   /* ── Success Screen ─────────────────────────────────── */
   if (deployResult) {
@@ -410,18 +515,22 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
     return (
       <div className="wz-card">
         <div className="wz-success">
-          <div className="wz-success-icon">🎉</div>
+          <div className="wz-success-icon"><PartyPopper size={52} strokeWidth={1.5} color="var(--primary)" /></div>
           <div className="wz-success-title">Contract Deployed Successfully!</div>
           <div className="wz-success-sub">Your contract is live on <strong>{deployResult.network}</strong>.</div>
           <div className="wz-success-addr">{deployResult.address}</div>
           {deployResult.txHash && (
             <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: 'var(--text-muted)', marginBottom: 20 }}>
-              Tx: {deployResult.txHash.slice(0,18)}…
+              Tx: {deployResult.txHash.slice(0,18)}...
             </div>
           )}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href={explorerUrl} target="_blank" rel="noreferrer" className="wz-btn wz-btn-success" style={{ textDecoration: 'none' }}>View on Explorer ↗</a>
-            <button className="wz-btn wz-btn-ghost" onClick={() => { navigator.clipboard.writeText(deployResult.address); toast.success('Copied'); }}>Copy Address</button>
+            <a href={explorerUrl} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+              View on Explorer <ExternalLink size={14} strokeWidth={2} />
+            </a>
+            <button className="btn btn-ghost" onClick={() => { navigator.clipboard.writeText(deployResult.address); toast.success('Copied'); }}>
+              Copy Address <Copy size={14} strokeWidth={2} />
+            </button>
           </div>
         </div>
       </div>
@@ -437,10 +546,10 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
       {/* Error banner with retry */}
       {deployError && (
         <div className="wz-alert error" style={{ marginBottom: 18, flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-          <div style={{ fontWeight: 700 }}>⚠ Deployment Failed</div>
+          <div style={{ fontWeight: 700 }}><X size={14} strokeWidth={3} /> Deployment Failed</div>
           <div style={{ fontSize: 11 }}>{deployError}</div>
-          <button className="wz-btn wz-btn-ghost" style={{ fontSize: 11, padding: '6px 14px', marginTop: 4 }} onClick={() => { setDoneSteps([]); setErrorStepLocal(null); clearDeployError(); }}>
-            ↺ Retry
+          <button className="btn btn-ghost btn-sm" style={{ marginTop: 4 }} onClick={() => { setDoneSteps([]); setErrorStepLocal(null); clearDeployError(); }}>
+            <RotateCcw size={12} strokeWidth={2} /> Retry
           </button>
         </div>
       )}
@@ -457,46 +566,49 @@ export function StepDeploy({ type, params, contractData, onSuccess }) {
 
       {/* Wallet */}
       <div className="wz-wallet-banner">
-        <div className="wz-wallet-icon">👛</div>
+        <div className="wz-wallet-icon"><Wallet size={22} strokeWidth={1.5} color="var(--primary)" /></div>
         <div className="wz-wallet-info">
           <div className="wz-wallet-label">Connected Wallet</div>
-          <div className="wz-wallet-addr">{walletAddress ? `${walletAddress.slice(0,8)}…${walletAddress.slice(-6)}` : 'Not connected'}</div>
+          <div className="wz-wallet-addr">{walletAddress ? `${walletAddress.slice(0,8)}...${walletAddress.slice(-6)}` : 'Not connected'}</div>
         </div>
         {!walletAddress && <button className="wz-wallet-connect" onClick={connectWallet}>Connect</button>}
       </div>
 
       {/* Progress steps */}
       <div className="wz-deploy-steps">
-        {DEPLOY_STEPS_DEF.map(s => (
-          <div key={s.id} className={`wz-ds ${stepState(s.id)}`}>
-            <div className="wz-ds-icon">{stepState(s.id) === 'done' ? '✓' : stepState(s.id) === 'error' ? '✕' : s.icon}</div>
-            <div className="wz-ds-text">
-              <div className="wz-ds-name">{s.name}</div>
-              <div className="wz-ds-sub">{s.sub}</div>
+        {DEPLOY_STEPS_DEF.map(s => {
+          const Icon = stepState(s.id) === 'done' ? Check : stepState(s.id) === 'error' ? X : s.icon;
+          return (
+            <div key={s.id} className={`wz-ds ${stepState(s.id)}`}>
+              <div className="wz-ds-icon"><Icon size={16} strokeWidth={2} /></div>
+              <div className="wz-ds-text">
+                <div className="wz-ds-name">{s.name}</div>
+                <div className="wz-ds-sub">{s.sub}</div>
+              </div>
+              {stepState(s.id) === 'active' && <div className="wz-ds-spin" />}
             </div>
-            {stepState(s.id) === 'active' && <div className="wz-ds-spin" />}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <button
-          className="wz-btn wz-btn-primary magnetic-btn glass-btn"
-          style={{ width: '100%', justifyContent: 'center', padding: '16px', fontSize: 15, fontWeight: 700 }}
+          className="btn btn-primary btn-lg magnetic-btn glass-btn"
+          style={{ width: '100%' }}
           onClick={handleDeploy}
           disabled={!walletAddress || !contractData?.abi || !!activeStep}
         >
           {activeStep
             ? <><span className="wz-ds-spin" style={{ width: 16, height: 16 }} /> Deploying…</>
-            : '🚀 Deploy Contract'}
+            : <><Zap size={18} strokeWidth={2} /> Deploy Contract</>}
         </button>
         <button
-          className="wz-btn wz-btn-ghost glass-btn"
-          style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: 14, background: 'rgba(255,255,255,0.03)' }}
+          className="btn btn-ghost btn-md glass-btn"
+          style={{ width: '100%' }}
           onClick={() => navigate('/audit', { state: { code: contractData?.sourceCode || '', type } })}
           disabled={!contractData?.abi || !!activeStep}
         >
-          ⚑ Optional: Run AI Audit
+          <Flag size={16} strokeWidth={2} /> Optional: Run AI Audit
         </button>
       </div>
     </div>

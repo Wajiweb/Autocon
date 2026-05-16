@@ -5,6 +5,7 @@ import {
   CategoryScale, LinearScale, BarElement, LineElement,
   PointElement, Filler, Title
 } from 'chart.js';
+import { Rocket, Layers, ImageIcon, Gavel, TrendingUp, Zap, Fuel, Lock, Trophy, Globe, Calendar, Wallet, BarChart3 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { useGasTracker } from '../hooks/useGasTracker';
@@ -24,7 +25,7 @@ const PINK      = '#e879f9';
 // Estimated gas units per type
 const GAS_UNITS = { 'ERC-20': 1_500_000, 'ERC-721': 2_200_000, 'Auction': 1_800_000 };
 
-function StatCard({ label, value, sub, color, icon, delay }) {
+function StatCard({ label, value, sub, color, Icon, delay }) {
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     if (typeof value !== 'number') return;
@@ -43,7 +44,7 @@ function StatCard({ label, value, sub, color, icon, delay }) {
       style={{ borderTop: `2px solid ${color}`, padding: '18px 20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--db-t3)' }}>{label}</span>
-        <span style={{ fontSize: 20 }}>{icon}</span>
+        {Icon && <Icon size={18} color={color} strokeWidth={1.8} aria-hidden="true" />}
       </div>
       <div style={{ fontSize: 32, fontWeight: 900, color, fontFamily: 'var(--db-font)', lineHeight: 1 }}>
         {typeof value === 'number' ? display : value}
@@ -115,11 +116,11 @@ export default function AnalyticsPage() {
 
   // Gas analytics — estimated total gas used
   const estGasUnits = deployments.reduce((sum, d) => sum + (GAS_UNITS[d._type] || 1_500_000), 0);
-  const estCostEth  = gasPriceGwei ? ((gasPriceGwei * estGasUnits) / 1e9).toFixed(4) : '—';
+  const estCostEth  = gasPriceGwei ? ((gasPriceGwei * estGasUnits) / 1e9).toFixed(4) : '-';
 
   // Most active month
   const peakIdx   = monthlyCounts.indexOf(Math.max(...monthlyCounts));
-  const peakMonth = months[peakIdx] || '—';
+  const peakMonth = months[peakIdx] || '-';
   const peakCount = monthlyCounts[peakIdx] || 0;
 
   // Avg deploys/month (non-zero months)
@@ -201,10 +202,12 @@ export default function AnalyticsPage() {
           </div>
         </div>
         {/* Time range selector */}
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6 }} role="group" aria-label="Analytics time range">
           {[3, 6, 12].map(m => (
             <button key={m} className="pg-btn"
               onClick={() => setTimeRange(m)}
+              aria-pressed={timeRange === m}
+              aria-label={`Last ${m} months`}
               style={{
                 background: timeRange === m ? 'var(--primary)' : 'var(--db-s2)',
                 color: timeRange === m ? 'var(--surface)' : 'var(--db-t2)',
@@ -218,20 +221,20 @@ export default function AnalyticsPage() {
       </div>
 
       {isLoading ? (
-        <div className="pg-card" style={{ textAlign: 'center', padding: 48, color: 'var(--db-t3)' }}>
-          <div className="pg-spinner" style={{ margin: '0 auto 12px' }} />
-          Loading analytics…
+        <div className="pg-card" role="status" aria-label="Loading analytics" style={{ textAlign: 'center', padding: 48, color: 'var(--db-t3)' }}>
+          <div className="animate-spin" style={{ width: 24, height: 24, border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 12px' }} />
+          Loading analytics...
         </div>
       ) : (
         <>
           {/* ── Stat Cards ── */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
-            <StatCard label="Total Contracts" value={total}    icon="🚀" color={PRIMARY}  delay={2} sub="All types deployed" />
-            <StatCard label="ERC-20 Tokens"   value={tokens}   icon="🪙" color={SUCCESS}  delay={2} sub="Fungible tokens" />
-            <StatCard label="NFT Collections" value={nfts}     icon="🎨" color={PINK}     delay={3} sub="ERC-721 collections" />
-            <StatCard label="Auctions"         value={auctions} icon="🔨" color={AMBER}    delay={3} sub="English auctions" />
-            <StatCard label="Avg / Month"      value={avgPerMonth} icon="📈" color={PRIMARY} delay={4} sub={`Over ${activeMonths} active months`} />
-            <StatCard label="Peak Month"       value={peakMonth}   icon="⚡" color={AMBER}   delay={4} sub={`${peakCount} deployments`} />
+            <StatCard label="Total Contracts" value={total}       Icon={Rocket}      color={PRIMARY}  delay={2} sub="All types deployed" />
+            <StatCard label="ERC-20 Tokens"   value={tokens}      Icon={Layers}      color={SUCCESS}  delay={2} sub="Fungible tokens" />
+            <StatCard label="NFT Collections" value={nfts}        Icon={ImageIcon}   color={PINK}     delay={3} sub="ERC-721 collections" />
+            <StatCard label="Auctions"         value={auctions}   Icon={Gavel}       color={AMBER}    delay={3} sub="English auctions" />
+            <StatCard label="Avg / Month"      value={avgPerMonth} Icon={TrendingUp} color={PRIMARY}  delay={4} sub={`Over ${activeMonths} active months`} />
+            <StatCard label="Peak Month"       value={peakMonth}  Icon={Zap}         color={AMBER}    delay={4} sub={`${peakCount} deployments`} />
           </div>
 
           {/* ── Row 1: Donut + Bar ── */}
@@ -394,14 +397,16 @@ export default function AnalyticsPage() {
 
           {/* ── Gas Analytics Card ── */}
           <div className="pg-card db-enter db-enter-6" style={{ padding: 22, marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', marginBottom: 4 }}>⛽ Gas Usage Analytics</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
+              <Fuel size={15} color="var(--db-amber)" strokeWidth={2} /> Gas Usage Analytics
+            </div>
             <div style={{ fontSize: 11, color: 'var(--db-t3)', marginBottom: 20 }}>Live gas prices and estimated historical spend</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
               {[
-                { label: 'Live Gas Price', value: gasPriceGwei ? `${Math.round(gasPriceGwei)} Gwei` : '…', color: gasStatusColor, desc: `Status: ${status}` },
-                { label: 'Latest Block', value: blockNumber ? `#${blockNumber}` : '…', color: PRIMARY, desc: 'Real-time chain sync' },
+                { label: 'Live Gas Price', value: gasPriceGwei ? `${Math.round(gasPriceGwei)} Gwei` : '...', color: gasStatusColor, desc: `Status: ${status}` },
+                { label: 'Latest Block', value: blockNumber ? `#${blockNumber}` : '...', color: PRIMARY, desc: 'Real-time chain sync' },
                 { label: 'Est. Total Gas', value: `${(estGasUnits / 1_000_000).toFixed(1)}M units`, color: PRIMARY, desc: `~${estCostEth} ETH at current price` },
-                { label: 'Avg Gas / Deploy', value: total > 0 ? `${((estGasUnits / total) / 1_000_000).toFixed(1)}M` : '—', color: AMBER, desc: 'Estimated gas units' },
+                { label: 'Avg Gas / Deploy', value: total > 0 ? `${((estGasUnits / total) / 1_000_000).toFixed(1)}M` : '-', color: AMBER, desc: 'Estimated gas units' },
                 { label: 'Cheapest Type', value: 'ERC-20', color: SUCCESS, desc: '~1.5M gas units' },
                 { label: 'Most Expensive', value: 'ERC-721', color: PINK, desc: '~2.2M gas units' },
               ].map(item => (
@@ -417,38 +422,45 @@ export default function AnalyticsPage() {
           {/* ── Admin Insights ── */}
           <div className="pg-card db-enter db-enter-7" style={{ padding: 22 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)' }}>🔐 Admin Insights</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <Lock size={15} color="var(--primary)" strokeWidth={2} /> Admin Insights
+              </div>
               <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(93,169,233,.12)', color: 'var(--primary)', border: '1px solid rgba(93,169,233,.2)', fontWeight: 700 }}>Advanced</span>
             </div>
             <div style={{ fontSize: 11, color: 'var(--db-t3)', marginBottom: 18 }}>Account-level deployment intelligence</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
               {[
-                { label: 'Deployment Velocity', value: `${avgPerMonth}/month`, icon: '📈', color: PRIMARY, desc: `Across ${activeMonths} active month${activeMonths !== 1 ? 's' : ''}` },
-                { label: 'Success Rate (Audit)', value: deployments.length > 0 ? '100%' : '—', icon: '🛡️', color: SUCCESS, desc: '0 failures recorded in audit logs' },
-                { label: 'Most Deployed Type', value: tokens >= nfts && tokens >= auctions ? 'ERC-20 Token' : nfts >= auctions ? 'ERC-721 NFT' : 'Auction', icon: '🏆', color: AMBER, desc: 'Most common contract type' },
-                { label: 'Networks Active', value: Object.keys(networkCounts).length, icon: '🌐', color: SUCCESS, desc: Object.keys(networkCounts).join(' · ') || 'None' },
-                { label: 'Peak Activity', value: `${peakMonth}`, icon: '⚡', color: PINK, desc: `${peakCount} deploys in one month` },
-                { label: 'Portfolio Age', value: portfolioAge, icon: '📅', color: AMBER, desc: 'Since first deployment' },
-                { label: 'Wallet', value: user?.walletAddress ? `${user.walletAddress.slice(0,6)}…${user.walletAddress.slice(-4)}` : '—', icon: '🦊', color: PRIMARY, desc: 'Connected address' },
-              ].map(item => (
-                <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px', borderRadius: 10, background: 'var(--db-s2)', border: '1px solid var(--db-br)' }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: `${item.color}18`, border: `1px solid ${item.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                    {item.icon}
+                { label: 'Deployment Velocity', Icon: TrendingUp, color: PRIMARY, value: `${avgPerMonth}/month`,    desc: `Across ${activeMonths} active month${activeMonths !== 1 ? 's' : ''}` },
+                { label: 'Success Rate (Audit)', Icon: Lock,      color: SUCCESS, value: deployments.length > 0 ? '100%' : '—', desc: '0 failures recorded in audit logs' },
+                { label: 'Most Deployed Type',  Icon: Trophy,     color: AMBER,   value: tokens >= nfts && tokens >= auctions ? 'ERC-20 Token' : nfts >= auctions ? 'ERC-721 NFT' : 'Auction', desc: 'Most common contract type' },
+                { label: 'Networks Active',     Icon: Globe,      color: SUCCESS, value: Object.keys(networkCounts).length, desc: Object.keys(networkCounts).join(' · ') || 'None' },
+                { label: 'Peak Activity',       Icon: Zap,        color: PINK,    value: `${peakMonth}`, desc: `${peakCount} deploys in one month` },
+                { label: 'Portfolio Age',       Icon: Calendar,   color: AMBER,   value: portfolioAge, desc: 'Since first deployment' },
+                { label: 'Wallet',              Icon: Wallet,     color: PRIMARY, value: user?.walletAddress ? `${user.walletAddress.slice(0,6)}...${user.walletAddress.slice(-4)}` : '-', desc: 'Connected address' },
+              ].map(item => {
+                const ItemIcon = item.Icon;
+                return (
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px', borderRadius: 10, background: 'var(--db-s2)', border: '1px solid var(--db-br)' }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: `${item.color}18`, border: `1px solid ${item.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <ItemIcon size={18} color={item.color} strokeWidth={1.8} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, color: 'var(--db-t3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 4 }}>{item.label}</div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: item.color, fontFamily: 'var(--db-font)', marginBottom: 3 }}>{item.value}</div>
+                      <div style={{ fontSize: 11, color: 'var(--db-t3)' }}>{item.desc}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 10, color: 'var(--db-t3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 4 }}>{item.label}</div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: item.color, fontFamily: 'var(--db-font)', marginBottom: 3 }}>{item.value}</div>
-                    <div style={{ fontSize: 11, color: 'var(--db-t3)' }}>{item.desc}</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Empty state */}
           {total === 0 && (
             <div className="pg-card" style={{ textAlign: 'center', padding: 40 }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                <BarChart3 size={48} color="var(--db-t3)" strokeWidth={1.2} />
+              </div>
               <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--db-t1)', marginBottom: 6 }}>No data yet</div>
               <div style={{ fontSize: 13, color: 'var(--db-t3)' }}>Deploy your first contract to start seeing analytics here.</div>
             </div>

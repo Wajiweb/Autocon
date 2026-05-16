@@ -10,7 +10,8 @@
  */
 
 const mongoose     = require('mongoose');
-const Token        = require('../models/Token');
+const Contract     = require('../models/Contract');
+
 const asyncHandler = require('../utils/asyncHandler');
 const { AppError } = require('../middleware/errorHandler');
 const { compileContract, sanitize, toClassName, readTemplate } = require('../services/compilerService');
@@ -156,13 +157,13 @@ ${functions}
 const saveToken = asyncHandler(async (req, res) => {
     const { name, symbol, contractAddress, ownerAddress, network, abi, sourceCode, compilerVersion, constructorArgs } = req.body;
 
-    console.log('[saveToken] Received fields:', { name, symbol, contractAddress, sourceCode: sourceCode?.substring(0, 50), compilerVersion, constructorArgs: constructorArgs?.substring(0, 20) });
-
     if (req.user.walletAddress !== ownerAddress.toLowerCase()) {
         throw new AppError('You can only save tokens for your own wallet.', 403, 'FORBIDDEN');
     }
 
-    const newToken = new Token({
+    const newToken = new Contract({
+        userId: req.user.userId,
+        contractType: 'ERC20',
         name, symbol, contractAddress,
         ownerAddress: ownerAddress.toLowerCase(),
         network:      network || 'Sepolia',
@@ -170,50 +171,14 @@ const saveToken = asyncHandler(async (req, res) => {
         sourceCode:     sourceCode || '',
         compilerVersion: compilerVersion || 'v0.8.20+commit.a1b79de6',
         constructorArgs: constructorArgs || '',
+        metadata: {}
     });
     await newToken.save();
 
-    console.log('[saveToken] Saved successfully with sourceCode length:', sourceCode?.length || 0);
 
     incrementDeployments(req.user.userId); // fire-and-forget, non-fatal
 
     return res.status(201).json({ success: true, message: 'Token saved successfully!' });
 });
 
-/**
- * GET /api/token/my-tokens/:walletAddress
- * Returns all tokens owned by the authenticated user.
- */
-const getMyTokens = asyncHandler(async (req, res) => {
-    const { walletAddress } = req.params;
-
-    if (req.user.walletAddress !== walletAddress.toLowerCase()) {
-        throw new AppError('You can only view your own tokens.', 403, 'FORBIDDEN');
-    }
-
-    const tokens = await Token.find({ ownerAddress: walletAddress.toLowerCase() }).sort({ createdAt: -1 });
-    return res.json({ success: true, data: { tokens } });
-});
-
-/**
- * DELETE /api/token/delete-token/:id
- * Removes a token from the registry.
- */
-const deleteToken = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new AppError('Invalid ID format.', 400, 'INVALID_ID');
-    }
-
-    const token = await Token.findById(id);
-    if (!token) throw new AppError('Token not found.', 404, 'NOT_FOUND');
-    if (req.user.walletAddress !== token.ownerAddress.toLowerCase()) {
-        throw new AppError('You can only delete your own tokens.', 403, 'FORBIDDEN');
-    }
-
-    await Token.findByIdAndDelete(id);
-    return res.json({ success: true, message: 'Deployment removed from registry.' });
-});
-
-module.exports = { generateToken, saveToken, getMyTokens, deleteToken };
+module.exports = { generateToken, saveToken };

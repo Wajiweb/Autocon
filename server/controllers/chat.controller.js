@@ -122,10 +122,26 @@ Respond STRICTLY in JSON format with the following structure:
     let parsed;
 
     try {
-        const cleanText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
-        parsed = JSON.parse(cleanText);
+        // Try direct parse first (works when response is pure JSON)
+        parsed = JSON.parse(responseText);
     } catch {
-        throw new AppError('AI returned malformed JSON.', 502, 'AI_PARSE_ERROR');
+        // Strip markdown code fences
+        const stripped = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        try {
+            parsed = JSON.parse(stripped);
+        } catch {
+            // Extract the first top-level JSON object from mixed content
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
+                    parsed = JSON.parse(jsonMatch[0]);
+                } catch {
+                    throw new AppError('AI returned malformed JSON.', 502, 'AI_PARSE_ERROR');
+                }
+            } else {
+                throw new AppError('AI returned malformed JSON.', 502, 'AI_PARSE_ERROR');
+            }
+        }
     }
 
     const answer = (parsed.answer || parsed.reply || "I'm sorry, I couldn't generate an answer.").slice(0, MAX_ANSWER_SIZE);

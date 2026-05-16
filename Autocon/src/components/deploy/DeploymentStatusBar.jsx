@@ -46,7 +46,7 @@ export default function DeploymentStatusBar() {
         }}>
             {/* ── Header Row ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <cfg.Icon size={18} color={cfg.color} style={cfg.spin ? { animation: 'spin-slow 1.2s linear infinite' } : {}} />
+                <cfg.Icon size={18} color={cfg.color} className={cfg.spin ? "animate-spin" : ""} />
                 <span style={{ fontSize: '0.88rem', fontWeight: 700, color: cfg.color }}>
                     {cfg.label}
                 </span>

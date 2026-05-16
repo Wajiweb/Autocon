@@ -18,9 +18,9 @@ import {
 
 const commands = [
   { id: 'dashboard', title: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', section: 'Platform' },
-  { id: 'tokens', title: 'Deploy Token', icon: Coins, path: '/tokens', section: 'Generators' },
-  { id: 'nfts', title: 'Deploy NFT', icon: ImageIcon, path: '/nfts', section: 'Generators' },
-  { id: 'auctions', title: 'Deploy Auction', icon: Gavel, path: '/auctions', section: 'Generators' },
+  { id: 'tokens', title: 'Deploy Token', icon: Coins, path: '/create?type=ERC20', section: 'Generators' },
+  { id: 'nfts', title: 'Deploy NFT', icon: ImageIcon, path: '/create?type=ERC721', section: 'Generators' },
+  { id: 'auctions', title: 'Deploy Auction', icon: Gavel, path: '/create?type=Auction', section: 'Generators' },
   { id: 'wizard', title: 'Contract Wizard', icon: Terminal, path: '/create', section: 'Generators' },
   { id: 'audit', title: 'Security Audit', icon: ShieldCheck, path: '/audit', section: 'Tools' },
   { id: 'ast', title: 'AST Analysis', icon: Code2, path: '/ast', section: 'Tools' },

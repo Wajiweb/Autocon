@@ -15,6 +15,7 @@ import { exportDeploymentsCSV, exportDeploymentsPDF } from '../utils/exportUtils
 import { Button } from '../components/ui/Button';
 import { usePlatformStore } from '../store/usePlatformStore';
 import { AnimatedDashboardCard } from '../components/ui/animated-dashboard-card';
+import { Download, Share2 } from 'lucide-react';
 
 /* ─── Main Dashboard ────────────────────────────────── */
 
@@ -34,10 +35,7 @@ export default function Dashboard() {
      optimizations inside it. Stable reference via useCallback. */
   const executeDelete = useCallback(async (item) => {
     const tid = toast.loading('Removing from registry…');
-    const endpoint = {
-      'ERC-721': `/api/nft/delete/${item._id}`,
-      'Auction': `/api/auction/delete/${item._id}`,
-    }[item._type] ?? `/api/token/delete-token/${item._id}`;
+    const endpoint = `/api/contracts/delete/${item._id}`;
     try {
       const res = await authFetch(endpoint, { method: 'DELETE' });
       const data = await res.json();
@@ -101,16 +99,16 @@ export default function Dashboard() {
               <div className="db-ph-sub">Real-time monitoring of your blockchain assets · {network.name}</div>
             </div>
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => exportDeploymentsCSV(deployments)}>↓ CSV</Button>
-              <Button variant="secondary" onClick={() => exportDeploymentsPDF(deployments, user?.walletAddress)}>↓ PDF</Button>
+              <Button variant="secondary" onClick={() => exportDeploymentsCSV(deployments)}><Download size={14} /> CSV</Button>
+              <Button variant="secondary" onClick={() => exportDeploymentsPDF(deployments, user?.walletAddress)}><Download size={14} /> PDF</Button>
               {deployments.length > 0 && (
                 <a
                   href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just deployed ${deployments.length} smart contract${deployments.length > 1 ? 's' : ''} on Sepolia using AutoCon! #Web3 #AutoCon`)}`}
                   target="_blank" rel="noreferrer"
-                  className="db-btn accent"
-                  style={{ textDecoration: 'none' }}
+                  className="btn btn-primary"
+                  style={{ textDecoration: 'none', height: 'fit-content' }}
                 >
-                  𝕏 Share
+                  <Share2 size={16} /> Share
                 </a>
               )}
             </div>

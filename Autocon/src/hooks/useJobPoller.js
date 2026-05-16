@@ -27,7 +27,7 @@ import { useAuth } from '../context/AuthContext';
 export function useJobPoller({
     pollIntervalMs   = 3000,   // Poll every 3 seconds
     timeoutMs        = 300000, // Stop after 5 minutes regardless
-    pendingTimeoutMs = 45000,  // Fail fast if a job never leaves the queue
+    pendingTimeoutMs = 120000, // Fail fast if a job never leaves the queue (2 min for Slither+LLM)
 } = {}) {
     const { authFetch } = useAuth();
     const [jobId,     setJobId]     = useState(null);

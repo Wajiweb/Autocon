@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { Rocket, Layers, ImageIcon, Gavel, Shield, Star, Trophy, Gem, Copy, ExternalLink, Activity, User } from 'lucide-react';
+import CryptoIcon from '../components/ui/CryptoIcon';
 import '../components/dashboard/styles/dashboard.css';
 
 const BADGES = [
-  { cond: (d) => d >= 1,  icon: '🏅', label: 'First Deploy',    color: 'var(--db-acc)' },
-  { cond: (d) => d >= 5,  icon: '🌟', label: 'Power User',      color: '#a78bfa' },
-  { cond: (d) => d >= 10, icon: '🏆', label: 'Blockchain Pro',  color: 'var(--db-amber)' },
+  { cond: (d) => d >= 1,  Icon: Shield, label: 'First Deploy',    color: 'var(--db-acc)' },
+  { cond: (d) => d >= 5,  Icon: Star,   label: 'Power User',      color: '#a78bfa' },
+  { cond: (d) => d >= 10, Icon: Trophy, label: 'Blockchain Pro',  color: 'var(--db-amber)' },
 ];
-const NFT_BADGE    = { icon: '🎨', label: 'NFT Creator',  color: '#ec4899' };
-const AUC_BADGE    = { icon: '🔨', label: 'Auctioneer',   color: 'var(--db-amber)' };
-const TOKEN_BADGE  = { icon: '💎', label: 'Token Master', color: 'var(--db-blue)' };
+const NFT_BADGE    = { Icon: ImageIcon, label: 'NFT Creator',  color: '#ec4899' };
+const AUC_BADGE    = { Icon: Gavel,     label: 'Auctioneer',   color: 'var(--db-amber)' };
+const TOKEN_BADGE  = { Icon: Gem,       label: 'Token Master', color: 'var(--db-blue)' };
 
 export default function ProfilePage() {
   const { user, authFetch } = useAuth();
@@ -62,13 +64,13 @@ export default function ProfilePage() {
     : 'N/A';
   const uniqueNetworks = [...new Set(deployments.map(d => d.network).filter(Boolean))];
   const shortAddr = user?.walletAddress
-    ? `${user.walletAddress.slice(0, 8)}…${user.walletAddress.slice(-6)}`
+    ? `${user.walletAddress.slice(0, 8)}...${user.walletAddress.slice(-6)}`
     : '';
 
   const typeInfo = (type) => ({
-    'Auction': { color: 'var(--db-amber)', label: 'Auction', icon: '🔨' },
-    'ERC-721': { color: '#ec4899',         label: 'NFT Collection', icon: '🎨' },
-  }[type] ?? { color: 'var(--db-acc)', label: 'ERC-20 Token', icon: '🪙' });
+    'Auction': { color: 'var(--db-amber)', label: 'Auction',      Icon: Gavel },
+    'ERC-721': { color: '#ec4899',         label: 'NFT Collection', Icon: ImageIcon },
+  }[type] ?? { color: 'var(--db-acc)', label: 'ERC-20 Token', Icon: Layers });
 
   return (
     <div className="pg-wrap" style={{ maxWidth: 860 }}>
@@ -80,12 +82,12 @@ export default function ProfilePage() {
         <div style={{ height: 110,
           background: 'linear-gradient(135deg, #1a4226, #2c6540, #1e4a2b)',
           borderBottom: '.5px solid var(--db-br)', position: 'relative' }}>
-          {/* Avatar */}
+          {/* Avatar — MetaMask fox logo */}
           <div style={{ position: 'absolute', bottom: -28, left: 28,
             width: 64, height: 64, borderRadius: 16, background: 'var(--db-s1)',
             border: '3px solid var(--db-s1)', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: 28, boxShadow: '0 4px 20px rgba(0,0,0,.5)' }}>
-            🦊
+            justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,.5)', overflow: 'hidden' }}>
+            <CryptoIcon id="metamask" size={48} />
           </div>
         </div>
 
@@ -99,15 +101,17 @@ export default function ProfilePage() {
                 background: 'var(--db-acc-d)', padding: '4px 12px', borderRadius: 8,
                 border: '.5px solid rgba(143,185,0,.25)' }}>{shortAddr || 'Not connected'}</span>
               <button onClick={() => { navigator.clipboard.writeText(user?.walletAddress || ''); toast.success('Address copied!'); }}
-                className="pg-btn pg-btn-outline" style={{ padding: '4px 10px', fontSize: 11 }}>
-                📋 Copy
+                className="pg-btn pg-btn-outline"
+                aria-label="Copy wallet address to clipboard"
+                style={{ padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Copy size={12} strokeWidth={2.5} /> Copy
               </button>
             </div>
           </div>
           <a href={`https://sepolia.etherscan.io/address/${user?.walletAddress}`}
             target="_blank" rel="noreferrer" className="pg-btn pg-btn-outline"
             style={{ textDecoration: 'none', fontSize: 12 }}>
-            Etherscan ↗
+            Etherscan <ExternalLink size={12} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 2 }} />
           </a>
         </div>
       </div>
@@ -115,13 +119,15 @@ export default function ProfilePage() {
       {/* Stats */}
       <div className="pg-mini-stats cols-4 db-enter db-enter-2">
         {[
-          { label: 'Total Deploys', value: deployments.length, icon: '🚀', color: 'var(--db-acc)' },
-          { label: 'ERC-20 Tokens', value: tokenCount,         icon: '🪙', color: 'var(--db-blue)' },
-          { label: 'NFT Collections', value: nftCount,         icon: '🎨', color: '#ec4899' },
-          { label: 'Auctions',       value: auctionCount,      icon: '🔨', color: 'var(--db-amber)' },
+          { label: 'Total Deploys',   value: deployments.length, Icon: Rocket,    color: 'var(--db-acc)' },
+          { label: 'ERC-20 Tokens',   value: tokenCount,         Icon: Layers,    color: 'var(--db-blue)' },
+          { label: 'NFT Collections', value: nftCount,           Icon: ImageIcon, color: '#ec4899' },
+          { label: 'Auctions',        value: auctionCount,       Icon: Gavel,     color: 'var(--db-amber)' },
         ].map(s => (
           <div key={s.label} className="pg-stat-card">
-            <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
+            <div aria-hidden="true" style={{ marginBottom: 6, display: 'flex', justifyContent: 'center' }}>
+              <s.Icon size={22} color={s.color} strokeWidth={1.8} />
+            </div>
             <div className="pg-stat-val" style={{ color: s.color }}>{s.value}</div>
             <div className="pg-stat-lbl">{s.label}</div>
           </div>
@@ -131,28 +137,31 @@ export default function ProfilePage() {
       {/* Badges + Account Details */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }} className="db-enter db-enter-3">
         <div className="pg-card">
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 14 }}>
-            🏆 Earned Badges
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Trophy size={15} color="var(--db-amber)" strokeWidth={2} /> Earned Badges
           </div>
           {badges.length === 0 ? (
             <div style={{ fontSize: 13, color: 'var(--db-t3)' }}>Deploy your first contract to earn badges!</div>
           ) : (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {badges.map(b => (
-                <div key={b.label} style={{ padding: '8px 14px', borderRadius: 10,
-                  background: `${b.color}18`, border: `.5px solid ${b.color}40`,
-                  display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <span style={{ fontSize: 18 }}>{b.icon}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: b.color }}>{b.label}</span>
-                </div>
-              ))}
+              {badges.map(b => {
+                const BadgeIcon = b.Icon;
+                return (
+                  <div key={b.label} style={{ padding: '8px 14px', borderRadius: 10,
+                    background: `${b.color}18`, border: `.5px solid ${b.color}40`,
+                    display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <BadgeIcon size={16} color={b.color} strokeWidth={2} />
+                    <span style={{ fontSize: 12, fontWeight: 600, color: b.color }}>{b.label}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
         <div className="pg-card">
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 14 }}>
-            📋 Account Details
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}>
+            <User size={15} color="var(--db-t2)" strokeWidth={2} /> Account Details
           </div>
           {[
             { label: 'First Deploy',  value: firstDeploy },
@@ -171,12 +180,13 @@ export default function ProfilePage() {
 
       {/* Activity Timeline */}
       <div className="pg-card db-enter db-enter-4">
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 14 }}>
-          📜 Recent Activity
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Activity size={15} color="var(--db-acc)" strokeWidth={2} /> Recent Activity
         </div>
         {isLoading ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--db-t3)', fontSize: 13 }}>
-            <div className="pg-spinner" /> Loading…
+          <div role="status" aria-label="Loading activity" style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--db-t3)', fontSize: 13 }}>
+            <div className="animate-spin" style={{ width: 16, height: 16, border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', flexShrink: 0 }} />
+            Loading...
           </div>
         ) : deployments.slice(0, 5).length === 0 ? (
           <div style={{ fontSize: 13, color: 'var(--db-t3)' }}>No deployments yet. Create your first contract!</div>
@@ -188,8 +198,8 @@ export default function ProfilePage() {
                 padding: '12px 0', borderBottom: idx < 4 ? '.5px solid var(--db-br)' : 'none' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0,
                   background: `${ti.color}18`, border: `.5px solid ${ti.color}35`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-                  {ti.icon}
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ti.Icon size={18} color={ti.color} strokeWidth={2} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--db-t1)', fontFamily: 'var(--db-font)', marginBottom: 3 }}>
@@ -203,7 +213,7 @@ export default function ProfilePage() {
                       <a href={`https://sepolia.etherscan.io/address/${item.contractAddress}`}
                         target="_blank" rel="noreferrer"
                         style={{ fontSize: 11, color: 'var(--db-acc)', textDecoration: 'none', fontFamily: 'var(--db-mono)' }}>
-                        {item.contractAddress.slice(0, 10)}…{item.contractAddress.slice(-6)} ↗
+                        {item.contractAddress.slice(0, 10)}...{item.contractAddress.slice(-6)} <ExternalLink size={10} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 2 }} />
                       </a>
                     )}
                   </div>

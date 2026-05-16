@@ -107,7 +107,7 @@ export default function AIChatPanel({
       if (activeContext && activeContextName !== 'Platform Context') {
         setMessages([{
           role: 'assistant',
-          content: 'Contract context loaded! 🎉 I am analyzing your code in real-time.\n\n- "What does this contract do?"\n- "Is this contract secure?"\n- "Explain the mint function"',
+          content: 'Contract context loaded! I am analyzing your code in real-time.\n\n- "What does this contract do?"\n- "Is this contract secure?"\n- "Explain the mint function"',
           timestamp: Date.now()
         }]);
       } else {
@@ -267,7 +267,7 @@ export default function AIChatPanel({
       setFormError(errorMessage);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `❌ ${errorMessage}`,
+        content: errorMessage,
         timestamp: Date.now()
       }]);
       setIsLoading(false);

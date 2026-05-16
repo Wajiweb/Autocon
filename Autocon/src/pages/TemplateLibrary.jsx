@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Globe, Coins, Ticket, Palette, Heart, Hammer, Zap, Lightbulb, ArrowRight } from 'lucide-react';
 import '../components/dashboard/styles/dashboard.css';
 
 /* ═══════════════════════════════════════════════════════════
@@ -13,14 +14,14 @@ const TEMPLATES = [
   {
     id: 'community-token',
     name: 'Community Token',
-    icon: '🌐',
+    icon: <Globe size={24} />,
     category: 'ERC-20',
     complexity: 'Beginner',
     gasEstimate: '~0.003 ETH',
     color: 'var(--primary)',
     accent: 'rgba(93,169,233,0.10)',
     border: 'rgba(93,169,233,0.22)',
-    route: '/tokens',
+    route: '/create?type=ERC20',
     description: 'Launch a community governance or rewards token for your DAO, Discord server, or online community.',
     features: ['1,000,000 Initial Supply', 'Owner Minting', 'Burn Support', 'Fully ERC-20 Compliant'],
     beginner_note: 'Perfect for beginners — everything is pre-filled. Just connect your wallet and deploy.',
@@ -33,14 +34,14 @@ const TEMPLATES = [
   {
     id: 'erc20-token',
     name: 'ERC-20 Token',
-    icon: '🪙',
+    icon: <Coins size={24} />,
     category: 'ERC-20',
     complexity: 'Beginner',
     gasEstimate: '~0.003 ETH',
     color: '#4ade80',
     accent: 'rgba(74,222,128,0.08)',
     border: 'rgba(74,222,128,0.20)',
-    route: '/tokens',
+    route: '/create?type=ERC20',
     description: 'Create a custom cryptocurrency token with minting, burning, and ownership controls.',
     features: ['Custom Name & Symbol', 'Initial Supply', 'Owner Minting', 'ERC20Burnable', 'Ownable'],
     beginner_note: 'Standard token template. Customise the name, symbol, and supply before deploying.',
@@ -55,14 +56,14 @@ const TEMPLATES = [
   {
     id: 'event-ticket-nft',
     name: 'Event Ticket NFT',
-    icon: '🎟️',
+    icon: <Ticket size={24} />,
     category: 'ERC-721',
     complexity: 'Beginner',
     gasEstimate: '~0.005 ETH',
     color: '#a78bfa',
     accent: 'rgba(167,139,250,0.10)',
     border: 'rgba(167,139,250,0.22)',
-    route: '/nfts',
+    route: '/create?type=ERC721',
     description: 'Issue tamper-proof event tickets as NFTs. Each ticket is a unique, transferable on-chain asset.',
     features: ['500 Max Supply', '0.01 ETH Mint Price', 'URI Storage', 'Burn Support', 'Owner Withdraw'],
     beginner_note: 'Pre-set for 500 event tickets at 0.01 ETH each. Change the name and deploy.',
@@ -77,14 +78,14 @@ const TEMPLATES = [
   {
     id: 'nft-collection',
     name: 'NFT Collection',
-    icon: '🎨',
+    icon: <Palette size={24} />,
     category: 'ERC-721',
     complexity: 'Intermediate',
     gasEstimate: '~0.005 ETH',
     color: '#e879f9',
     accent: 'rgba(232,121,249,0.08)',
     border: 'rgba(232,121,249,0.20)',
-    route: '/nfts',
+    route: '/create?type=ERC721',
     description: 'Launch a full NFT collection with individual token metadata, mint pricing, and max supply caps.',
     features: ['Custom Max Supply', 'Mint Pricing', 'URI Storage', 'Burn Support', 'Withdraw Funds'],
     beginner_note: 'Configure your collection size and mint price before deploying.',
@@ -101,14 +102,14 @@ const TEMPLATES = [
   {
     id: 'charity-auction',
     name: 'Charity Auction',
-    icon: '❤️',
+    icon: <Heart size={24} />,
     category: 'Auction',
     complexity: 'Beginner',
     gasEstimate: '~0.004 ETH',
     color: '#fb923c',
     accent: 'rgba(251,146,60,0.10)',
     border: 'rgba(251,146,60,0.22)',
-    route: '/auctions',
+    route: '/create?type=Auction',
     description: 'Run a transparent, on-chain charity auction where 100% of proceeds go directly to the beneficiary wallet.',
     features: ['24h Duration', '0.001 ETH Min Bid', 'Auto-Refund Losers', 'Extend Time', 'Direct Payout'],
     beginner_note: 'Pre-configured for a 24-hour charity auction. Change the item name and deploy.',
@@ -123,14 +124,14 @@ const TEMPLATES = [
   {
     id: 'english-auction',
     name: 'English Auction',
-    icon: '🔨',
+    icon: <Hammer size={24} />,
     category: 'Auction',
     complexity: 'Advanced',
     gasEstimate: '~0.004 ETH',
     color: '#f59e0b',
     accent: 'rgba(245,158,11,0.10)',
     border: 'rgba(245,158,11,0.22)',
-    route: '/auctions',
+    route: '/create?type=Auction',
     description: 'Deploy a decentralized English Auction with timed bidding, auto-refunds, and minimum bids.',
     features: ['Timed Bidding', 'Min Bid Enforced', 'Auto-Refund', 'Time Extension', 'Beneficiary Payout'],
     beginner_note: 'Fully customisable auction. Set your item, duration, and minimum bid.',
@@ -173,12 +174,19 @@ function CustomiseModal({ template, onClose, onLaunch }) {
   }));
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
-      background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '20px'
-    }} onClick={onClose}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Customise ${template.name} template`}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px'
+      }}
+      onClick={onClose}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+    >
       <div style={{
         background: 'var(--surface)',
         border: `1px solid ${template.border}`,
@@ -235,7 +243,7 @@ function CustomiseModal({ template, onClose, onLaunch }) {
           </button>
           <button className="pg-btn pg-btn-primary" onClick={() => onLaunch(params)}
             style={{ flex: 2, background: template.color, color: 'var(--surface)', boxShadow: `0 4px 20px ${template.accent}` }}>
-            Launch Generator →
+            Launch Generator <ArrowRight size={16} style={{ marginLeft: 6 }} />
           </button>
         </div>
       </div>
@@ -277,6 +285,7 @@ export default function TemplateLibrary() {
         {CATEGORY_FILTERS.map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className="pg-btn"
+            aria-pressed={filter === f}
             style={{
               background: filter === f ? 'var(--primary)' : 'var(--surface-high)',
               color: filter === f ? 'var(--surface)' : 'var(--on-surface-variant)',
@@ -299,6 +308,9 @@ export default function TemplateLibrary() {
           return (
             <div key={t.id}
               className={`pg-card db-enter db-enter-${(i % 4) + 2}`}
+              role="button"
+              tabIndex={0}
+              aria-label={`Use ${t.name} template`}
               style={{
                 cursor: 'pointer',
                 borderTop: `2px solid ${t.color}`,
@@ -308,6 +320,7 @@ export default function TemplateLibrary() {
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.35)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = ''; }}
               onClick={() => openModal(t)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openModal(t)}
             >
               {/* Icon + Title Row */}
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -315,7 +328,7 @@ export default function TemplateLibrary() {
                   <div style={{
                     width: 46, height: 46, borderRadius: 13, flexShrink: 0,
                     background: t.accent, border: `1px solid ${t.border}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>{t.icon}</div>
                   <div>
                     <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--on-surface)', fontFamily: 'var(--db-font)', marginBottom: 6 }}>
@@ -328,8 +341,8 @@ export default function TemplateLibrary() {
                       <span className="pg-badge" style={{ background: cx.bg, color: cx.color, border: `1px solid ${cx.border}` }}>
                         {t.complexity}
                       </span>
-                      <span style={{ fontFamily: 'var(--db-mono)', fontSize: 11, color: 'var(--on-surface-variant)' }}>
-                        ⛽ {t.gasEstimate}
+                      <span style={{ fontFamily: 'var(--db-mono)', fontSize: 11, color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Zap size={12} /> {t.gasEstimate}
                       </span>
                     </div>
                   </div>
@@ -346,9 +359,9 @@ export default function TemplateLibrary() {
                 padding: '9px 12px', borderRadius: 10,
                 background: t.accent, border: `1px solid ${t.border}`,
                 fontSize: 12, color: t.color, fontWeight: 600, marginBottom: 14,
-                lineHeight: 1.5,
+                lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: 6
               }}>
-                💡 {t.beginner_note}
+                <Lightbulb size={14} style={{ flexShrink: 0, marginTop: 2 }} /> {t.beginner_note}
               </div>
 
               {/* Feature tags */}
@@ -370,7 +383,7 @@ export default function TemplateLibrary() {
                   background: t.color, color: 'var(--surface)',
                   fontWeight: 700, boxShadow: `0 4px 16px ${t.accent}`,
                 }}>
-                Use Template →
+                Use Template <ArrowRight size={16} style={{ marginLeft: 6 }} />
               </button>
             </div>
           );

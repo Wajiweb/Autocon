@@ -28,30 +28,19 @@ export function usePlatformSync() {
       setSyncStatus(true);
       try {
         // 1. Fetch Deployments
-        const allAssets = [];
-        const fetches = [
-          { url: `/api/token/my-tokens/${user.walletAddress}`, key: 'tokens', type: 'ERC-20' },
-          { url: `/api/nft/my-nfts/${user.walletAddress}`, key: 'nfts', type: 'ERC-721' },
-          { url: `/api/auction/my-auctions/${user.walletAddress}`, key: 'auctions', type: 'Auction' },
-        ];
+        const res = await authFetchRef.current(`/api/contracts/my-contracts/${user.walletAddress}`);
+        if (!res.ok) {
+          console.error('Sync error: contract fetch failed with status', res.status);
+          setSyncStatus(false, Date.now());
+          return; // Bail out — don't process empty/invalid data
+        }
+        const data = await res.json();
         
-        await Promise.all(fetches.map(async ({ url, key, type }) => {
-          try {
-            const res = await authFetchRef.current(url);
-            const data = await res.json();
-            const items = data.success ? (data.data?.[key] ?? data[key]) : null;
-            if (items) {
-              /* Phase 3: removed console.log that leaked sourceCode metadata on every poll */
-              items.forEach(item => allAssets.push({
-                ...item,
-                _type: type,
-                ...(type === 'Auction' ? { symbol: item.name?.substring(0, 4)?.toUpperCase() || 'AUC' } : {}),
-              }));
-            }
-          } catch (e) { console.error('Fetch error for', type, e); }
-        }));
-        
-        allAssets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const allAssets = data.success && data.data ? data.data.map(item => ({
+            ...item,
+            _type: item.contractType === 'ERC20' ? 'ERC-20' : item.contractType === 'ERC721' ? 'ERC-721' : 'Auction',
+            symbol: item.symbol || (item.contractType === 'AUCTION' ? item.name?.substring(0, 4)?.toUpperCase() || 'AUC' : '')
+        })) : [];
 
         // Diff deployments to notify user of new ones
         const currentIds = new Set(deploymentsRef.current.map(d => d._id));
@@ -104,6 +93,7 @@ export function usePlatformSync() {
 
       } catch (err) {
         console.error('Sync error:', err);
+        toast.error('Failed to sync with server. Check your connection.');
       } finally {
         setSyncStatus(false, Date.now());
       }

@@ -4,7 +4,7 @@ import ASTGraph from '../components/dashboard/ASTGraph';
 import ASTSummaryTree from '../components/dashboard/ASTSummaryTree';
 import ASTReportTemplate from '../components/dashboard/ASTReportTemplate';
 import { usePDFExport } from '../hooks/useExport';
-import { Download } from 'lucide-react';
+import { Download, FileJson } from 'lucide-react';
 import '../components/dashboard/styles/dashboard.css';
 
 const NODE_TYPES = [
@@ -25,7 +25,7 @@ export default function ASTPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
         minHeight: '50vh', fontFamily: 'var(--db-font)' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🌳</div>
+          <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3, display: 'flex', justifyContent: 'center' }}><FileJson size={48} /></div>
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--db-t1)', marginBottom: 6 }}>No AST Data</div>
           <div style={{ fontSize: 13, color: 'var(--db-t3)' }}>
             Generate &amp; compile a contract first, then click "View AST".
@@ -67,10 +67,11 @@ export default function ASTPage() {
             onClick={() => generatePDF('AutoCon_AST_Report.pdf', 'pdf-ast-report')}
             disabled={isExportingPDF}
             className="pg-btn pg-btn-outline"
+            aria-label={isExportingPDF ? 'Generating PDF report...' : 'Export AST report as PDF'}
             style={{ gap: 7, padding: '5px 14px', fontSize: 12 }}
           >
-            {isExportingPDF ? <div className="pg-spinner" style={{ width: 12, height: 12 }} /> : <Download size={12} />}
-            {isExportingPDF ? 'Generating…' : 'Export PDF'}
+            {isExportingPDF ? <div className="animate-spin" style={{ width: 12, height: 12, border: '1.5px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', flexShrink: 0 }} /> : <Download size={12} />}
+            {isExportingPDF ? 'Generating...' : 'Export PDF'}
           </button>
         </div>
       </div>

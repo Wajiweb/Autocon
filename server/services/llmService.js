@@ -61,8 +61,23 @@ Respond STRICTLY in JSON format with the following structure:
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
         
-        // Ensure it parses successfully
-        const parsedResponse = JSON.parse(responseText);
+        // Robust JSON extraction — handle markdown fences and mixed content
+        let parsedResponse;
+        try {
+            parsedResponse = JSON.parse(responseText);
+        } catch {
+            const stripped = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+            try {
+                parsedResponse = JSON.parse(stripped);
+            } catch {
+                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    parsedResponse = JSON.parse(jsonMatch[0]);
+                } else {
+                    throw new Error('AI returned unparseable response');
+                }
+            }
+        }
         return parsedResponse;
 
     } catch (error) {

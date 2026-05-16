@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useJobPoller } from '../../hooks/useJobPoller';
 import toast from 'react-hot-toast';
+import { Settings, XCircle, CheckCircle } from 'lucide-react';
 
 /**
  * JobStatusBadge
@@ -118,7 +119,9 @@ export default function JobStatusBadge({ jobId, type = 'job', onComplete, onFail
                     background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
                     fontSize: '0.72rem', color: '#fca5a5',
                 }}>
-                    ❌ {error}
+                    <div className="flex items-center gap-1">
+                      <XCircle size={14} /> {error}
+                    </div>
                 </div>
             )}
 
@@ -130,10 +133,16 @@ export default function JobStatusBadge({ jobId, type = 'job', onComplete, onFail
                     fontSize: '0.72rem', color: '#6ee7b7',
                 }}>
                     {type === 'audit' && result.overallRisk && (
-                        <span>✅ Risk Level: <strong>{result.overallRisk}</strong> · {result.totalFindings ?? 0} findings</span>
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle size={14} className="text-emerald-500" /> 
+                          Risk Level: <strong>{result.overallRisk}</strong> · {result.totalFindings ?? 0} findings
+                        </span>
                     )}
                     {type === 'verification' && (
-                        <span>✅ Contract verified on {result.network}</span>
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle size={14} className="text-emerald-500" />
+                          Contract verified on {result.network}
+                        </span>
                     )}
                 </div>
             )}
@@ -160,7 +169,7 @@ const statusConfig = {
     },
     processing: {
         label:    'Processing',
-        icon:     '⚙️',
+        icon:     <Settings size={14} className="animate-spin-slow" />,
         color:    '#fbbf24',
         bg:       'rgba(251,191,36,0.1)',
         border:   'rgba(251,191,36,0.25)',
@@ -168,7 +177,7 @@ const statusConfig = {
     },
     completed: {
         label:    'Completed',
-        icon:     '✅',
+        icon:     <CheckCircle size={14} />,
         color:    '#34d399',
         bg:       'rgba(52,211,153,0.1)',
         border:   'rgba(52,211,153,0.25)',
@@ -176,7 +185,7 @@ const statusConfig = {
     },
     failed: {
         label:    'Failed',
-        icon:     '❌',
+        icon:     <XCircle size={14} />,
         color:    '#f87171',
         bg:       'rgba(248,113,113,0.1)',
         border:   'rgba(248,113,113,0.25)',

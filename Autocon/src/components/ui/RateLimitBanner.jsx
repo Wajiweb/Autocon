@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Timer } from 'lucide-react';
 import './RateLimitBanner.css';
 
 export const RateLimitBanner = ({
@@ -24,7 +25,9 @@ export const RateLimitBanner = ({
 
   return (
     <div className="rate-limit-banner">
-      <div className="rate-limit-icon">⏱️</div>
+      <div className="rate-limit-icon">
+        <Timer size={20} />
+      </div>
       <div className="rate-limit-message">{displayMessage}</div>
       <div className="rate-limit-countdown">{countdown}s</div>
     </div>

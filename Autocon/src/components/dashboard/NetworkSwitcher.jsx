@@ -1,6 +1,38 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNetwork } from '../../context/NetworkContext';
+import { ChevronDown, ExternalLink, Droplets } from 'lucide-react';
 import './styles/dashboard.css';
+
+/* Inline fallback-safe network logo */
+function NetLogo({ n, size = 18 }) {
+    const [failed, setFailed] = useState(false);
+    if (!n?.logo || failed) {
+        return (
+            <span style={{
+                width: size, height: size, borderRadius: '50%',
+                background: n?.color || '#6366f1',
+                display: 'inline-block', flexShrink: 0,
+            }} />
+        );
+    }
+    return (
+        <img
+            src={n.logo}
+            alt={n.name}
+            width={size} height={size}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            style={{
+                width: size, height: size,
+                objectFit: 'contain',
+                borderRadius: n.currencySymbol === 'tBNB' ? '50%' : undefined,
+                background: n.currencySymbol === 'tBNB' ? '#F0B90B' : 'transparent',
+                padding: n.currencySymbol === 'tBNB' ? 2 : 0,
+                flexShrink: 0,
+            }}
+        />
+    );
+}
 
 /* ══════════════════════════════════════════════════════
    NetworkSwitcher — compact dropdown chip for the Topbar
@@ -44,18 +76,19 @@ export default function NetworkSwitcher() {
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >
-                {/* Live dot */}
-                <span style={{
-                    width: 7, height: 7, borderRadius: '50%',
-                    background: network?.color || 'var(--db-acc)',
-                    boxShadow: `0 0 6px ${network?.color || 'var(--db-acc)'}`,
-                    display: 'inline-block', flexShrink: 0,
-                }} />
+                {/* Network logo */}
+                <NetLogo n={network} size={18} />
                 {network?.name || 'Sepolia'}
                 {/* Chevron */}
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: .6, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s', flexShrink: 0 }}>
-                    <path d="M2 3.5 L5 6.5 L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <ChevronDown 
+                  size={14} 
+                  style={{ 
+                    opacity: .6, 
+                    transform: open ? 'rotate(180deg)' : 'none', 
+                    transition: 'transform .15s', 
+                    flexShrink: 0 
+                  }} 
+                />
             </button>
 
             {/* Dropdown */}
@@ -107,12 +140,8 @@ export default function NetworkSwitcher() {
                                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--db-s2)'; }}
                                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                             >
-                                {/* Color dot */}
-                                <span style={{
-                                    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                                    background: n.color,
-                                    boxShadow: isActive ? `0 0 8px ${n.color}` : 'none',
-                                }} />
+                                {/* Network logo */}
+                                <NetLogo n={n} size={20} />
                                 <div style={{ flex: 1 }}>
                                     <div style={{
                                         fontSize: 13, fontWeight: isActive ? 700 : 500,
@@ -159,7 +188,11 @@ export default function NetworkSwitcher() {
                             onMouseEnter={e => e.currentTarget.style.color = 'var(--db-acc)'}
                             onMouseLeave={e => e.currentTarget.style.color = 'var(--db-t3)'}
                         >
-                            🚰 Get {network.currencySymbol} from faucet ↗
+                            <span className="flex items-center gap-1.5">
+                              <Droplets size={12} className="text-blue-400" /> 
+                              Get {network.currencySymbol} from faucet 
+                              <ExternalLink size={10} className="ml-1" />
+                            </span>
                         </a>
                     )}
                 </div>

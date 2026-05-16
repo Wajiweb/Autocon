@@ -1,0 +1,56 @@
+name: AutoCon CI Pipeline
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Root Dependencies
+        run: npm install
+
+      - name: Install Frontend Dependencies
+        working-directory: ./Autocon
+        run: npm ci
+
+      - name: Install Backend Dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Lint Frontend
+        working-directory: ./Autocon
+        run: npm run lint
+
+      - name: Build Frontend
+        working-directory: ./Autocon
+        run: npm run build
+
+      # Future phase: Run Tests
+      # - name: Test Frontend
+      #   working-directory: ./Autocon
+      #   run: npm run test
+      
+      # - name: Test Backend
+      #   working-directory: ./server
+      #   run: npm run test
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run npm audit
+        run: |
+          cd Autocon && npm audit --audit-level=high
+          cd ../server && npm audit --audit-level=high

@@ -6,6 +6,7 @@ import EmptyState from './EmptyState';
 import JobStatusBadge from './JobStatusBadge';
 import { useVerificationStore } from '../../store/useVerificationStore';
 import { useAuth } from '../../context/AuthContext';
+import { ShieldCheck, CheckCircle, Copy, Search, Coins, Hexagon, Gavel, ExternalLink, Trash2, Globe } from 'lucide-react';
 
 const EXPLORER_URLS = {
   sepolia: 'https://sepolia.etherscan.io',
@@ -118,7 +119,9 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
             background: 'rgba(52,211,153,0.1)', color: '#34d399', border: '1px solid rgba(52,211,153,0.25)',
             width: 'fit-content'
           }}>
-            ✅ Verified
+            <span className="flex items-center gap-1.5 text-emerald-500">
+              <CheckCircle size={14} /> Verified
+            </span>
           </span>
           {job?.updatedAt && (
             <span style={{ fontSize: '0.65rem', color: 'var(--db-t3)', marginLeft: 4 }}>
@@ -149,9 +152,10 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
       );
     }
 
-    // Default empty state
     return (
-      <span style={{ color: 'var(--db-t3)', fontSize: '0.8rem' }}>Not verified</span>
+      <span style={{ color: 'var(--db-t3)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <CheckCircle size={14} className="text-gray-400" /> Not verified
+      </span>
     );
   };
 
@@ -168,7 +172,7 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
           rel="noreferrer"
           className="db-act-btn primary"
         >
-          Explorer ↗
+          Explorer <ExternalLink size={12} className="inline ml-1" />
         </a>
       );
     }
@@ -176,10 +180,10 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
   };
 
   const typeStyles = (type) => ({
-    'ERC-20': { pillClass: 'token', icon: '◈', label: 'ERC-20' },
-    'ERC-721': { pillClass: 'nft', icon: '⬡', label: 'ERC-721' },
-    'Auction': { pillClass: 'auction', icon: '◉', label: 'Auction' },
-  }[type] || { pillClass: 'token', icon: '◈', label: type });
+    'ERC-20': { pillClass: 'token', icon: <Coins size={12} />, label: 'ERC-20' },
+    'ERC-721': { pillClass: 'nft', icon: <Hexagon size={12} />, label: 'ERC-721' },
+    'Auction': { pillClass: 'auction', icon: <Gavel size={12} />, label: 'Auction' },
+  }[type] || { pillClass: 'token', icon: <Coins size={12} />, label: type });
 
   return (
     <div className="db-table-card db-enter db-enter-6">
@@ -202,7 +206,9 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
           ))}
         </div>
         <div className="db-search-wrap">
-          <span className="db-search-icon">⌕</span>
+          <span className="db-search-icon">
+            <Search size={14} />
+          </span>
           <input
             className="db-search-box"
             placeholder="Search contracts…"
@@ -253,7 +259,7 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
                         <span className="db-addr-txt">{item.contractAddress.slice(0, 6)}…{item.contractAddress.slice(-4)}</span>
                         <button className="db-copy-btn" title="Copy address"
                           onClick={() => { navigator.clipboard.writeText(item.contractAddress); toast.success('Copied!'); }}>
-                          ⎘
+                          <Copy size={12} />
                         </button>
                       </div>
                     </td>
@@ -265,16 +271,18 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
                             onClick={() => handleVerify(item)}
                             disabled={verificationJobs[item.contractAddress]?.status?.toLowerCase() === 'pending' || verificationJobs[item.contractAddress]?.status?.toLowerCase() === 'processing'}
                           >
-                            ✓ Verify
+                            <div className="flex items-center gap-1">
+                              <ShieldCheck size={12} /> Verify
+                            </div>
                           </button>
                         )}
                         <button className="db-act mint-site" title="Open the public minting site for this contract"
                           onClick={() => {
                             window.open(`${API_BASE}/api/site/view?contractAddress=${item.contractAddress}&network=${item.network}&name=${encodeURIComponent(item.name)}&type=${item._type}`, '_blank');
-                            toast.success('Minting Site Opened! 🌐');
+                            toast.success('Minting Site Opened!');
                           }}
                         >
-                          🌐 Minting Site
+                          <Globe size={14} /> Minting Site
                         </button>
                         {getExplorerLink(item) || (
                           <a
@@ -287,10 +295,12 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
                             target="_blank" rel="noreferrer"
                             className="db-act exp"
                           >
-                            Explorer ↗
+                            Explorer <ExternalLink size={12} />
                           </a>
                         )}
-                        <button className="db-act del" title="Delete" onClick={() => handleDelete(item)}>✕</button>
+                        <button className="db-act del" title="Delete" onClick={() => handleDelete(item)}>
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>

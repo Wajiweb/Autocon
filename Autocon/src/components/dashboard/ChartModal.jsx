@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale,
-  PointElement, LineElement, Tooltip, Filler, TimeScale
+  PointElement, LineElement, Tooltip, Filler
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import 'chartjs-adapter-date-fns';
+import { X, TrendingUp, TrendingDown } from 'lucide-react';
 import './styles/dashboard.css';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler, TimeScale);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 const RANGES = [
   { label: '1D', value: '1',   interval: '15m', limit: 96  },
@@ -90,8 +90,6 @@ export default function ChartModal({ coin, onClose }) {
     interaction: { mode: 'index', intersect: false },
     scales: {
       x: {
-        type: 'time',
-        time: { tooltipFormat: 'MMM d, HH:mm', displayFormats: { hour: 'HH:mm', day: 'MMM d' } },
         display: false,
       },
       y: {
@@ -142,7 +140,9 @@ export default function ChartModal({ coin, onClose }) {
                 <div className="db-m-name">{coin.name}</div>
                 <div className="db-m-sym">{coin.symbol} · ERC-20 · Sepolia</div>
               </div>
-              <button className="db-m-close" onClick={onClose} aria-label="Close chart">✕</button>
+              <button className="db-m-close" onClick={onClose} aria-label="Close chart">
+                <X size={18} />
+              </button>
             </div>
 
             {/* Body */}
@@ -154,8 +154,9 @@ export default function ChartModal({ coin, onClose }) {
                   : '—'
                 }
               </div>
-              <div className={`db-m-chg ${isUp ? 'up' : 'dn'}`}>
-                {isUp ? '▲' : '▼'} {coin.change != null ? `${isUp ? '+' : ''}${coin.change.toFixed(2)}% (24h)` : '—'}
+              <div className={`db-m-chg ${isUp ? 'up' : 'dn'} flex items-center gap-1.5`}>
+                {isUp ? <TrendingUp size={14} /> : <TrendingDown size={14} />} 
+                {coin.change != null ? `${isUp ? '+' : ''}${coin.change.toFixed(2)}% (24h)` : '—'}
               </div>
 
               {/* Range tabs */}

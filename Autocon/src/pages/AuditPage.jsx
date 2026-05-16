@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useJobPoller } from '../hooks/useJobPoller';
-import { Download, FileText, ShieldAlert, ShieldCheck, RefreshCw, Clock, Cpu } from 'lucide-react';
+import { Download, FileText, ShieldAlert, ShieldCheck, RefreshCw, Clock, Cpu, Lightbulb, ChevronUp, ChevronDown, Bot, Sparkles, BrainCircuit, Zap } from 'lucide-react';
 import { usePDFExport } from '../hooks/useExport';
 import AuditReportTemplate from '../components/audit/AuditReportTemplate';
 import { Doughnut } from 'react-chartjs-2';
@@ -128,7 +128,7 @@ export default function AuditPage() {
 
       /* Clear persisted jobId — audit is done */
       localStorage.removeItem(LS_JOB_KEY);
-      toast.success('Audit complete!');
+      toast.success('Audit complete');
     }
 
     if (status === 'failed') {
@@ -194,7 +194,7 @@ export default function AuditPage() {
   const handleExplainAI = async () => {
     if (!auditResult?.findings?.length) return;
     setIsExplaining(true);
-    const tid = toast.loading('🧠 AI is analysing vulnerabilities…');
+    const tid = toast.loading('AI is analysing vulnerabilities...');
     try {
       const res  = await authFetch('/api/ai/audit-explain', {
         method: 'POST',
@@ -304,7 +304,9 @@ export default function AuditPage() {
             )}
           </select>
         </div>
-        <label className="pg-label">📝 Paste Solidity Code</label>
+        <label className="pg-label flex items-center gap-2">
+          <FileEdit size={16} className="text-[var(--primary)]" /> Paste Solidity Code
+        </label>
         <textarea
           value={contractCode}
           onChange={e => setContractCode(e.target.value)}
@@ -323,7 +325,7 @@ export default function AuditPage() {
           >
             {isActive ? (
               <><div className="pg-spinner" style={{ width: 16, height: 16 }} /> Scanning…</>
-            ) : '🛡️ Run Security Audit'}
+            ) : <><ShieldCheck size={16} strokeWidth={2.5} /> Run Security Audit</>}
           </button>
 
           {auditResult && (
@@ -345,7 +347,9 @@ export default function AuditPage() {
         >
           {/* Spinner icon */}
           <svg
-            style={{ animation: 'db-spin .9s linear infinite', width: 36, height: 36, color: 'var(--db-acc)', margin: '0 auto 16px' }}
+            aria-hidden="true"
+            className="animate-spin"
+            style={{ width: 36, height: 36, color: 'var(--db-acc)', margin: '0 auto 16px' }}
             viewBox="0 0 24 24" fill="none"
           >
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2" />
@@ -461,15 +465,15 @@ export default function AuditPage() {
 
           {/* ── AI summary banner ── */}
           {auditResult.aiInsights?.summary && (
-            <div className="pg-card db-enter db-enter-2" style={{
-              background: 'rgba(93,169,233,.06)', border: '1px solid rgba(93,169,233,.2)',
-              padding: '14px 18px', marginBottom: 14,
-            }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--db-blue)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>
-                🤖 AI Summary
+            <div style={{ padding: '20px', borderRadius: '16px', background: 'hsla(14,100%,50%,0.03)', border: '1px dashed hsla(14,100%,50%,0.15)', display: 'flex', gap: '15px', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'hsla(14,100%,50%,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                <Sparkles size={24} />
               </div>
-              <div style={{ fontSize: 13, color: 'var(--db-t2)', lineHeight: 1.7 }}>
-                {auditResult.aiInsights.summary}
+              <div>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>AI Security Summary</h4>
+                <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-muted)', lineHeight: 1.5 }}>
+                  {auditResult.aiInsights.summary}
+                </p>
               </div>
             </div>
           )}
@@ -554,6 +558,7 @@ export default function AuditPage() {
             <button
               onClick={handleExplainAI}
               disabled={isExplaining}
+              aria-label="Explain all security findings using AI"
               className="pg-btn"
               style={{
                 position: 'relative', width: '100%', marginBottom: 16, padding: '12px 0',
@@ -568,7 +573,7 @@ export default function AuditPage() {
             >
               {isExplaining
                 ? <><div className="pg-spinner" style={{ width: 15, height: 15, borderTopColor: '#c4b5fd' }} /> AI is analysing vulnerabilities…</>
-                : '✨ Explain All Findings with AI'}
+                : <><Sparkles size={16} /> Explain All Findings with AI</>}
             </button>
           )}
 
@@ -576,7 +581,9 @@ export default function AuditPage() {
           {auditResult.recommendations.length > 0 && (
             <div className="pg-card db-enter" style={{ marginBottom: 14, padding: '18px 20px' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--db-t1)', marginBottom: 10, fontFamily: 'var(--db-font)' }}>
-                💡 AI Recommendations
+                <div className="flex items-center gap-2">
+                  <Lightbulb size={18} className="text-amber-400" /> AI Recommendations
+                </div>
               </div>
               <ul style={{ paddingLeft: 20, margin: 0, color: 'var(--db-t2)', fontSize: 13, lineHeight: 1.7 }}>
                 {auditResult.recommendations.map((rec, i) => <li key={i}>{rec}</li>)}
@@ -596,7 +603,12 @@ export default function AuditPage() {
                   const open = expandedIdx === idx;
                   return (
                     <div key={idx} className="pg-card" style={{ borderLeft: `3px solid ${c.text}`, cursor: 'pointer', marginBottom: 0 }}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={open}
+                      aria-label={`${open ? 'Collapse' : 'Expand'} finding: ${f.title} (${f.severity})`}
                       onClick={() => setExpandedIdx(open ? null : idx)}
+                      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setExpandedIdx(open ? null : idx)}
                     >
                       {/* Finding header */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -612,7 +624,7 @@ export default function AuditPage() {
                             Line {f.line}{f.additionalLines?.length ? `, ${f.additionalLines.join(', ')}` : ''}
                           </span>
                         )}
-                        <span style={{ fontSize: 11, color: 'var(--db-t3)' }}>{open ? '▲' : '▼'}</span>
+                        <span style={{ fontSize: 11, color: 'var(--db-t3)' }}>{open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</span>
                       </div>
 
                       {/* Expanded detail */}
@@ -625,7 +637,9 @@ export default function AuditPage() {
                               background: 'rgba(124,58,237,.1)', borderLeft: '3px solid #8b5cf6',
                               color: '#c4b5fd', fontSize: 12, lineHeight: 1.6,
                             }}>
-                              <span style={{ fontWeight: 700, display: 'block', marginBottom: 4 }}>✨ AI Explanation:</span>
+                              <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: 4 }}>
+                                <Sparkles size={14} /> AI Explanation:
+                              </span>
                               {f.aiDescription}
                             </div>
                           )}
@@ -652,7 +666,7 @@ export default function AuditPage() {
                             background: 'var(--db-acc-dd)', border: '.5px solid var(--db-br)',
                             fontSize: 12, color: 'var(--db-t2)', lineHeight: 1.6,
                           }}>
-                            💡 <strong style={{ color: 'var(--db-acc)' }}>Recommendation:</strong> {f.advice}
+                            <Lightbulb size={14} style={{ color: 'var(--db-acc)', marginRight: '6px' }} /> <strong style={{ color: 'var(--db-acc)' }}>Recommendation:</strong> {f.advice}
                           </div>
                         </div>
                       )}

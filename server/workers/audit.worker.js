@@ -134,9 +134,15 @@ async function processAuditJob(bullJob) {
     try {
         // ── STEP 1: Slither Static Analysis ─────────────────────────────
         console.log(`[AuditWorker] Running Slither analysis...`);
-        const slitherFindings = await runSlitherAnalysis(contractCode);
+        let slitherFindings = [];
+        try {
+            slitherFindings = await runSlitherAnalysis(contractCode);
+            console.log(`[AuditWorker] Slither complete. Findings: ${slitherFindings.length}`);
+        } catch (slitherErr) {
+            console.warn(`[AuditWorker] Slither analysis skipped: ${slitherErr.message}`);
+            // Continue with LLM-only analysis rather than failing the entire job
+        }
         await bullJob.updateProgress(35);
-        console.log(`[AuditWorker] Slither complete. Findings: ${slitherFindings.length}`);
 
         // ── STEP 2: Gemini LLM Analysis ──────────────────────────────────
         console.log(`[AuditWorker] Running LLM analysis...`);
@@ -147,6 +153,14 @@ async function processAuditJob(bullJob) {
         // ── STEP 3: Aggregate Results ─────────────────────────────────────
         const auditResult = aggregateAuditResults(slitherFindings, llmInsights);
         await bullJob.updateProgress(85);
+
+        // If Slither was skipped, add a recommendation to install it
+        if (slitherFindings.length === 0 && llmInsights.risks && llmInsights.risks.length === 0) {
+            auditResult.recommendations = [
+                'Slither static analysis was unavailable. Install slither-analyzer for deeper analysis.',
+                ...(auditResult.recommendations || []),
+            ];
+        }
 
         // ── STEP 4: Persist AuditReport ───────────────────────────────────
         const reportId = await persistAuditReport(auditResult, payload);

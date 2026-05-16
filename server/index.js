@@ -5,9 +5,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const fs = require('fs');
 const mongoose = require('mongoose');
-// Legacy models (kept for backward compatibility during migration)
-const Token = require('./models/Token');
-// New unified models
 const Contract = require('./models/Contract');
 const { authMiddleware } = require('./middleware/auth');
 const { generalLimiter, strictLimiter, authLimiter } = require('./middleware/rateLimiter');
@@ -135,9 +132,7 @@ app.use('/api/token', tokenRoutes);
 app.use('/api', gasRoutes); // Mounts POST /api/estimate-gas
 
 // ─── GET SINGLE DEPLOYMENT by ID for Contract X-Ray ───
-// Updated: uses unified Contract model first, falls back to legacy models
-const NFT = require('./models/NFT');
-const Auction = require('./models/Auction');
+// Updated: uses unified Contract model
 
 app.get('/api/deployments/:id', authMiddleware, async (req, res) => {
     const { id } = req.params;
@@ -149,10 +144,7 @@ app.get('/api/deployments/:id', authMiddleware, async (req, res) => {
         let doc = await Contract.findById(id).lean();
         let docType = doc?.contractType || null;
 
-        // Fallback to legacy collections during migration period
-        if (!doc) { doc = await Token.findById(id).lean(); docType = 'ERC-20'; }
-        if (!doc) { doc = await NFT.findById(id).lean(); docType = 'ERC-721'; }
-        if (!doc) { doc = await Auction.findById(id).lean(); docType = 'Auction'; }
+        // Fallback to legacy collections removed during Phase 2 migration
 
         if (!doc) {
             return res.status(404).json({ success: false, error: 'Deployment not found.' });
@@ -188,6 +180,9 @@ app.get('/api/deployments/:id', authMiddleware, async (req, res) => {
 app.use('/api/nft', nftRoutes);
 app.use('/api/auction', auctionRoutes);
 app.use('/api', auditRoutes);
+
+// ─── CONTRACTS ROUTES ───
+app.use('/api/contracts', require('./routes/contractRoutes'));
 
 // ─── CHAT ROUTES ───
 app.use('/api/chat', chatRoutes);

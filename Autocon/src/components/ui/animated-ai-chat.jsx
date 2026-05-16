@@ -11,6 +11,9 @@ import {
     Copy,
     Check,
     Plus,
+    Bot,
+    User,
+    FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as React from "react"
@@ -216,7 +219,9 @@ export function AnimatedAIChat({
                 {/* Header */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderBottom: "1px solid var(--db-br)", background: "var(--db-s1)", gap: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--db-acc-d)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤖</div>
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--db-acc-d)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Bot size={16} />
+                        </div>
                         <div style={{ fontWeight: 600, color: "var(--db-t1)", fontSize: 14 }}>AI Contract Assistant</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -230,7 +235,7 @@ export function AnimatedAIChat({
                             </button>
                         )}
                         {onClose && (
-                            <button onClick={onClose} aria-label="Close AI panel" style={{ background: "transparent", border: "none", color: "var(--db-t2)", cursor: "pointer", fontSize: 20 }}>×</button>
+                            <button onClick={onClose} aria-label="Close AI panel" style={{ background: "transparent", border: "none", color: "var(--db-t2)", cursor: "pointer", fontSize: 20 }}><X size={18} /></button>
                         )}
                     </div>
                 </div>
@@ -243,7 +248,7 @@ export function AnimatedAIChat({
                         borderBottom: "1px solid var(--db-br)", gap: 8,
                     }}>
                         <span style={{ fontSize: 11, color: "var(--db-acc)", fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
-                            <span>📎</span> Context: {contextLabel}
+                            <Paperclip size={12} /> Context: {contextLabel}
                         </span>
                         <button
                             onClick={onRemoveContext}
@@ -258,7 +263,7 @@ export function AnimatedAIChat({
                 {/* Content area */}
                 {!activeContext && !inline ? (
                     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center", color: "var(--db-t2)" }}>
-                        <div style={{ fontSize: 40, marginBottom: 16 }}>📄</div>
+                        <div style={{ marginBottom: 16 }}><FileText size={40} strokeWidth={1} /></div>
                         <h3 style={{ color: "var(--db-t1)", margin: 0 }}>No Contract Generated</h3>
                         <p style={{ fontSize: 13, marginTop: 8, lineHeight: 1.6 }}>Generate a smart contract first — I can then analyze and explain it.</p>
                     </div>
@@ -273,8 +278,8 @@ export function AnimatedAIChat({
                         >
                             {messages.map((msg, i) => (
                                 <div key={i} style={{ display: "flex", gap: 12, flexDirection: msg.role === "user" ? "row-reverse" : "row" }}>
-                                    <div style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, background: msg.role === "user" ? "var(--db-s2)" : "var(--db-acc-d)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
-                                        {msg.role === "user" ? "👤" : "🤖"}
+                                    <div style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, background: msg.role === "user" ? "var(--db-s2)" : "var(--db-acc-d)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                        {msg.role === "user" ? <User size={14} /> : <Bot size={14} />}
                                     </div>
                                     <div style={{ maxWidth: "85%", display: "flex", flexDirection: "column", gap: 4 }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
@@ -311,9 +316,11 @@ export function AnimatedAIChat({
                                                         color: copiedIdx === i ? "var(--db-acc)" : "var(--db-t3)",
                                                         cursor: "pointer", fontSize: 10, padding: "2px 8px", borderRadius: 50,
                                                         transition: "color 0.2s",
+                                                        display: 'flex', alignItems: 'center', gap: 4
                                                     }}
                                                 >
-                                                    {copiedIdx === i ? "✓ Copied" : "⎘ Copy"}
+                                                    {copiedIdx === i ? <Check size={10} /> : <Copy size={10} />}
+                                                    {copiedIdx === i ? "Copied" : "Copy"}
                                                 </button>
                                             </div>
                                         )}
@@ -324,7 +331,7 @@ export function AnimatedAIChat({
                             {/* Streaming preview */}
                             {streamingText && (
                                 <div style={{ display: "flex", gap: 12 }}>
-                                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--db-acc-d)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🤖</div>
+                                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--db-acc-d)", display: "flex", alignItems: "center", justifyContent: "center" }}><Bot size={14} /></div>
                                     <div style={{ flex: 1, maxWidth: "85%" }}>
                                         <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--db-acc)", marginBottom: 4 }}>AutoCon AI</div>
                                         <div
@@ -338,7 +345,7 @@ export function AnimatedAIChat({
                             {/* Typing dots (while fetching, before streaming starts) */}
                             {isLoading && (
                                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--db-acc-d)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🤖</div>
+                                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--db-acc-d)", display: "flex", alignItems: "center", justifyContent: "center" }}><Bot size={14} /></div>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                                         <div style={{ fontSize: 10, color: "var(--db-t3)", marginBottom: 4 }}>AI is thinking…</div>
                                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>

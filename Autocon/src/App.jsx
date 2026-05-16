@@ -15,9 +15,7 @@ import ErrorBoundary from './components/ui/ErrorBoundary';
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const TokenGenerator = lazy(() => import('./pages/TokenGenerator'));
-const NFTGenerator = lazy(() => import('./pages/NFTGenerator'));
-const AuctionGenerator = lazy(() => import('./pages/AuctionGenerator'));
+// Legacy generators removed, routes redirected
 const AuditPage = lazy(() => import('./pages/AuditPage'));
 const TemplateLibrary = lazy(() => import('./pages/TemplateLibrary'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
@@ -51,7 +49,7 @@ function GuardedPage({ children }) {
       <ErrorBoundary>
         <Suspense fallback={
           <div className="min-h-[50vh] flex flex-col items-center justify-center gap-4">
-            <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid var(--primary-subtle)', borderTopColor: 'var(--primary)', animation: 'spin-slow 1s linear infinite' }} />
+            <div className="spinner spinner-md" />
             <p className="text-sm" style={{ color: 'var(--on-surface-variant)' }}>Loading page...</p>
           </div>
         }>
@@ -72,9 +70,9 @@ function AnimatedRoutes() {
 
       {/* All protected routes — auth guarded + error isolated per GuardedPage */}
       <Route path="/dashboard" element={<GuardedPage><Dashboard /></GuardedPage>} />
-      <Route path="/tokens"    element={<GuardedPage><TokenGenerator /></GuardedPage>} />
-      <Route path="/nfts"      element={<GuardedPage><NFTGenerator /></GuardedPage>} />
-      <Route path="/auctions"  element={<GuardedPage><AuctionGenerator /></GuardedPage>} />
+      <Route path="/tokens"    element={<Navigate to="/create?type=ERC20" replace />} />
+      <Route path="/nfts"      element={<Navigate to="/create?type=ERC721" replace />} />
+      <Route path="/auctions"  element={<Navigate to="/create?type=Auction" replace />} />
       <Route path="/audit"     element={<GuardedPage><AuditPage /></GuardedPage>} />
       <Route path="/profile"   element={<GuardedPage><ProfilePage /></GuardedPage>} />
       <Route path="/templates" element={<GuardedPage><TemplateLibrary /></GuardedPage>} />
@@ -98,7 +96,7 @@ function AppContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid var(--primary-subtle)', borderTopColor: 'var(--primary)', animation: 'spin-slow 1s linear infinite' }} />
+        <div className="spinner spinner-lg" />
         <p className="text-sm" style={{ color: 'var(--on-surface-variant)' }}>Loading AutoCon...</p>
       </div>
     );

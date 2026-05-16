@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Zap } from 'lucide-react';
+import { ArrowRight, Zap, CheckCircle } from 'lucide-react';
 import Container from '../layout/Container';
 import Button from '../ui/Button';
 import { fadeUp, staggerContainer, floatYSlow, viewportConfig } from '../../lib/motionVariants';
@@ -172,7 +172,7 @@ export default function CTA({ onGetStarted }) {
           >
             {['No credit card required', 'Free testnet deployment', 'AI audit included'].map((text) => (
               <span key={text} style={{ fontSize: '0.82rem', color: 'var(--lp-text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: '#34d399', fontWeight: 700 }}>✓</span> {text}
+                <CheckCircle size={14} className="text-emerald-500" /> {text}
               </span>
             ))}
           </motion.div>

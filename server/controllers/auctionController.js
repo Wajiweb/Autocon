@@ -9,7 +9,8 @@
  */
 
 const mongoose     = require('mongoose');
-const Auction      = require('../models/Auction');
+const Contract     = require('../models/Contract');
+
 const asyncHandler = require('../utils/asyncHandler');
 const { AppError } = require('../middleware/errorHandler');
 const { compileContract, sanitize, toClassName, readTemplate } = require('../services/compilerService');
@@ -175,50 +176,23 @@ const saveAuction = asyncHandler(async (req, res) => {
         throw new AppError('You can only save your own auctions.', 403, 'FORBIDDEN');
     }
 
-    const newAuction = new Auction({
-        name, itemName, itemDescription, contractAddress,
+    const newAuction = new Contract({
+        userId: req.user.userId,
+        contractType: 'AUCTION',
+        name, contractAddress,
         ownerAddress: ownerAddress.toLowerCase(),
         network: network || 'Sepolia',
-        duration, minimumBid,
         sourceCode: sourceCode || '',
         compilerVersion: compilerVersion || 'v0.8.20+commit.a1b79de6',
         constructorArgs: constructorArgs || '',
+        metadata: { itemName, itemDescription, duration, minimumBid }
     });
     await newAuction.save();
+
 
     incrementDeployments(req.user.userId); // Fire and forget
 
     return res.status(201).json({ success: true, message: 'Auction saved successfully!' });
 });
 
-/** GET /api/auction/my-auctions/:walletAddress */
-const getMyAuctions = asyncHandler(async (req, res) => {
-    const { walletAddress } = req.params;
-
-    if (req.user.walletAddress !== walletAddress.toLowerCase()) {
-        throw new AppError('Access denied.', 403, 'FORBIDDEN');
-    }
-
-    const auctions = await Auction.find({ ownerAddress: walletAddress.toLowerCase() }).sort({ createdAt: -1 });
-    return res.json({ success: true, data: { auctions } });
-});
-
-/** DELETE /api/auction/delete/:id */
-const deleteAuction = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new AppError('Invalid ID format.', 400, 'INVALID_ID');
-    }
-
-    const auction = await Auction.findById(id);
-    if (!auction) throw new AppError('Not found.', 404, 'NOT_FOUND');
-    if (req.user.walletAddress !== auction.ownerAddress.toLowerCase()) {
-        throw new AppError('Access denied.', 403, 'FORBIDDEN');
-    }
-
-    await Auction.findByIdAndDelete(id);
-    return res.json({ success: true, message: 'Auction removed.' });
-});
-
-module.exports = { generateAuction, saveAuction, getMyAuctions, deleteAuction };
+module.exports = { generateAuction, saveAuction };

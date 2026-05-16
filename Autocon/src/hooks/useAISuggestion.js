@@ -13,7 +13,7 @@ export function useAISuggestion() {
     setSuggestions(null);
     setReasoning('');
     
-    const toastId = suppressToast ? null : toast.loading('🧠 AI is brainstorming parameters...');
+    const toastId = suppressToast ? null : toast.loading('AI is brainstorming parameters...');
 
     try {
       const res = await authFetch('/api/ai/suggest', {

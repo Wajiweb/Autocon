@@ -50,21 +50,12 @@ export default function Footer() {
           }}>
             {/* Brand column */}
             <div style={{ gridColumn: 'span 1' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                <span style={{
-                  width:         '32px',
-                  height:        '32px',
-                  borderRadius:  '9px',
-                  background:    'var(--lp-accent)',
-                  display:       'flex',
-                  alignItems:    'center',
-                  justifyContent:'center',
-                }}>
-                  <Zap size={16} color="var(--surface)" strokeWidth={2.5} />
-                </span>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--lp-text-primary)', letterSpacing: '-0.03em' }}>
-                  Auto<span style={{ color: 'var(--lp-accent)' }}>Con</span>
-                </span>
+              <div style={{ marginBottom: '14px' }}>
+                <img 
+                  src="/autocon-logo-new.png" 
+                  alt="AutoCon" 
+                  style={{ height: '32px', width: 'auto' }} 
+                />
               </div>
               <p style={{ fontSize: '0.85rem', color: 'var(--lp-text-muted)', lineHeight: 1.7, maxWidth: '220px', marginBottom: '20px' }}>
                 No-code Web3 smart contract platform. Deploy on any EVM chain.

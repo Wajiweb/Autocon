@@ -20,4 +20,20 @@ export default defineConfig({
       ],
     },
   },
+  // Phase 6: Code Splitting — Separate heavy vendor libraries from application code
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'web3-vendor': ['ethers'],
+          'ui-vendor': ['framer-motion', 'lucide-react', 'react-hot-toast'],
+          'monaco-vendor': ['@monaco-editor/react'],
+          'chart-vendor': ['chart.js', 'react-chartjs-2'],
+          'syntax-vendor': ['react-syntax-highlighter'],
+          'pdf-vendor': ['jspdf', 'jspdf-autotable', 'html2canvas']
+        }
+      }
+    }
+  }
 })
