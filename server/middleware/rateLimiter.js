@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 
 // Custom handler for rate limit events
 const createRateLimitHandler = (retryAfter) => (req, res) => {
@@ -42,7 +43,7 @@ const strictLimiter = rateLimit({
     handler: createRateLimitHandler(60),
 });
 
-// Auth endpoints — prevent brute-force
+// Auth endpoints — prevent brute-force (IP-based)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 30,                   // 30 attempts per 15 min
@@ -51,4 +52,22 @@ const authLimiter = rateLimit({
     handler: createRateLimitHandler(15 * 60),
 });
 
-module.exports = { generalLimiter, strictLimiter, authLimiter };
+// Per-wallet auth rate limiter — prevents abuse of specific wallets
+const perWalletAuthLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10,                   // 10 attempts per wallet per 15 min
+    keyGenerator: (req) => {
+        // Use wallet address from request body if available, otherwise IP
+        const wallet = req.body?.walletAddress;
+        if (wallet) {
+            return `wallet:${wallet.toLowerCase()}`;
+        }
+        // Use the built-in IP helper for IPv6 compatibility
+        return ipKeyGenerator(req);
+    },
+    standardHeaders: true,
+    legacyHeaders: true,
+    handler: createRateLimitHandler(15 * 60),
+});
+
+module.exports = { generalLimiter, strictLimiter, authLimiter, perWalletAuthLimiter };

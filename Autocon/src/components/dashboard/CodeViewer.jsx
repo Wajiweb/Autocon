@@ -144,7 +144,7 @@ const menuBtnStyle = {
     border: 'none',
     color: 'var(--text-muted)',
     fontSize: '11px',
-    padding: '6px 12px',
+    padding: '8px 14px',
     textAlign: 'left',
     cursor: 'pointer',
     borderRadius: '4px',

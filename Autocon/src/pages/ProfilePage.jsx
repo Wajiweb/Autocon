@@ -103,7 +103,7 @@ export default function ProfilePage() {
               <button onClick={() => { navigator.clipboard.writeText(user?.walletAddress || ''); toast.success('Address copied!'); }}
                 className="pg-btn pg-btn-outline"
                 aria-label="Copy wallet address to clipboard"
-                style={{ padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                style={{ padding: '8px 14px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
                 <Copy size={12} strokeWidth={2.5} /> Copy
               </button>
             </div>

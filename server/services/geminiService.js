@@ -39,7 +39,30 @@ function getGeminiModel(modelName = 'gemini-2.5-flash', jsonMode = true) {
     }
 
     const generationConfig = jsonMode
-        ? { responseMimeType: 'application/json' }
+        ? {
+            responseMimeType: 'application/json',
+            temperature: 0.3,
+            topP: 0.8,
+            topK: 40,
+            responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                    answer: {
+                        type: 'STRING',
+                        description: 'The detailed answer to the user question, using markdown formatting.',
+                    },
+                    suggestedQuestions: {
+                        type: 'ARRAY',
+                        items: {
+                            type: 'STRING',
+                            description: 'A follow-up question the user might ask.',
+                        },
+                        description: 'Array of 3-4 relevant follow-up questions.',
+                    },
+                },
+                required: ['answer', 'suggestedQuestions'],
+            },
+        }
         : {};
 
     return _client.getGenerativeModel({ model: modelName, generationConfig });

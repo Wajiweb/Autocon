@@ -85,10 +85,11 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
           payload: {
             contractAddress: item.contractAddress,
             sourceCode: item.sourceCode,
-            contractName: item.name,
-            compilerVersion: item.compilerVersion || 'v0.8.20+commit.a1b79de6',
+            contractName: item.contractName || item.name.replace(/\s+/g, '') || 'TokenContract',
+            compilerVersion: item.compilerVersion || 'v0.8.35+commit.47b9dedd',
             network: item.network || 'sepolia',
             constructorArguments: item.constructorArgs || '',
+            sourceFile: item.sourceFile || null,
           }
         }),
       });

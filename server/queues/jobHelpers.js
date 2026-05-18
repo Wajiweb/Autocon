@@ -32,7 +32,8 @@ function generateJobId(type) {
  * @param {string} params.contractName
  * @param {string} params.compilerVersion
  * @param {string} params.network
- * @param {string} [params.constructorArguements]
+ * @param {string} [params.constructorArgs]
+ * @param {string} [params.sourceFile]
  * @returns {{ jobId: string, payload: object }}
  */
 function buildVerificationJob(params) {
@@ -44,7 +45,8 @@ function buildVerificationJob(params) {
             contractName:         params.contractName,
             compilerVersion:      params.compilerVersion,
             network:              params.network,
-            constructorArguements: params.constructorArguements || null,
+            constructorArguments: params.constructorArgs || params.constructorArguments || null,
+            sourceFile:           params.sourceFile || null,
         },
     };
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { API_BASE } from '../config';
 
 const AuthContext = createContext(null);
@@ -7,13 +7,31 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('autocon_token'));
     const [isLoading, setIsLoading] = useState(true);
+    const isLoggingOut = useRef(false);
 
     const isAuthenticated = !!user && !!token;
+    const isAdmin = user?.role === 'admin';
 
-    const logout = useCallback(() => {
+    const logout = useCallback(async () => {
+        if (isLoggingOut.current) return;
+        isLoggingOut.current = true;
+
+        const currentToken = localStorage.getItem('autocon_token');
+        if (currentToken) {
+            try {
+                await fetch(`${API_BASE}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${currentToken}` },
+                });
+            } catch {
+                // Server might be down, still clear local state
+            }
+        }
+
         localStorage.removeItem('autocon_token');
         setToken(null);
         setUser(null);
+        isLoggingOut.current = false;
     }, []);
 
     const parseAuthResponse = async (response, fallbackMessage) => {
@@ -85,10 +103,12 @@ export function AuthProvider({ children }) {
                 } else {
                     localStorage.removeItem('autocon_token');
                     setToken(null);
+                    setUser(null);
                 }
             } catch {
                 localStorage.removeItem('autocon_token');
                 setToken(null);
+                setUser(null);
             } finally {
                 setIsLoading(false);
             }
@@ -99,11 +119,12 @@ export function AuthProvider({ children }) {
     // MetaMask account changes invalidate the current app session.
     useEffect(() => {
         if (!window.ethereum) return;
-        const handleAccountsChanged = (accounts) => {
+        const handleAccountsChanged = async (accounts) => {
             if (accounts.length === 0) {
-                logout();
+                await logout();
             } else if (user && accounts[0].toLowerCase() !== user.walletAddress.toLowerCase()) {
-                logout();
+                // Wallet changed - logout old user and prompt for new login
+                await logout();
             }
         };
         window.ethereum.on('accountsChanged', handleAccountsChanged);
@@ -125,6 +146,11 @@ export function AuthProvider({ children }) {
         }
 
         const walletAddress = accounts[0];
+
+        // If already authenticated with different wallet, logout first
+        if (user && walletAddress.toLowerCase() !== user.walletAddress.toLowerCase()) {
+            await logout();
+        }
 
         const nonceRes = await authRequest(
             `${API_BASE}/api/auth/nonce`,
@@ -161,13 +187,13 @@ export function AuthProvider({ children }) {
         setUser(authData.user);
 
         return authData.user;
-    }, []);
+    }, [user, logout]);
 
     const login = useCallback(() => authenticateWithWallet('login'), [authenticateWithWallet]);
     const signup = useCallback(() => authenticateWithWallet('signup'), [authenticateWithWallet]);
 
     return (
-        <AuthContext.Provider value={{ user, token, isAuthenticated, isLoading, login, signup, logout, authFetch }}>
+        <AuthContext.Provider value={{ user, token, isAdmin, isAuthenticated, isLoading, login, signup, logout, authFetch }}>
             {children}
         </AuthContext.Provider>
     );

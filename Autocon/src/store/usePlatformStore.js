@@ -8,7 +8,9 @@ export const usePlatformStore = create((set) => ({
   lastSynced: null,
   isInitialLoad: true,
 
-  setDeployments: (deployments) => set({ deployments }),
+  setDeployments: (deployments) => set((state) => ({ 
+    deployments: typeof deployments === 'function' ? deployments(state.deployments) : deployments 
+  })),
   setJobs: (jobs) => set({ jobs }),
   setStats: (stats) => set({ stats }),
   setSyncStatus: (isSyncing, lastSynced) => set((state) => ({

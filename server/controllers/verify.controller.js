@@ -42,8 +42,10 @@ const SUPPORTED_NETWORKS = Object.keys(NETWORK_CHAIN_IDS).join(', ');
 const submitVerification = asyncHandler(async (req, res) => {
     const {
         contractAddress, sourceCode, contractName,
-        compilerVersion, network, constructorArguements,
+        compilerVersion, network, constructorArguments, constructorArgs,
     } = req.body;
+    
+    const constructorArgsToUse = constructorArguments || constructorArgs;
 
     // Validate input sizes
     if (sourceCode && sourceCode.length > MAX_SOURCE_CODE_SIZE) {
@@ -76,12 +78,13 @@ const submitVerification = asyncHandler(async (req, res) => {
     params.append('compilerversion',  compilerVersion);
     params.append('optimizationUsed', '1');
     params.append('runs',             '200');
+    params.append('evmversion',       'paris');
 
-    if (constructorArguements) {
-        const cleanArgs = constructorArguements.startsWith('0x')
-            ? constructorArguements.slice(2)
-            : constructorArguements;
-        params.append('constructorArguements', cleanArgs);
+    if (constructorArgsToUse) {
+        const cleanArgs = constructorArgsToUse.startsWith('0x')
+            ? constructorArgsToUse.slice(2)
+            : constructorArgsToUse;
+        params.append('constructorArguments', cleanArgs);
     }
 
     const response = await axios.post(apiUrl, params.toString(), {

@@ -35,8 +35,12 @@ const eth = {
     largeSolidity: Joi.string().min(10).max(500000), // 500KB max for large contracts
 };
 
-const name  = Joi.string().min(1).max(64).trim();
-const symbol = Joi.string().min(1).max(12).uppercase().trim();
+const name  = Joi.string().min(1).max(64).trim().pattern(/^[a-zA-Z0-9 ]+$/).messages({ 'string.pattern.base': '{{#label}} may only contain letters, numbers, and spaces' });
+const symbol = Joi.string().min(1).max(12).uppercase().trim().pattern(/^[a-zA-Z0-9]+$/).messages({ 'string.pattern.base': '{{#label}} may only contain letters and numbers' });
+const solidityIdentifier = Joi.string().min(1).max(64).trim().pattern(/^[A-Za-z_][A-Za-z0-9_]*$/)
+    .messages({ 'string.pattern.base': '{{#label}} must be a valid Solidity identifier' });
+const sourceFile = Joi.string().min(1).max(128).trim().pattern(/^[A-Za-z0-9_./-]+\.sol$/)
+    .messages({ 'string.pattern.base': '{{#label}} must be a Solidity file path ending in .sol' });
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -101,11 +105,12 @@ const schemas = {
             then: Joi.object({
                 contractAddress:      eth.address.required(),
                 sourceCode:           eth.solidity.required(),
-                contractName:         name.required(),
+                contractName:         solidityIdentifier.required(),
                 compilerVersion:      Joi.string().pattern(/^v\d+\.\d+\.\d+\+commit\.[a-f0-9]+$/).required()
                     .messages({ 'string.pattern.base': 'compilerVersion must be in format v0.8.20+commit.xxxxxxxx' }),
                 network:              eth.network.required(),
                 constructorArguments: Joi.string().optional().allow('', null), // was: constructorArguements (typo)
+                sourceFile:           sourceFile.optional().allow(null),
             }).required(),
             otherwise: Joi.object({
                 contractCode:    eth.solidity.required(),
@@ -161,6 +166,8 @@ const schemas = {
         network:         eth.network.optional().default('sepolia'),
         abi:             Joi.array().optional(),
         sourceCode:      Joi.string().optional().allow(''),
+        contractName:    solidityIdentifier.optional(),
+        sourceFile:      sourceFile.optional(),
         compilerVersion: Joi.string().optional().allow(''),
         constructorArgs: Joi.string().optional().allow(''),
     }),
@@ -176,6 +183,8 @@ const schemas = {
         baseURI:         Joi.string().optional().allow(''),
         abi:             Joi.array().optional(),
         sourceCode:      Joi.string().optional().allow(''),
+        contractName:    solidityIdentifier.optional(),
+        sourceFile:      sourceFile.optional(),
         compilerVersion: Joi.string().optional().allow(''),
         constructorArgs: Joi.string().optional().allow(''),
     }),
@@ -190,6 +199,8 @@ const schemas = {
         duration:        Joi.number().integer().optional(),
         minimumBid:      Joi.string().pattern(/^\d*\.?\d+$/).optional(),
         sourceCode:      Joi.string().optional().allow(''),
+        contractName:    solidityIdentifier.optional(),
+        sourceFile:      sourceFile.optional(),
         compilerVersion: Joi.string().optional().allow(''),
         constructorArgs: Joi.string().optional().allow(''),
     }),
@@ -198,10 +209,11 @@ const schemas = {
     verifyContract: Joi.object({
         contractAddress:       eth.address.required(),
         sourceCode:            eth.solidity.required(),
-        contractName:          name.required(),
+        contractName:          solidityIdentifier.required(),
         compilerVersion:       Joi.string().required(),
         network:               eth.network.required(),
         constructorArguments:  Joi.string().optional().allow('', null), // was: constructorArguements (typo)
+        sourceFile:            sourceFile.optional(),
     }),
 
     // ── Gas Estimation ────────────────────────────────────────────────────────
@@ -217,13 +229,13 @@ const schemas = {
     // ── Custom Compile (Monaco editor) ───────────────────────────────────────
     compileCustom: Joi.object({
         sourceCode:   eth.solidity.required(),
-        contractName: name.required(),
+        contractName: solidityIdentifier.required(),
     }),
 
     // ── Large Contract Compile (for verification) ────────────────────────
     compileLarge: Joi.object({
         sourceCode:   eth.largeSolidity.required(),
-        contractName: name.required(),
+        contractName: solidityIdentifier.required(),
     }),
 };
 

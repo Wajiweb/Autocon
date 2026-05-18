@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useWallet } from '../../hooks/useWallet';
 import { useNetwork } from '../../context/NetworkContext';
+import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { 
   LayoutDashboard, Wand2, Coins, Image as ImageIcon, Gavel, 
   ShieldCheck, Bot, Activity, BarChart3, LayoutTemplate, 
-  Network, User, Copy, ChevronLeft, ChevronRight, Wallet, MoreHorizontal
+  Network, User, Copy, ChevronLeft, ChevronRight, Wallet, MoreHorizontal,
+  Shield
 } from 'lucide-react';
 import './styles/dashboard.css';
 
@@ -41,6 +43,7 @@ const NAV_GROUPS = [
 export default function Sidebar({ isMobileOpen, setIsMobileOpen, isCollapsed, setIsCollapsed }) {
   const { walletAddress } = useWallet();
   const { network } = useNetwork();
+  const { isAdmin } = useAuth();
   const [blockNum, setBlockNum] = useState(8241036);
 
   useEffect(() => {
@@ -121,6 +124,26 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen, isCollapsed, se
               })}
             </React.Fragment>
           ))}
+          
+          {/* Admin-only navigation */}
+          {isAdmin && (
+            <React.Fragment key="admin">
+              <div className="db-nav-group-label" style={{ display: 'flex', justifyContent: 'center' }}>
+                {isCollapsed ? <MoreHorizontal size={14} style={{ opacity: 0.4 }} /> : 'Admin'}
+              </div>
+              <NavLink
+                to="/admin"
+                className={({ isActive }) => `db-nav-link${isActive ? ' active' : ''}`}
+                onClick={() => setIsMobileOpen?.(false)}
+                title={isCollapsed ? 'Admin Panel' : undefined}
+              >
+                <span className="db-nav-icon">
+                  <Shield size={18} strokeWidth={2} aria-hidden="true" />
+                </span>
+                {!isCollapsed && 'Admin Panel'}
+              </NavLink>
+            </React.Fragment>
+          )}
         </nav>
 
         {/* Bottom */}

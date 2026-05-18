@@ -69,7 +69,13 @@ export default function ContractWizard() {
       const data = await res.json();
       
       if (data.success && data.data) {
-        setGenerated(data.data.contractCode, { abi: data.data.abi, bytecode: data.data.bytecode });
+        setGenerated(data.data.contractCode, {
+          abi: data.data.abi,
+          bytecode: data.data.bytecode,
+          contractName: data.data.contractName,
+          compilerVersion: data.data.compilerVersion,
+          sourceFile: data.data.sourceFile,
+        });
         toast.success('Contract compiled!', { id: toastId });
         saveDraft(); // explicitly save after generating
       } else {

@@ -33,7 +33,7 @@ router.post('/generate-api-key',  strictLimiter, authMiddleware, generateApiKey)
 // Example: GET /api/admin/users
 // requireRole('admin') blocks any non-admin even with a valid JWT
 
-router.get ('/admin/users',                           authMiddleware, requireRole('admin'), listAllUsers);
-router.put ('/admin/users/:walletAddress/role',        authMiddleware, requireRole('admin'), updateUserRole);
+router.get ('/users',                           authMiddleware, requireRole('admin'), listAllUsers);
+router.put ('/users/:walletAddress/role',        authMiddleware, requireRole('admin'), updateUserRole);
 
 module.exports = router;

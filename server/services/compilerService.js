@@ -39,8 +39,9 @@ function compileContract(sourceCode, fileName, className, includeAST = false) {
                 enabled: true,
                 runs: 200
             },
+            evmVersion: 'paris',
             outputSelection: {
-                '*': { '*': ['abi', 'evm.bytecode.object'] },
+                '*': { '*': ['abi', 'evm.bytecode.object', 'evm.deployedBytecode.object'] },
                 ...(includeAST ? { '': { '': ['ast'] } } : {})
             }
         }

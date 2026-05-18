@@ -2,6 +2,7 @@
 
 const jwt  = require('jsonwebtoken');
 const User = require('../models/User');
+const TokenBlacklist = require('../models/TokenBlacklist');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
@@ -14,8 +15,11 @@ if (!JWT_SECRET || JWT_SECRET.length < 32) {
  * Verifies the JWT and attaches a full user context to req.user:
  *   { walletAddress, userId, role }
  *
- * Loading from DB ensures role changes take effect immediately
- * without requiring a re-login.
+ * Security checks:
+ * 1. Token signature and expiration
+ * 2. Token not blacklisted (logout invalidation)
+ * 3. Token version matches user's current version (session invalidation)
+ * 4. User exists in database
  */
 async function authMiddleware(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -30,11 +34,22 @@ async function authMiddleware(req, res, next) {
         const decoded = jwt.verify(token, JWT_SECRET);
         const walletAddress = decoded.walletAddress.toLowerCase();
 
-        // Load user to get current role (catch stale JWT role changes)
-        const user = await User.findOne({ walletAddress }).select('walletAddress role').lean();
+        // Check if token is blacklisted (logged out)
+        const blacklisted = await TokenBlacklist.findOne({ token });
+        if (blacklisted) {
+            return res.status(401).json({ success: false, error: 'Token has been revoked. Please sign in again.' });
+        }
+
+        // Load user to get current role and token version
+        const user = await User.findOne({ walletAddress }).select('walletAddress role tokenVersion').lean();
 
         if (!user) {
             return res.status(401).json({ success: false, error: 'User not found. Please sign in again.' });
+        }
+
+        // Check token version - if mismatch, all sessions are invalidated
+        if (decoded.tokenVersion !== undefined && decoded.tokenVersion < user.tokenVersion) {
+            return res.status(401).json({ success: false, error: 'Session expired. Please sign in again.' });
         }
 
         req.user = {

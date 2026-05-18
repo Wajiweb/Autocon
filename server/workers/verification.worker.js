@@ -65,9 +65,17 @@ const fs = require('fs');
 /**
  * Recursively resolves Solidity imports to build a Standard JSON Input
  */
-function buildStandardJsonInput(sourceCode) {
+function inferSourceFileName(sourceCode, contractName, explicitSourceFile) {
+    if (explicitSourceFile) return explicitSourceFile;
+    if (/ERC721/.test(sourceCode)) return 'NFT.sol';
+    if (/ERC20/.test(sourceCode)) return 'Token.sol';
+    if (/Auction Parameters|HighestBidIncreased|endAuction/.test(sourceCode)) return 'Auction.sol';
+    return `${contractName || 'Contract'}.sol`;
+}
+
+function buildStandardJsonInput(sourceCode, sourceFile) {
     const sources = {
-        'contract.sol': { content: sourceCode }
+        [sourceFile]: { content: sourceCode }
     };
     
     const queue = [{ content: sourceCode, basePath: '' }];
@@ -112,6 +120,7 @@ function buildStandardJsonInput(sourceCode) {
                 enabled: true,
                 runs: 200
             },
+            evmVersion: 'paris',
             outputSelection: {
                 "*": {
                     "*": [
@@ -132,9 +141,9 @@ function buildStandardJsonInput(sourceCode) {
  * @returns {string} GUID returned by Etherscan for polling
  */
 async function submitToEtherscan(payload) {
-    // Accept both spellings: correct 'constructorArguments' and legacy typo 'constructorArguements'
     const { contractAddress, sourceCode, contractName, compilerVersion, network } = payload;
-    const constructorArgs = payload.constructorArguments ?? payload.constructorArguements;
+    const constructorArgs = payload.constructorArguments ?? payload.constructorArgs ?? payload.constructorArguements;
+    const sourceFile = inferSourceFileName(sourceCode, contractName, payload.sourceFile);
 
     const apiKey  = process.env.ETHERSCAN_API_KEY;
     const chainId = CHAIN_IDS[network?.toLowerCase()];
@@ -142,11 +151,22 @@ async function submitToEtherscan(payload) {
     if (!chainId) throw new Error(`Unsupported network: "${network}"`);
     if (!apiKey)  throw new Error('ETHERSCAN_API_KEY not configured');
 
+    console.log('[VerificationWorker] === DEBUG INFO ===');
+    console.log('[VerificationWorker] Contract Address:', contractAddress);
+    console.log('[VerificationWorker] Contract Name:', contractName);
+    console.log('[VerificationWorker] Compiler Version:', compilerVersion);
+    console.log('[VerificationWorker] Network:', network, '(chainId:', chainId, ')');
+    console.log('[VerificationWorker] Source File:', sourceFile);
+    console.log('[VerificationWorker] Constructor Args:', constructorArgs);
+    console.log('[VerificationWorker] Source Code Length:', sourceCode?.length || 0);
+    console.log('[VerificationWorker] Source Code Preview:', sourceCode?.substring(0, 200));
+    console.log('[VerificationWorker] ====================');
+
     // Attempt to build standard JSON with resolved OpenZeppelin dependencies
     let useStandardJson = false;
     let standardJsonCode = null;
     try {
-        standardJsonCode = buildStandardJsonInput(sourceCode);
+        standardJsonCode = buildStandardJsonInput(sourceCode, sourceFile);
         // Only use standard JSON if we resolved more than just the main contract
         const parsed = JSON.parse(standardJsonCode);
         useStandardJson = Object.keys(parsed.sources).length > 1;
@@ -164,7 +184,7 @@ async function submitToEtherscan(payload) {
     if (useStandardJson && standardJsonCode) {
         params.append('sourceCode',      standardJsonCode);
         params.append('codeformat',      'solidity-standard-json-input');
-        params.append('contractname',    `contract.sol:${contractName}`);
+        params.append('contractname',    `${sourceFile}:${contractName}`);
     } else {
         // Fall back to single-file format — Etherscan resolves imports server-side
         params.append('sourceCode',      sourceCode);
@@ -175,25 +195,46 @@ async function submitToEtherscan(payload) {
     params.append('compilerversion', compilerVersion);
     params.append('optimizationUsed', '1');
     params.append('runs',            '200');
+    params.append('evmversion',      'paris');
 
     if (constructorArgs) {
         const clean = constructorArgs.startsWith('0x')
             ? constructorArgs.slice(2)
             : constructorArgs;
-        params.append('constructorArguements', clean);
+        params.append('constructorArguments', clean);
+        console.log('[VerificationWorker] Constructor Arguments (cleaned):', clean);
     }
 
     const apiUrl  = `https://api.etherscan.io/v2/api?chainid=${chainId}`;
-    const response = await axios.post(apiUrl, params.toString(), {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        timeout: 15000,
-    });
+    
+    console.log('[VerificationWorker] Submitting to:', apiUrl);
+    console.log('[VerificationWorker] Params:', Object.fromEntries(params));
+    
+    // Retry up to 3 times for transient network issues
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            console.log(`[VerificationWorker] Submission attempt ${attempt}/3...`);
+            const response = await axios.post(apiUrl, params.toString(), {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                timeout: 30000, // 30s - Etherscan V2 can be slow with large source code
+            });
 
-    if (response.data.status !== '1') {
-        throw new Error(response.data.result || 'Etherscan submission failed');
+            if (response.data.status !== '1') {
+                throw new Error(response.data.result || 'Etherscan submission failed');
+            }
+
+            console.log(`[VerificationWorker] GUID received: ${response.data.result}`);
+            return response.data.result;
+        } catch (err) {
+            lastError = err;
+            console.warn(`[VerificationWorker] Attempt ${attempt} failed: ${err.message}`);
+            if (attempt < 3) {
+                await new Promise(resolve => setTimeout(resolve, 2000 * attempt)); // Exponential backoff
+            }
+        }
     }
-
-    return response.data.result; // This is the GUID
+    throw lastError;
 }
 
 /**

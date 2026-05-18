@@ -26,6 +26,12 @@ const userSchema = new mongoose.Schema(
       default: 'user',
     },
 
+    // Token version - incremented on logout to invalidate all sessions
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
+
     // Usage counters for billing/analytics (atomic increments only)
     usage: {
       deployments: { type: Number, default: 0, min: 0 },
@@ -49,6 +55,12 @@ const userSchema = new mongoose.Schema(
 // Regenerate nonce after each login (prevents replay attacks)
 userSchema.methods.regenerateNonce = function () {
     this.nonce = crypto.randomBytes(32).toString('hex');
+    return this.save();
+};
+
+// Increment token version to invalidate all existing sessions
+userSchema.methods.incrementTokenVersion = function () {
+    this.tokenVersion += 1;
     return this.save();
 };
 

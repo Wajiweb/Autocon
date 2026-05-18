@@ -78,6 +78,16 @@ const contractSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    contractName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    sourceFile: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     compilerVersion: {
       type: String,
       default: null,

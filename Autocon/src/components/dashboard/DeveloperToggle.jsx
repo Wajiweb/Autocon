@@ -13,7 +13,7 @@ export default function DeveloperToggle() {
         alignItems: 'center',
         gap: '8px',
         background: 'var(--surface)',
-        padding: '5px 9px',
+        padding: '8px 12px',
         borderRadius: '999px',
         border: '1px solid var(--border-dark)',
         cursor: 'pointer',

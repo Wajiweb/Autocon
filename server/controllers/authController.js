@@ -9,6 +9,8 @@
 const jwt          = require('jsonwebtoken');
 const crypto       = require('crypto');
 const User         = require('../models/User');
+const TokenBlacklist = require('../models/TokenBlacklist');
+const Nonce        = require('../models/Nonce');
 const asyncHandler = require('../utils/asyncHandler');
 const { AppError } = require('../middleware/errorHandler');
 const { isValidAddress } = require('../services/blockchainService');
@@ -16,7 +18,6 @@ const { ethers }   = require('ethers');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const SIGNUP_NONCE_TTL_MS = 5 * 60 * 1000;
-const signupNonces = new Map();
 
 const buildAuthMessage = (nonce) => (
     `AutoCon authentication\n\nSign this message to verify your wallet.\nNonce: ${nonce}`
@@ -30,12 +31,13 @@ const normalizeWalletAddress = (walletAddress) => {
     return walletAddress.toLowerCase();
 };
 
-const signToken = (walletAddress) => (
-    jwt.sign({ walletAddress }, JWT_SECRET, { expiresIn: '24h' })
+const signToken = (walletAddress, tokenVersion) => (
+    jwt.sign({ walletAddress, tokenVersion }, JWT_SECRET, { expiresIn: '24h' })
 );
 
 const serializeUser = (user) => ({
     walletAddress: user.walletAddress,
+    role:          user.role,
     createdAt:     user.createdAt,
 });
 
@@ -53,11 +55,13 @@ const verifyWalletSignature = (message, signature, walletAddress) => {
     }
 };
 
-const getSignupNonce = (walletAddress) => {
-    const record = signupNonces.get(walletAddress);
+const getSignupNonce = async (walletAddress) => {
+    const record = await Nonce.findOne({ walletAddress, type: 'signup' });
 
-    if (!record || record.expiresAt < Date.now()) {
-        signupNonces.delete(walletAddress);
+    if (!record || record.expiresAt < new Date()) {
+        if (record) {
+            await Nonce.deleteOne({ _id: record._id });
+        }
         throw new AppError('Authentication nonce expired. Please request a new nonce.', 400, 'NONCE_EXPIRED');
     }
 
@@ -94,9 +98,16 @@ const getNonce = asyncHandler(async (req, res) => {
     }
 
     const nonce = crypto.randomBytes(32).toString('hex');
-    signupNonces.set(walletAddress, {
+    
+    // Delete any existing nonce for this wallet
+    await Nonce.deleteOne({ walletAddress, type: 'signup' });
+    
+    // Create new nonce in database
+    await Nonce.create({
+        walletAddress,
         nonce,
-        expiresAt: Date.now() + SIGNUP_NONCE_TTL_MS,
+        expiresAt: new Date(Date.now() + SIGNUP_NONCE_TTL_MS),
+        type: 'signup',
     });
 
     return res.json({
@@ -122,9 +133,10 @@ const signup = asyncHandler(async (req, res) => {
         throw new AppError('Account already exists, please log in', 409, 'USER_ALREADY_EXISTS');
     }
 
-    const nonce = getSignupNonce(lowerAddress);
-    signupNonces.delete(lowerAddress); // Invalidate immediately to prevent replay attacks
-    verifyWalletSignature(buildAuthMessage(nonce), signature, lowerAddress);
+    const nonce = await getSignupNonce(lowerAddress);
+    await Nonce.deleteOne({ walletAddress: lowerAddress, type: 'signup' }); // Invalidate immediately to prevent replay attacks
+    const message = buildAuthMessage(nonce);
+    verifyWalletSignature(message, signature, lowerAddress);
 
     let user;
     try {
@@ -136,7 +148,7 @@ const signup = asyncHandler(async (req, res) => {
         throw err;
     }
 
-    const token = signToken(lowerAddress);
+    const token = signToken(lowerAddress, user.tokenVersion);
 
     return res.status(201).json({
         success: true,
@@ -162,11 +174,15 @@ const login = asyncHandler(async (req, res) => {
     }
 
     const currentNonce = user.nonce;
-    await user.regenerateNonce(); // Invalidate immediately to prevent replay attacks
+    const message = buildAuthMessage(currentNonce);
+    
+    // Verify signature BEFORE regenerating nonce
+    verifyWalletSignature(message, signature, lowerAddress);
+    
+    // Regenerate nonce AFTER successful verification (prevents replay attacks)
+    await user.regenerateNonce();
 
-    verifyWalletSignature(buildAuthMessage(currentNonce), signature, lowerAddress);
-
-    const token = signToken(lowerAddress);
+    const token = signToken(lowerAddress, user.tokenVersion);
 
     return res.json({
         success: true,
@@ -193,4 +209,41 @@ const getMe = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { getNonce, signup, login, verifySignature, getMe };
+/** POST /api/auth/logout */
+const logout = asyncHandler(async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.json({ success: true, data: { message: 'Already logged out.' } });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const walletAddress = req.user.walletAddress;
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const expiresAt = new Date(decoded.exp * 1000);
+
+        // Blacklist the token
+        await TokenBlacklist.create({
+            token,
+            walletAddress,
+            expiresAt,
+        });
+
+        // Increment token version to invalidate all other sessions
+        const user = await User.findOne({ walletAddress });
+        if (user) {
+            await user.incrementTokenVersion();
+        }
+
+        return res.json({
+            success: true,
+            data: { message: 'Logged out successfully.' },
+        });
+    } catch (err) {
+        // Even if token is invalid, treat as logout
+        return res.json({ success: true, data: { message: 'Logged out.' } });
+    }
+});
+
+module.exports = { getNonce, signup, login, verifySignature, getMe, logout };

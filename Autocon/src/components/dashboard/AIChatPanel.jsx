@@ -107,13 +107,32 @@ export default function AIChatPanel({
       if (activeContext && activeContextName !== 'Platform Context') {
         setMessages([{
           role: 'assistant',
-          content: 'Contract context loaded! I am analyzing your code in real-time.\n\n- "What does this contract do?"\n- "Is this contract secure?"\n- "Explain the mint function"',
+          content: `👋 **Contract Analysis Ready!**
+
+I'm analyzing your smart contract. Ask me anything:
+
+• "What does this contract do?"
+• "Is this contract secure?"
+• "Explain the mint function"
+• "Suggest gas optimizations"`,
           timestamp: Date.now()
         }]);
       } else {
         setMessages([{
           role: 'assistant',
-          content: 'Hello! I am your Context-Aware AI Assistant. I can see what page you are on and your recent deployments. How can I help?',
+          content: `👋 **Welcome to AutoCon AI Assistant!**
+
+I'm your specialized **Web3 & Smart Contract expert**. I can help you with:
+
+✅ Smart contract development & auditing
+✅ Token generation (ERC-20, ERC-721, NFTs)
+✅ Security best practices & vulnerability analysis
+✅ Deployment guidance & gas optimization
+✅ AutoCon platform features
+
+💡 **Tip:** Ask me anything about blockchain development!
+
+*Note: For real-time data (gas prices, token prices), I'll direct you to the best tools.*`,
           timestamp: Date.now()
         }]);
       }

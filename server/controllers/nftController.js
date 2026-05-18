@@ -167,14 +167,14 @@ ${updateOverrides}
 }
 `;
 
-    const { abi, bytecode } = compileContract(finalCode, 'NFT.sol', className);
+    const { abi, bytecode, compilerVersion } = compileContract(finalCode, 'NFT.sol', className);
 
-    return res.json({ success: true, data: { contractCode: finalCode, abi, bytecode, contractName: className } });
+    return res.json({ success: true, data: { contractCode: finalCode, abi, bytecode, contractName: className, compilerVersion, sourceFile: 'NFT.sol' } });
 });
 
 /** POST /api/nft/save */
 const saveNFT = asyncHandler(async (req, res) => {
-    const { name, symbol, contractAddress, ownerAddress, network, maxSupply, mintPrice, baseURI, abi, sourceCode, compilerVersion, constructorArgs } = req.body;
+    const { name, symbol, contractAddress, ownerAddress, network, maxSupply, mintPrice, baseURI, abi, sourceCode, compilerVersion, constructorArgs, contractName, sourceFile } = req.body;
 
     if (req.user.walletAddress !== ownerAddress.toLowerCase()) {
         throw new AppError('You can only save NFTs for your own wallet.', 403, 'FORBIDDEN');
@@ -191,6 +191,8 @@ const saveNFT = asyncHandler(async (req, res) => {
         network:      safeNetwork,
         abi: abi || null,
         sourceCode: sourceCode || '',
+        contractName: contractName || toClassName(sanitize(name || ''), 'NFTContract'),
+        sourceFile: sourceFile || 'NFT.sol',
         compilerVersion: compilerVersion || 'v0.8.20+commit.a1b79de6',
         constructorArgs: constructorArgs || '',
         metadata: { maxSupply, mintPrice, baseURI }

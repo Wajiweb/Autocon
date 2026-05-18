@@ -10,6 +10,7 @@ import Navbar from './components/dashboard/Navbar';
 import OnboardingTour from './components/dashboard/OnboardingTour';
 import { usePlatformSync } from './hooks/usePlatformSync';
 import ErrorBoundary from './components/ui/ErrorBoundary';
+import AdminRoute from './components/routes/AdminRoute';
 
 // Phase 6: Code Splitting — Lazy load all page routes
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -24,6 +25,7 @@ const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 const JobsPage = lazy(() => import('./pages/JobsPage'));
 const AIChatPage = lazy(() => import('./pages/AIChatPage'));
 const ContractWizard = lazy(() => import('./pages/ContractWizard'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 import CommandPalette from './components/ui/CommandPalette';
 
 /**
@@ -81,6 +83,7 @@ function AnimatedRoutes() {
       <Route path="/jobs"      element={<GuardedPage><JobsPage /></GuardedPage>} />
       <Route path="/ai-chat"   element={<GuardedPage><AIChatPage /></GuardedPage>} />
       <Route path="/create"    element={<GuardedPage><ContractWizard /></GuardedPage>} />
+      <Route path="/admin"     element={<GuardedPage><AdminRoute><AdminPage /></AdminRoute></GuardedPage>} />
     </Routes>
   );
 }

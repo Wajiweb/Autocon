@@ -52,7 +52,13 @@ export const useWeb3 = () => {
       const data = await res.json();
 
       if (data.success && data.data) {
-        setGeneratedCode(data.data.contractCode, 'Token', { abi: data.data.abi, bytecode: data.data.bytecode });
+        setGeneratedCode(data.data.contractCode, 'Token', {
+          abi: data.data.abi,
+          bytecode: data.data.bytecode,
+          contractName: data.data.contractName,
+          compilerVersion: data.data.compilerVersion,
+          sourceFile: data.data.sourceFile,
+        });
         setAst(data.data.ast ?? null);
         toast.success("Contract Compiled & Ready!", { id: loadingToast });
         await calculateGas(data.data.abi, data.data.bytecode); // ⛽ Fetch dynamic estimate
@@ -118,7 +124,13 @@ export const useWeb3 = () => {
         }
         finalAbi = compData.abi;
         finalBytecode = compData.bytecode;
-        setContractData({ abi: finalAbi, bytecode: finalBytecode });
+        setContractData({
+          ...contractData,
+          abi: finalAbi,
+          bytecode: finalBytecode,
+          contractName: formData.name.replace(/\s+/g, '') || 'TokenContract',
+          sourceFile: 'CustomContract.sol',
+        });
         toast.success("Compiled successfully!", { id: 'recompile' });
       }
 
@@ -216,7 +228,9 @@ export const useWeb3 = () => {
             network: network.name,
             abi: contractData.abi,
             sourceCode: generatedCode,
-            compilerVersion: 'v0.8.20+commit.a1b79de6',
+            contractName: contractData.contractName,
+            sourceFile: contractData.sourceFile,
+            compilerVersion: contractData.compilerVersion || 'v0.8.35+commit.47b9dedd',
             constructorArgs: constructorArgsHex
           })
         });
@@ -240,10 +254,11 @@ export const useWeb3 = () => {
             payload: {
               contractAddress: deployed,
               sourceCode: generatedCode,
-              contractName: formData.name.replace(/\s+/g, '') || 'TokenContract',
-              compilerVersion: 'v0.8.20+commit.a1b79de6',
+              contractName: contractData.contractName || formData.name.replace(/\s+/g, '') || 'TokenContract',
+              compilerVersion: contractData.compilerVersion || 'v0.8.35+commit.47b9dedd',
               network: network.name,
-              constructorArgs: constructorArgsHex
+              constructorArgs: constructorArgsHex,
+              sourceFile: contractData.sourceFile || 'Token.sol',
             }
           })
         });

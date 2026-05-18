@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useJobPoller } from '../hooks/useJobPoller';
-import { Download, FileText, ShieldAlert, ShieldCheck, RefreshCw, Clock, Cpu, Lightbulb, ChevronUp, ChevronDown, Bot, Sparkles, BrainCircuit, Zap } from 'lucide-react';
+import { Download, FileText, ShieldAlert, ShieldCheck, RefreshCw, Clock, Cpu, Lightbulb, ChevronUp, ChevronDown, Bot, Sparkles, BrainCircuit, Zap, FileEdit } from 'lucide-react';
 import { usePDFExport } from '../hooks/useExport';
 import AuditReportTemplate from '../components/audit/AuditReportTemplate';
 import { Doughnut } from 'react-chartjs-2';

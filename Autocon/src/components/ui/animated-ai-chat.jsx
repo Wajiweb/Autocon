@@ -98,6 +98,11 @@ function renderContent(text) {
         .replace(/\n/g, '<br/>');
 }
 
+function getSuggestionIcon(idx) {
+    const icons = ['💬', '🔒', '⚡', '📚', '🔗'];
+    return icons[idx % icons.length];
+}
+
 export function AnimatedAIChat({
     messages,
     input,
@@ -122,12 +127,31 @@ export function AnimatedAIChat({
 }) {
     const [inputFocused, setInputFocused] = useState(false);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [placeholderIdx, setPlaceholderIdx] = useState(0);
     const { textareaRef, adjustHeight } = useAutoResizeTextarea({
         minHeight: 60,
         maxHeight: 200,
     });
     const chatEndRef = useRef(null);
     const [copiedIdx, setCopiedIdx] = useState(null);
+
+    const PLACEHOLDERS = [
+        "Ask about smart contracts, blockchain, or Web3...",
+        "How do I create an ERC-20 token?",
+        "What are common security vulnerabilities?",
+        "Explain reentrancy attacks...",
+        "How do I deploy a smart contract?",
+    ];
+
+    useEffect(() => {
+        if (inputFocused || isLoading) return;
+        
+        const interval = setInterval(() => {
+            setPlaceholderIdx((prev) => (prev + 1) % PLACEHOLDERS.length);
+        }, 3000);
+        
+        return () => clearInterval(interval);
+    }, [inputFocused, isLoading]);
 
     const handleCopy = async (text, idx) => {
         try {
@@ -276,6 +300,31 @@ export function AnimatedAIChat({
                             aria-label="Chat messages"
                             style={{ flex: 1, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 16 }}
                         >
+                            {/* Topic Guidance Card */}
+                            {messages.length <= 1 && !activeContext && (
+                                <div style={{
+                                    margin: '0 0 16px',
+                                    padding: '14px 16px',
+                                    background: 'rgba(var(--db-acc-rgb, 52, 211, 153), 0.06)',
+                                    border: '1px solid var(--db-br)',
+                                    borderRadius: 'var(--db-r)',
+                                }}>
+                                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--db-acc)', marginBottom: 8 }}>
+                                        🎯 What I Can Help With
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontSize: 11, color: 'var(--db-t2)' }}>
+                                        <div>• Smart Contract Development</div>
+                                        <div>• Security Auditing</div>
+                                        <div>• Token & NFT Creation</div>
+                                        <div>• DeFi & Web3 Concepts</div>
+                                        <div>• Gas Optimization</div>
+                                        <div>• AutoCon Platform</div>
+                                    </div>
+                                    <div style={{ fontSize: 10, color: 'var(--db-t3)', marginTop: 8 }}>
+                                        🔗 For live data, I'll recommend the best tools
+                                    </div>
+                                </div>
+                            )}
                             {messages.map((msg, i) => (
                                 <div key={i} style={{ display: "flex", gap: 12, flexDirection: msg.role === "user" ? "row-reverse" : "row" }}>
                                     <div style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, background: msg.role === "user" ? "var(--db-s2)" : "var(--db-acc-d)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -366,15 +415,38 @@ export function AnimatedAIChat({
                         <div style={{ padding: "14px 16px", background: "var(--db-s1)", borderTop: "1px solid var(--db-br)" }}>
                             {/* Suggestions */}
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                                {suggestedQuestions.map((s) => (
+                                {suggestedQuestions.map((s, idx) => (
                                     <button
                                         key={s}
                                         onClick={() => onSendMessage(s)}
                                         disabled={isLoading}
                                         aria-label={`Quick prompt: ${s}`}
-                                        style={{ background: "var(--bg)", border: "1px solid var(--db-br)", color: "var(--db-t2)", padding: "4px 10px", fontSize: "11px", borderRadius: "50px", cursor: isLoading ? "default" : "pointer", opacity: isLoading ? 0.5 : 1 }}
+                                        style={{ 
+                                            background: "var(--bg)", 
+                                            border: "1px solid var(--db-br)", 
+                                            color: "var(--db-t2)", 
+                                            padding: "6px 12px", 
+                                            fontSize: "11px", 
+                                            borderRadius: "50px", 
+                                            cursor: isLoading ? "default" : "pointer", 
+                                            opacity: isLoading ? 0.5 : 1,
+                                            transition: "all 0.2s",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 4,
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!isLoading) {
+                                                e.currentTarget.style.borderColor = "var(--db-acc)";
+                                                e.currentTarget.style.color = "var(--db-acc)";
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.borderColor = "var(--db-br)";
+                                            e.currentTarget.style.color = "var(--db-t2)";
+                                        }}
                                     >
-                                        {s}
+                                        {getSuggestionIcon(idx)} {s}
                                     </button>
                                 ))}
                             </div>
@@ -396,23 +468,23 @@ export function AnimatedAIChat({
                             {/* Input + Send */}
                             <div style={{ display: "flex", gap: 8 }}>
                                 <div className="relative w-full">
-                                    <Textarea
-                                        ref={textareaRef}
-                                        value={input}
-                                        onChange={(e) => {
-                                            onInputChange(e.target.value);
-                                            adjustHeight();
-                                        }}
-                                        onKeyDown={onKeyDown}
-                                        onFocus={() => setInputFocused(true)}
-                                        onBlur={() => setInputFocused(false)}
-                                        placeholder={isLoading ? "AI is responding…" : rateLimitCountdown > 0 ? `Wait ${rateLimitCountdown}s...` : "Ask about your contract… (Enter to send, Shift+Enter for new line)"}
-                                        disabled={(!activeContext && !inline) || isLoading || rateLimitCountdown > 0}
-                                        aria-label="Chat input"
-                                        style={{
-                                            opacity: isLoading ? 0.6 : 1,
-                                        }}
-                                    />
+                                <Textarea
+                                    ref={textareaRef}
+                                    value={input}
+                                    onChange={(e) => {
+                                        onInputChange(e.target.value);
+                                        adjustHeight();
+                                    }}
+                                    onKeyDown={onKeyDown}
+                                    onFocus={() => setInputFocused(true)}
+                                    onBlur={() => setInputFocused(false)}
+                                    placeholder={isLoading ? "AI is responding…" : rateLimitCountdown > 0 ? `Wait ${rateLimitCountdown}s...` : PLACEHOLDERS[placeholderIdx]}
+                                    disabled={(!activeContext && !inline) || isLoading || rateLimitCountdown > 0}
+                                    aria-label="Chat input"
+                                    style={{
+                                        opacity: isLoading ? 0.6 : 1,
+                                    }}
+                                />
                                     {inputFocused && input && (
                                         <motion.div 
                                             className="fixed w-[50rem] h-[50rem] rounded-full pointer-events-none z-0 opacity-[0.02] bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 blur-[96px]"

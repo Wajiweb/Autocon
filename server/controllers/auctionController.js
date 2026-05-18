@@ -163,14 +163,14 @@ ${extendFn}
 }
 `;
 
-    const { abi, bytecode } = compileContract(finalCode, 'Auction.sol', className);
+    const { abi, bytecode, compilerVersion } = compileContract(finalCode, 'Auction.sol', className);
 
-    return res.json({ success: true, data: { contractCode: finalCode, abi, bytecode, contractName: className } });
+    return res.json({ success: true, data: { contractCode: finalCode, abi, bytecode, contractName: className, compilerVersion, sourceFile: 'Auction.sol' } });
 });
 
 /** POST /api/auction/save */
 const saveAuction = asyncHandler(async (req, res) => {
-    const { name, itemName, itemDescription, contractAddress, ownerAddress, network, duration, minimumBid, sourceCode, compilerVersion, constructorArgs } = req.body;
+    const { name, itemName, itemDescription, contractAddress, ownerAddress, network, duration, minimumBid, sourceCode, compilerVersion, constructorArgs, contractName, sourceFile } = req.body;
 
     if (req.user.walletAddress !== ownerAddress.toLowerCase()) {
         throw new AppError('You can only save your own auctions.', 403, 'FORBIDDEN');
@@ -186,6 +186,8 @@ const saveAuction = asyncHandler(async (req, res) => {
         ownerAddress: ownerAddress.toLowerCase(),
         network:      safeNetwork,
         sourceCode: sourceCode || '',
+        contractName: contractName || toClassName(sanitize(name || ''), 'AuctionContract'),
+        sourceFile: sourceFile || 'Auction.sol',
         compilerVersion: compilerVersion || 'v0.8.20+commit.a1b79de6',
         constructorArgs: constructorArgs || '',
         metadata: { itemName, itemDescription, duration, minimumBid }

@@ -248,7 +248,7 @@ export default function Hero({ onGetStarted }) {
               lineHeight: 1.7,
             }}
           >
-            Generate production-ready Solidity contracts with AI. 
+            Generate production-ready Solidity contracts.
             No Solidity knowledge required. Deploy to multiple chains in minutes.
           </motion.p>
 

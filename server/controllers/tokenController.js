@@ -145,9 +145,20 @@ ${functions}
 }
 `;
 
-    const { abi, bytecode, ast } = compileContract(finalCode, 'Token.sol', className, true);
+    const { abi, bytecode, ast, compilerVersion } = compileContract(finalCode, 'Token.sol', className, true);
 
-    return res.json({ success: true, data: { contractCode: finalCode, abi, bytecode, ast } });
+    return res.json({
+        success: true,
+        data: {
+            contractCode: finalCode,
+            abi,
+            bytecode,
+            ast,
+            contractName: className,
+            compilerVersion,
+            sourceFile: 'Token.sol',
+        },
+    });
 });
 
 /**
@@ -155,7 +166,7 @@ ${functions}
  * Persists a deployed token to the registry.
  */
 const saveToken = asyncHandler(async (req, res) => {
-    const { name, symbol, contractAddress, ownerAddress, network, abi, sourceCode, compilerVersion, constructorArgs } = req.body;
+    const { name, symbol, contractAddress, ownerAddress, network, abi, sourceCode, compilerVersion, constructorArgs, contractName, sourceFile } = req.body;
 
     if (req.user.walletAddress !== ownerAddress.toLowerCase()) {
         throw new AppError('You can only save tokens for your own wallet.', 403, 'FORBIDDEN');
@@ -172,6 +183,8 @@ const saveToken = asyncHandler(async (req, res) => {
         network:      safeNetwork,
         abi:          abi || null,
         sourceCode:     sourceCode || '',
+        contractName:   contractName || toClassName(sanitize(name || ''), 'TokenContract'),
+        sourceFile:     sourceFile || 'Token.sol',
         compilerVersion: compilerVersion || 'v0.8.20+commit.a1b79de6',
         constructorArgs: constructorArgs || '',
         metadata: {}

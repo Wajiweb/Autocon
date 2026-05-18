@@ -133,7 +133,12 @@ export const useWizardStore = create(
           ...state.session,
           // Don't persist large bytecode blobs — re-generate on resume
           contractData: state.session.contractData
-            ? { abi: state.session.contractData.abi }
+            ? {
+                abi: state.session.contractData.abi,
+                contractName: state.session.contractData.contractName,
+                compilerVersion: state.session.contractData.compilerVersion,
+                sourceFile: state.session.contractData.sourceFile,
+              }
             : null,
         },
         drafts: state.drafts,

@@ -280,13 +280,13 @@ export function StepReview({ type, params, code, isGenerating, onGenerate }) {
         <div style={{ display: 'flex', gap: 16, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: 10 }}>
           <button 
             onClick={() => setActiveTab('summary')} 
-            style={{ background: 'none', border: 'none', color: activeTab === 'summary' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: '4px 8px', transition: 'color 0.2s', borderBottom: activeTab === 'summary' ? '2px solid var(--primary)' : '2px solid transparent' }}
+            style={{ background: 'none', border: 'none', color: activeTab === 'summary' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: '8px 12px', transition: 'color 0.2s', borderBottom: activeTab === 'summary' ? '2px solid var(--primary)' : '2px solid transparent' }}
           >
             Configuration Summary
           </button>
           <button 
             onClick={() => setActiveTab('code')} 
-            style={{ background: 'none', border: 'none', color: activeTab === 'code' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: '4px 8px', transition: 'color 0.2s', borderBottom: activeTab === 'code' ? '2px solid var(--primary)' : '2px solid transparent' }}
+            style={{ background: 'none', border: 'none', color: activeTab === 'code' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: '8px 12px', transition: 'color 0.2s', borderBottom: activeTab === 'code' ? '2px solid var(--primary)' : '2px solid transparent' }}
           >
             Smart Contract Code
           </button>
@@ -413,7 +413,9 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
           network: selNet.toLowerCase(),
           abi: contractData.abi,
           sourceCode: code,
-          compilerVersion: 'v0.8.20+commit.a1b79de6',
+          contractName: contractData.contractName,
+          sourceFile: contractData.sourceFile,
+          compilerVersion: contractData.compilerVersion || 'v0.8.35+commit.47b9dedd',
           constructorArgs
         };
         const payload = type === 'ERC20'
@@ -528,7 +530,9 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
         network: selNet.toLowerCase(), 
         abi: contractData.abi,
         sourceCode: code,
-        compilerVersion: 'v0.8.20+commit.a1b79de6',
+        contractName: contractData.contractName,
+        sourceFile: contractData.sourceFile,
+        compilerVersion: contractData.compilerVersion || 'v0.8.35+commit.47b9dedd',
         constructorArgs
       };
       const payload = type === 'ERC20'

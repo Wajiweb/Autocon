@@ -7,8 +7,9 @@ const fs = require('fs');
 const mongoose = require('mongoose');
 const Contract = require('./models/Contract');
 const { authMiddleware } = require('./middleware/auth');
-const { generalLimiter, strictLimiter, authLimiter } = require('./middleware/rateLimiter');
+const { generalLimiter, strictLimiter, authLimiter, perWalletAuthLimiter } = require('./middleware/rateLimiter');
 const { errorHandler } = require('./middleware/errorHandler');
+const timeout = require('./middleware/timeout');
 const authRoutes = require('./routes/authRoutes');
 const tokenRoutes = require('./routes/tokenRoutes');
 const gasRoutes = require('./routes/gasRoutes');
@@ -24,6 +25,7 @@ const jobRoutes     = require('./routes/jobRoutes');
 const userRoutes    = require('./routes/userRoutes');
 const aiRoutes      = require('./routes/aiRoutes');
 const landingRoutes = require('./routes/landingRoutes');
+const healthRoutes  = require('./routes/healthRoutes');
 const Sentry        = require('@sentry/node');
 const { nodeProfilingIntegration } = require('@sentry/profiling-node');
 
@@ -102,28 +104,67 @@ app.use(express.json({ limit: '5mb' }));
 // ─── SECURITY: Rate Limiting (global) ───
 app.use(generalLimiter);
 
+// ─── PRODUCTION: Request Timeout (prevents hanging requests) ───
+app.use(timeout(15000)); // 15 second timeout for all requests
+
 // ─── MongoDB Connection ───
 const Job = require('./models/Job');
 
-mongoose.connect(process.env.MONGO_URI)
-    .then(async () => {
-        console.log(' Connected to MongoDB Atlas!');
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 3000; // 3 seconds
+
+async function connectWithRetry(retries = MAX_RETRIES) {
+    try {
+        await mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 10000,
+            socketTimeoutMS: 45000,
+            connectTimeoutMS: 10000,
+        });
+        console.log('✅ Connected to MongoDB Atlas!');
+        
         // Ensure Job collection indexes are created
         await Job.ensureIndexes();
-        console.log(' Job indexes ensured.');
-    })
-    .catch((err) => console.error(' MongoDB Connection Error:', err));
+        console.log('✅ Job indexes ensured.');
+        
+        // Handle connection events
+        mongoose.connection.on('disconnected', () => {
+            console.warn('⚠️  MongoDB disconnected. Attempting to reconnect...');
+        });
+        
+        mongoose.connection.on('reconnected', () => {
+            console.log('✅ MongoDB reconnected successfully!');
+        });
+        
+        mongoose.connection.on('error', (err) => {
+            console.error(' MongoDB connection error:', err.message);
+        });
+        
+    } catch (err) {
+        console.error(`❌ MongoDB Connection Error: ${err.message}`);
+        
+        if (retries > 0) {
+            console.log(`🔄 Retrying connection in ${RETRY_DELAY/1000}s... (${retries} attempts left)`);
+            setTimeout(() => connectWithRetry(retries - 1), RETRY_DELAY);
+        } else {
+            console.error('❌ Failed to connect to MongoDB after maximum retries. Please check:');
+            console.error('   1. Your IP is whitelisted in MongoDB Atlas (0.0.0.0/0)');
+            console.error('   2. Your MONGO_URI in .env is correct');
+            console.error('   3. Your internet connection is stable');
+            process.exit(1);
+        }
+    }
+}
 
-// ─── PUBLIC ROUTES ───
-app.get('/api/health', (req, res) => {
-    res.json({ message: "AutoCon Backend is Alive and Running!" });
-});
+connectWithRetry();
+
+// ─── HEALTH CHECK ROUTES (comprehensive monitoring) ───
+app.use('/api', healthRoutes);
 
 // ─── LANDING PAGE ROUTES (public — no auth) ───
 app.use('/api/landing', landingRoutes);
 
 // ─── AUTH ROUTES (with brute-force protection) ───
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authLimiter, perWalletAuthLimiter, authRoutes);
 
 // ─── TOKEN ROUTES ───
 app.use('/api/token', tokenRoutes);
