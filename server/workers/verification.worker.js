@@ -26,6 +26,7 @@
 
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('../config/envValidation'); // Runs startup variable and JWT entropy checks
 
 const { Worker } = require('bullmq');
 const axios      = require('axios');
@@ -33,6 +34,14 @@ const mongoose   = require('mongoose');
 
 const connection = require('../queues/redisConnection');
 const Job        = require('../models/Job');
+const logger     = require('../utils/logger');
+
+// Redirect console logs to central structured logger
+const console = {
+    log: (msg, ...args) => logger.info(msg, args.length ? { extra: args } : {}),
+    warn: (msg, ...args) => logger.warn(msg, args.length ? { extra: args } : {}),
+    error: (msg, ...args) => logger.error(msg, args.length ? { extra: args } : {})
+};
 
 // ─── Etherscan Chain ID Map ───────────────────────────────────────────────────
 const CHAIN_IDS = {

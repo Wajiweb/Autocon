@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
@@ -12,10 +12,10 @@ import { useCounter } from '../hooks/useCounter';
 import DeploymentTable from '../components/dashboard/DeploymentTable';
 import Sparkline from '../components/ui/Sparkline';
 import { exportDeploymentsCSV, exportDeploymentsPDF } from '../utils/exportUtils';
-import { Button } from '../components/ui/Button';
 import { usePlatformStore } from '../store/usePlatformStore';
-import { AnimatedDashboardCard } from '../components/ui/animated-dashboard-card';
+import { AnimatedDashboardCard } from '../components/ui/AnimatedDashboardCard';
 import { Download, Share2 } from 'lucide-react';
+import Button from '../components/ui/Button';
 
 /* ─── Main Dashboard ────────────────────────────────── */
 
@@ -98,19 +98,67 @@ export default function Dashboard() {
               <div className="db-ph-title">Executive <em>Overview</em></div>
               <div className="db-ph-sub">Real-time monitoring of your blockchain assets · {network.name}</div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => exportDeploymentsCSV(deployments)}><Download size={14} /> CSV</Button>
-              <Button variant="secondary" onClick={() => exportDeploymentsPDF(deployments, user?.walletAddress)}><Download size={14} /> PDF</Button>
-              {deployments.length > 0 && (
-                <a
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just deployed ${deployments.length} smart contract${deployments.length > 1 ? 's' : ''} on Sepolia using AutoCon! #Web3 #AutoCon`)}`}
-                  target="_blank" rel="noreferrer"
-                  className="btn btn-primary"
-                  style={{ textDecoration: 'none', height: 'fit-content' }}
-                >
-                  <Share2 size={16} /> Share
-                </a>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                onClick={() => exportDeploymentsCSV(deployments)}
+                title="Export CSV"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  padding: '5px 11px', borderRadius: '8px',
+                  fontSize: '11px', fontWeight: 600, letterSpacing: '.02em',
+                  fontFamily: 'var(--db-font)',
+                  background: 'rgba(255,255,255,.04)',
+                  border: '.5px solid rgba(255,255,255,.09)',
+                  color: 'var(--db-t2)', cursor: 'pointer',
+                  transition: 'all .15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,107,0,.1)'; e.currentTarget.style.borderColor = 'rgba(255,107,0,.35)'; e.currentTarget.style.color = '#ff6b00'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.09)'; e.currentTarget.style.color = 'var(--db-t2)'; }}
+              >
+                <Download size={12} strokeWidth={2.2} />
+                CSV
+              </button>
+
+              <button
+                onClick={() => exportDeploymentsPDF(deployments, user?.walletAddress)}
+                title="Export PDF"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  padding: '5px 11px', borderRadius: '8px',
+                  fontSize: '11px', fontWeight: 600, letterSpacing: '.02em',
+                  fontFamily: 'var(--db-font)',
+                  background: 'rgba(255,255,255,.04)',
+                  border: '.5px solid rgba(255,255,255,.09)',
+                  color: 'var(--db-t2)', cursor: 'pointer',
+                  transition: 'all .15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,107,0,.1)'; e.currentTarget.style.borderColor = 'rgba(255,107,0,.35)'; e.currentTarget.style.color = '#ff6b00'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.09)'; e.currentTarget.style.color = 'var(--db-t2)'; }}
+              >
+                <Download size={12} strokeWidth={2.2} />
+                PDF
+              </button>
+
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just deployed ${deployments.length} smart contract${deployments.length !== 1 ? 's' : ''} on Sepolia using AutoCon! #Web3 #AutoCon`)}`}
+                target="_blank" rel="noreferrer"
+                title="Share on X"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  padding: '5px 11px', borderRadius: '8px',
+                  fontSize: '11px', fontWeight: 600, letterSpacing: '.02em',
+                  fontFamily: 'var(--db-font)', textDecoration: 'none',
+                  background: 'rgba(255,255,255,.04)',
+                  border: '.5px solid rgba(255,255,255,.09)',
+                  color: 'var(--db-t2)',
+                  transition: 'all .15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(29,161,242,.1)'; e.currentTarget.style.borderColor = 'rgba(29,161,242,.35)'; e.currentTarget.style.color = '#1da1f2'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.09)'; e.currentTarget.style.color = 'var(--db-t2)'; }}
+              >
+                <Share2 size={12} strokeWidth={2.2} />
+                Share
+              </a>
             </div>
           </div>
         </section>
@@ -118,8 +166,8 @@ export default function Dashboard() {
         {/* ── Status Banner ── */}
         <section className="mb-8">
           <div
-            className="flex items-center justify-between p-4 px-6 rounded-2xl border border-white/5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] db-enter db-enter-2 transition-transform hover:scale-[1.01]"
-            style={{ background: 'var(--surface-low)' }}
+            className="flex items-center justify-between p-4 px-6 rounded-2xl db-glass-surface db-enter db-enter-2 transition-transform hover:scale-[1.01]"
+            style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)' }}
           >
             <div className="flex items-center gap-4">
               <div className="relative flex h-3 w-3">

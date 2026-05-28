@@ -1,5 +1,14 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+require('./config/envValidation'); // Runs env and JWT_SECRET validation at boot
+const logger = require('./utils/logger');
+
+// Redirect console logs to central structured logger
+const console = {
+    log: (msg, ...args) => logger.info(msg, args.length ? { extra: args } : {}),
+    warn: (msg, ...args) => logger.warn(msg, args.length ? { extra: args } : {}),
+    error: (msg, ...args) => logger.error(msg, args.length ? { extra: args } : {})
+};
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -113,6 +122,28 @@ const Job = require('./models/Job');
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 3000; // 3 seconds
 
+async function cleanupStaleJobs() {
+    try {
+        const threshold = new Date(Date.now() - 60 * 60 * 1000); // 1 hour ago
+        const result = await Job.updateMany(
+            {
+                status: { $in: ['pending', 'processing'] },
+                updatedAt: { $lt: threshold }
+            },
+            {
+                status: 'failed',
+                error: 'Job timed out or worker process terminated unexpectedly.',
+                completedAt: new Date()
+            }
+        );
+        if (result.modifiedCount > 0) {
+            console.log(`[Startup] Cleaned up ${result.modifiedCount} stale/orphaned jobs.`);
+        }
+    } catch (err) {
+        console.error('[Startup] Stale job cleanup failed:', err.message);
+    }
+}
+
 async function connectWithRetry(retries = MAX_RETRIES) {
     try {
         await mongoose.connect(process.env.MONGO_URI, {
@@ -125,6 +156,9 @@ async function connectWithRetry(retries = MAX_RETRIES) {
         // Ensure Job collection indexes are created
         await Job.ensureIndexes();
         console.log('✅ Job indexes ensured.');
+        
+        // Clean up stale/orphaned jobs on boot
+        await cleanupStaleJobs();
         
         // Handle connection events
         mongoose.connection.on('disconnected', () => {
@@ -270,4 +304,37 @@ process.on('uncaughtException', (err) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
+const server = app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
+
+// Graceful shutdown for Express server
+async function gracefulServerShutdown(signal) {
+    console.log(`\n[Server] Received ${signal}. Shutting down gracefully...`);
+    
+    // Stop accepting new connections
+    if (server) {
+        server.close(() => {
+            console.log('[Server] HTTP server closed.');
+        });
+    }
+
+    try {
+        // Close MongoDB connection
+        if (mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close();
+            console.log('[Server] MongoDB connection closed.');
+        }
+
+        // Close Redis connection
+        const redisConn = require('./queues/redisConnection');
+        await redisConn.quit();
+        console.log('[Server] Redis connection closed.');
+    } catch (err) {
+        console.error('[Server] Error during graceful shutdown:', err.message);
+    }
+
+    console.log('[Server] Shutdown complete. Exiting.');
+    process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulServerShutdown('SIGTERM'));
+process.on('SIGINT',  () => gracefulServerShutdown('SIGINT'));

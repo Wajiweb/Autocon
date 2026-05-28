@@ -46,11 +46,27 @@ const verifyWalletSignature = (message, signature, walletAddress) => {
 
     try {
         recoveredAddress = ethers.verifyMessage(message, signature);
-    } catch {
+    } catch (err) {
+        console.warn(JSON.stringify({
+            level: 'WARN',
+            timestamp: new Date().toISOString(),
+            context: 'auth/verifyWalletSignature',
+            walletAddress,
+            reason: 'Signature verification error',
+            error: err.message
+        }));
         throw new AppError('Signature verification failed.', 401, 'UNAUTHORIZED');
     }
 
     if (recoveredAddress.toLowerCase() !== walletAddress) {
+        console.warn(JSON.stringify({
+            level: 'WARN',
+            timestamp: new Date().toISOString(),
+            context: 'auth/verifyWalletSignature',
+            walletAddress,
+            recoveredAddress: recoveredAddress.toLowerCase(),
+            reason: 'Recovered address mismatch'
+        }));
         throw new AppError('Signature verification failed.', 401, 'UNAUTHORIZED');
     }
 };
@@ -84,11 +100,17 @@ const getNonce = asyncHandler(async (req, res) => {
             throw new AppError('User not found, please sign up', 404, 'USER_NOT_FOUND');
         }
 
+        // Regenerate nonce and set a 10-minute expiration window for login
+        const nonce = crypto.randomBytes(32).toString('hex');
+        user.nonce = nonce;
+        user.nonceExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes TTL
+        await user.save();
+
         return res.json({
             success: true,
             data: {
-                nonce:   user.nonce,
-                message: buildAuthMessage(user.nonce),
+                nonce,
+                message: buildAuthMessage(nonce),
             }
         });
     }
@@ -173,16 +195,32 @@ const login = asyncHandler(async (req, res) => {
         throw new AppError('User not found, please sign up', 404, 'USER_NOT_FOUND');
     }
 
+    // Verify dynamic nonce is fresh (10 min expiration window)
+    if (!user.nonceExpiresAt || user.nonceExpiresAt < new Date()) {
+        throw new AppError('Authentication nonce expired. Please request a new nonce.', 400, 'NONCE_EXPIRED');
+    }
+
     const currentNonce = user.nonce;
     const message = buildAuthMessage(currentNonce);
     
     // Verify signature BEFORE regenerating nonce
     verifyWalletSignature(message, signature, lowerAddress);
     
-    // Regenerate nonce AFTER successful verification (prevents replay attacks)
-    await user.regenerateNonce();
+    // Regenerate and invalidate nonce immediately (prevents replay attacks)
+    user.nonce = crypto.randomBytes(32).toString('hex');
+    user.nonceExpiresAt = null; // Clear expiration until next request
+    await user.save();
 
     const token = signToken(lowerAddress, user.tokenVersion);
+
+    // Secure audit logging: log successful authentication
+    console.log(JSON.stringify({
+        level: 'INFO',
+        timestamp: new Date().toISOString(),
+        context: 'auth/login',
+        walletAddress: lowerAddress,
+        message: 'Successful wallet authentication'
+    }));
 
     return res.json({
         success: true,

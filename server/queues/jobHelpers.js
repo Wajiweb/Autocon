@@ -71,4 +71,24 @@ function buildAuditJob(params) {
     };
 }
 
-module.exports = { generateJobId, buildVerificationJob, buildAuditJob };
+/**
+ * Builds a standard compile job payload.
+ * 
+ * @param {object} params
+ * @param {string} params.sourceCode
+ * @param {string} params.contractName
+ * @param {string} params.ownerAddress
+ * @returns {{ jobId: string, payload: object }}
+ */
+function buildCompileJob(params) {
+    return {
+        jobId: generateJobId('compile'),
+        payload: {
+            sourceCode:      params.sourceCode,
+            contractName:    params.contractName,
+            ownerAddress:    params.ownerAddress,
+        },
+    };
+}
+
+module.exports = { generateJobId, buildVerificationJob, buildAuditJob, buildCompileJob };

@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useJobPoller } from '../hooks/useJobPoller';
+import { AnimatedCard } from '../components/ui/AnimatedCard';
 import { Download, FileText, ShieldAlert, ShieldCheck, RefreshCw, Clock, Cpu, Lightbulb, ChevronUp, ChevronDown, Bot, Sparkles, BrainCircuit, Zap, FileEdit } from 'lucide-react';
 import { usePDFExport } from '../hooks/useExport';
 import AuditReportTemplate from '../components/audit/AuditReportTemplate';
@@ -10,37 +12,14 @@ import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { SEV, RISK_TO_SCORE as riskToScore, STATUS_LABEL, scoreColor, scoreGrad } from '../constants/contract';
+import { createAuditJob, explainAudit } from '../services/auditApi';
 import '../components/dashboard/styles/dashboard.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const LS_JOB_KEY = 'autocon_audit_jobId';   // localStorage key for session persistence
 
-/* ─── Severity colour map ────────────────────────────────────────────────── */
-const SEV = {
-  CRITICAL: { bg: 'rgba(239,68,68,.10)',   border: 'rgba(239,68,68,.25)',   text: '#ef4444', badge: 'red'    },
-  HIGH:     { bg: 'rgba(249,115,22,.10)',  border: 'rgba(249,115,22,.25)',  text: '#f97316', badge: 'amber'  },
-  MEDIUM:   { bg: 'rgba(167,139,250,.10)', border: 'rgba(167,139,250,.25)', text: '#a78bfa', badge: 'purple' },
-  LOW:      { bg: 'rgba(96,165,250,.10)',  border: 'rgba(96,165,250,.25)',  text: '#60a5fa', badge: 'blue'   },
-};
-
-const scoreColor = (s) => s >= 80 ? '#22c55e' : s >= 60 ? '#f59e0b' : s >= 40 ? '#f97316' : '#ef4444';
-const scoreGrad  = (s) => s >= 80
-  ? 'linear-gradient(135deg,#22c55e,#16a34a)'
-  : s >= 60 ? 'linear-gradient(135deg,#f59e0b,#f97316)'
-  : s >= 40 ? 'linear-gradient(135deg,#f97316,#ef4444)'
-  : 'linear-gradient(135deg,#ef4444,#dc2626)';
-
-/* ─── Risk level → score mapping (mirrors audit.worker.js) ──────────────── */
-const riskToScore = { LOW: 95, MEDIUM: 70, HIGH: 40, CRITICAL: 10 };
-
-/* ─── Poll status → label ────────────────────────────────────────────────── */
-const STATUS_LABEL = {
-  pending:    'Queued…',
-  processing: 'Running Slither + AI analysis…',
-  completed:  'Analysis complete',
-  failed:     'Analysis failed',
-};
 
 /* ─── Main component ─────────────────────────────────────────────────────── */
 export default function AuditPage() {
@@ -151,18 +130,9 @@ export default function AuditPage() {
 
     const tid = toast.loading('Queueing security audit…');
     try {
-      const res  = await authFetch('/api/jobs/create', {
-        method: 'POST',
-        body:   JSON.stringify({ type: 'audit', payload: { contractCode, contractType } }),
-      });
-      const data = await res.json();
-
-      if (data.success && data.jobId) {
-        toast.success('Audit job queued!', { id: tid });
-        startPolling(data.jobId);
-      } else {
-        throw new Error(data.error || 'Failed to queue audit job.');
-      }
+      const jobId = await createAuditJob(authFetch, contractCode, contractType);
+      toast.success('Audit job queued!', { id: tid });
+      startPolling(jobId);
     } catch (err) {
       toast.error(err.message || 'Failed to start audit.', { id: tid });
     } finally {
@@ -196,38 +166,27 @@ export default function AuditPage() {
     setIsExplaining(true);
     const tid = toast.loading('AI is analysing vulnerabilities...');
     try {
-      const res  = await authFetch('/api/ai/audit-explain', {
-        method: 'POST',
-        body:   JSON.stringify({
-          vulnerabilities: auditResult.findings,
-          contractCode,
-        }),
-      });
-      const data = await res.json();
+      const explanationData = await explainAudit(authFetch, auditResult.findings, contractCode);
 
-      if (data.success && data.data) {
-        /* FIX #3 — Safe AI response normalisation; never crash on bad shape */
-        const aiSummary         = data.data.summary         || 'No summary available.';
-        const aiRisks           = Array.isArray(data.data.risks)           ? data.data.risks           : [];
-        const aiRecommendations = Array.isArray(data.data.recommendations) ? data.data.recommendations : [];
+      /* FIX #3 — Safe AI response normalisation; never crash on bad shape */
+      const aiSummary         = explanationData.summary         || 'No summary available.';
+      const aiRisks           = Array.isArray(explanationData.risks)           ? explanationData.risks           : [];
+      const aiRecommendations = Array.isArray(explanationData.recommendations) ? explanationData.recommendations : [];
 
-        setAuditResult(prev => {
-          const enriched = [...prev.findings];
-          /* risks is string[] — each string maps to the finding at same index */
-          aiRisks.forEach((explanation, i) => {
-            if (enriched[i]) enriched[i] = { ...enriched[i], aiDescription: String(explanation) };
-          });
-          return {
-            ...prev,
-            aiInsights:      { summary: aiSummary },
-            recommendations: aiRecommendations.length ? aiRecommendations : prev.recommendations,
-            findings:        enriched,
-          };
+      setAuditResult(prev => {
+        const enriched = [...prev.findings];
+        /* risks is string[] — each string maps to the finding at same index */
+        aiRisks.forEach((explanation, i) => {
+          if (enriched[i]) enriched[i] = { ...enriched[i], aiDescription: String(explanation) };
         });
-        toast.success('AI explanation ready!', { id: tid });
-      } else {
-        throw new Error(data.error || 'Failed to get AI explanation.');
-      }
+        return {
+          ...prev,
+          aiInsights:      { summary: aiSummary },
+          recommendations: aiRecommendations.length ? aiRecommendations : prev.recommendations,
+          findings:        enriched,
+        };
+      });
+      toast.success('AI explanation ready!', { id: tid });
     } catch (err) {
       toast.error(err.message || 'Failed to fetch AI explanation.', { id: tid });
     } finally {
@@ -259,7 +218,7 @@ export default function AuditPage() {
   const totalFindings = auditResult ? Object.values(auditResult.summary).reduce((a,b) => a+b, 0) : 0;
 
   return (
-    <div className="pg-wrap">
+    <AnimatedCard className="pg-wrap" delay={0.15}>
 
       {/* ── Header ── */}
       <div className="pg-head db-enter db-enter-1">
@@ -408,7 +367,9 @@ export default function AuditPage() {
           <div style={{
             display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center',
             padding: '10px 14px', borderRadius: 'var(--db-r-sm)', marginBottom: 14,
-            background: 'var(--surface)', border: '.5px solid var(--db-br)',
+            background: 'rgba(255,255,255,0.042)',
+            backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+            border: '.5px solid rgba(255,255,255,0.08)',
             fontFamily: 'var(--db-mono)', fontSize: 11, color: 'var(--db-t3)',
           }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -490,7 +451,9 @@ export default function AuditPage() {
                 boxShadow: `0 0 32px ${scoreColor(auditResult.score)}30`, marginBottom: 12,
               }}>
                 <div style={{
-                  width: 82, height: 82, borderRadius: '50%', background: 'var(--db-s1)',
+                  width: 82, height: 82, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.06)',
+                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 }}>
                   <span style={{ fontFamily: 'var(--db-mono)', fontSize: 28, fontWeight: 700, color: scoreColor(auditResult.score), lineHeight: 1 }}>
@@ -696,6 +659,8 @@ export default function AuditPage() {
           </div>
         </div>
       )}
-    </div>
+    </AnimatedCard>
   );
 }
+
+

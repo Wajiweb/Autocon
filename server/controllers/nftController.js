@@ -8,12 +8,12 @@
  * validation to Joi middleware.
  */
 
-const mongoose     = require('mongoose');
 const Contract     = require('../models/Contract');
 
 const asyncHandler = require('../utils/asyncHandler');
 const { AppError } = require('../middleware/errorHandler');
-const { compileContract, sanitize, toClassName, readTemplate } = require('../services/compilerService');
+const { sanitize, toClassName } = require('../services/compilerService');
+const { enqueueCompileJobHelper } = require('./jobController');
 const { incrementDeployments } = require('../services/usageService');
 
 /** POST /api/nft/generate */
@@ -167,9 +167,17 @@ ${updateOverrides}
 }
 `;
 
-    const { abi, bytecode, compilerVersion } = compileContract(finalCode, 'NFT.sol', className);
+    const jobId = await enqueueCompileJobHelper(finalCode, className, ownerAddress);
 
-    return res.json({ success: true, data: { contractCode: finalCode, abi, bytecode, contractName: className, compilerVersion, sourceFile: 'NFT.sol' } });
+    return res.status(202).json({
+        success: true,
+        data: {
+            jobId,
+            contractCode: finalCode,
+            contractName: className,
+            sourceFile: 'NFT.sol',
+        },
+    });
 });
 
 /** POST /api/nft/save */

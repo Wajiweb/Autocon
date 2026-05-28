@@ -1,16 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useJobPoller } from '../hooks/useJobPoller';
 import { useAuth } from '../context/AuthContext';
 import { useWizardStore } from '../store/useWizardStore';
-import { Stepper, StepType, StepParams, StepReview, StepDeploy, validate, API_ENDPOINT, CONTRACT_TYPES } from './WizardComponents';
+import { Button, GlassCard } from '../components/ui';
+import { Stepper } from '../components/wizard/Stepper';
+import { StepType } from '../components/wizard/StepType';
+import { StepParams } from '../components/wizard/StepParams';
+import { StepReview } from '../components/wizard/StepReview';
+import { StepDeploy } from '../components/wizard/StepDeploy';
+import { validate } from '../utils/validation';
+import { CONTRACT_TYPES } from '../constants/contract';
+import { compileContract } from '../services/contractApi';
 import './wizard.css';
 import '../components/dashboard/styles/dashboard.css';
 
 export default function ContractWizard() {
   const { authFetch } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   // Wizard global state
   const { session, drafts, setStep, setContractType, setParams, setGenerated, resetSession, saveDraft, loadDraft, deleteDraft } = useWizardStore();
@@ -18,18 +27,55 @@ export default function ContractWizard() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
+  const toastIdRef = useRef(null);
 
-  // Handle ?type= query param to act as unified engine
+  const { status: compileStatus, result: compileResult, error: compileError, startPolling: startCompilePolling } = useJobPoller();
+
+  useEffect(() => {
+    if (!isGenerating || !compileStatus) return;
+
+    if (compileStatus === 'completed' && compileResult) {
+      setTimeout(() => {
+        setGenerated(compileResult.sourceCode, {
+          abi: compileResult.abi,
+          bytecode: compileResult.bytecode,
+          contractName: compileResult.contractName,
+          compilerVersion: compileResult.compilerVersion,
+          sourceFile: compileResult.sourceFile || (contractType === 'ERC20' ? 'Token.sol' : contractType === 'ERC721' ? 'NFT.sol' : 'Auction.sol'),
+          ast: compileResult.ast,
+        });
+        if (toastIdRef.current) {
+          toast.success('Contract compiled successfully!', { id: toastIdRef.current });
+          toastIdRef.current = null;
+        }
+        setIsGenerating(false);
+        saveDraft();
+      }, 0);
+    } else if (compileStatus === 'failed') {
+      setTimeout(() => {
+        if (toastIdRef.current) {
+          toast.error(compileError || 'Compilation failed', { id: toastIdRef.current });
+          toastIdRef.current = null;
+        }
+        setIsGenerating(false);
+      }, 0);
+    }
+  }, [compileStatus, compileResult, compileError, isGenerating, contractType, setGenerated, saveDraft]);
+
+  // Handle ?type= query param — fires whenever the sidebar generator link changes.
+  // NOTE: We keep ?type in the URL (don't delete it) so the sidebar
+  // can highlight the correct generator link while on this page.
   useEffect(() => {
     const typeQuery = searchParams.get('type');
     if (typeQuery && CONTRACT_TYPES.find(t => t.id === typeQuery)) {
+      // Always apply the selected type + jump to params step,
+      // even if the wizard is already open mid-flow.
+      // This lets sidebar generator links act as independent entry points.
       setContractType(typeQuery);
-      if (step === 0) setStep(1, 'forward');
-      // Clean URL so it doesn't re-trigger on reload
-      searchParams.delete('type');
-      setSearchParams(searchParams, { replace: true });
+      setStep(1, 'forward');
     }
-  }, [searchParams, setSearchParams, setContractType, setStep, step]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get('type')]);  // only re-run when the type param itself changes
 
   // Auto-save draft on params or step change
   useEffect(() => {
@@ -59,31 +105,18 @@ export default function ContractWizard() {
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-    const toastId = toast.loading('Compiling contract...');
+    const toastId = toast.loading('Generating contract code...');
+    toastIdRef.current = toastId;
     try {
-      const endpoint = API_ENDPOINT[contractType];
-      // Use a dummy address for initial compilation if wallet not connected yet, to preview code
-      const bodyParams = { ...params, ownerAddress: '0x0000000000000000000000000000000000000001' };
-      
-      const res = await authFetch(endpoint, { method: 'POST', body: JSON.stringify(bodyParams) });
-      const data = await res.json();
-      
-      if (data.success && data.data) {
-        setGenerated(data.data.contractCode, {
-          abi: data.data.abi,
-          bytecode: data.data.bytecode,
-          contractName: data.data.contractName,
-          compilerVersion: data.data.compilerVersion,
-          sourceFile: data.data.sourceFile,
-        });
-        toast.success('Contract compiled!', { id: toastId });
-        saveDraft(); // explicitly save after generating
-      } else {
-        toast.error(data.error || 'Compilation failed', { id: toastId });
-      }
+      const data = await compileContract(authFetch, contractType, params);
+      setGenerated(data.contractCode, {
+        contractName: data.contractName,
+        sourceFile: data.sourceFile,
+      });
+      toast.loading('Compiling contract (background)...', { id: toastId });
+      startCompilePolling(data.jobId);
     } catch (e) {
       toast.error(e.message || 'Server error', { id: toastId });
-    } finally {
       setIsGenerating(false);
     }
   };
@@ -99,18 +132,18 @@ export default function ContractWizard() {
       {/* Top action bar */}
       <div style={{ position: 'absolute', top: 20, right: 30, display: 'flex', gap: 10, zIndex: 10 }}>
         {drafts.length > 0 && (
-          <button className="btn btn-secondary btn-sm" onClick={() => setShowDrafts(!showDrafts)}>
+          <Button variant="secondary" size="sm" onClick={() => setShowDrafts(!showDrafts)}>
             {showDrafts ? 'Close Drafts' : `Drafts (${drafts.length})`}
-          </button>
+          </Button>
         )}
         {(step > 0 || deployResult) && (
-          <button className="btn btn-secondary btn-sm" onClick={startNew}>+ New Contract</button>
+          <Button variant="secondary" size="sm" onClick={startNew}>+ New Contract</Button>
         )}
       </div>
 
-      <div className="wz-wrap">
+      <GlassCard className="wz-wrap" delay={0.15} padding="lg">
         {showDrafts && (
-          <div className="wz-card" style={{ marginBottom: 24, animation: 'wz-slideIn .3s ease' }}>
+          <GlassCard hoverable={false} padding="md" style={{ marginBottom: 24, animation: 'wz-slideIn .3s ease' }}>
             <div className="wz-card-title">Saved Drafts</div>
             <div className="wz-card-sub">Resume your uncompleted contracts.</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -123,14 +156,14 @@ export default function ContractWizard() {
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Step {d.step + 1} • Last updated {new Date(d.lastUpdated).toLocaleString()}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="btn btn-primary btn-sm" onClick={() => { loadDraft(d.id); setShowDrafts(false); }}>Resume</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => deleteDraft(d.id)}>Delete</button>
+                      <Button variant="primary" size="sm" onClick={() => { loadDraft(d.id); setShowDrafts(false); }}>Resume</Button>
+                      <Button variant="danger" size="sm" onClick={() => deleteDraft(d.id)}>Delete</Button>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </GlassCard>
         )}
 
         <div className="wz-header">
@@ -150,21 +183,21 @@ export default function ContractWizard() {
         </div>
 
         <div className="wz-nav">
-          <button className="btn btn-ghost" onClick={step === 0 ? () => navigate('/dashboard') : handleBack}>
+          <Button variant="ghost" onClick={step === 0 ? () => navigate('/dashboard') : handleBack}>
             {step === 0 ? '← Dashboard' : '← Back'}
-          </button>
+          </Button>
           
           {step < 3 && (
-            <button className="btn btn-primary" onClick={handleNext}>
+            <Button variant="primary" onClick={handleNext}>
               {step === 2 && !generatedCode ? 'Generate First' : step === 2 ? 'Proceed to Deploy →' : 'Continue →'}
-            </button>
+            </Button>
           )}
           
           {step === 3 && deployResult && (
-            <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>Go to Dashboard →</button>
+            <Button variant="ghost" onClick={() => navigate('/dashboard')}>Go to Dashboard →</Button>
           )}
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

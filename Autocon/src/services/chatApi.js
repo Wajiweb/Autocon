@@ -45,6 +45,7 @@ export async function sendChatRequest(authFetch, payload) {
                 error: responseBody.error || responseBody.message || 'Chat request failed.',
                 details: responseBody.details,
                 retryAfter,
+                limits: responseBody.limits,
             };
         }
 

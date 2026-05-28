@@ -1,5 +1,17 @@
 {
+  "name": "autocon-root",
+  "version": "1.0.0",
+  "description": "AutoCon root package runner",
+  "scripts": {
+    "backend": "npm --prefix server run start",
+    "worker": "npm --prefix server run worker",
+    "frontend": "npm --prefix Autocon run dev",
+    "dev": "concurrently --kill-others \"npm run backend\" \"npm run worker\" \"npm run frontend\""
+  },
   "dependencies": {
     "antigravity-awesome-skills": "^11.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

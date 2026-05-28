@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { AnimatedCard } from '../components/ui/AnimatedCard';
 import toast from 'react-hot-toast';
 import { Shield, Users, UserCheck, Copy, ExternalLink, RefreshCw } from 'lucide-react';
 import '../components/dashboard/styles/dashboard.css';
@@ -26,7 +28,7 @@ export default function AdminPage() {
       } else {
         toast.error(data.error || 'Failed to fetch users');
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to load users');
     } finally {
       setIsLoading(false);
@@ -61,7 +63,7 @@ export default function AdminPage() {
       } else {
         toast.error(data.error || 'Failed to update role');
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to update user role');
     } finally {
       setIsUpdating(null);
@@ -75,20 +77,20 @@ export default function AdminPage() {
 
   if (isLoading) {
     return (
-      <div className="pg-wrap">
+      <AnimatedCard className="pg-wrap" delay={0.15}>
         <div className="pg-card" style={{ padding: '40px', textAlign: 'center' }}>
           <div className="spinner spinner-md" />
           <p style={{ marginTop: 16, color: 'var(--db-t3)' }}>Loading admin panel...</p>
         </div>
-      </div>
+      </AnimatedCard>
     );
   }
 
   return (
-    <div className="pg-wrap">
+    <AnimatedCard className="pg-wrap" delay={0.15}>
       {/* Header */}
-      <div className="pg-card db-enter db-enter-1" style={{ padding: '24px', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+      <div className="pg-head db-enter db-enter-1">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Shield size={24} color="var(--db-acc)" />
           <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Admin Panel</h1>
         </div>
@@ -208,6 +210,9 @@ export default function AdminPage() {
           </div>
         )}
       </div>
-    </div>
+    </AnimatedCard>
   );
 }
+
+
+

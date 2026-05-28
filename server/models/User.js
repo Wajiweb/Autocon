@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: () => crypto.randomBytes(32).toString('hex'),
     },
+    nonceExpiresAt: {
+      type: Date,
+      default: null,
+    },
 
     // ─── SaaS Foundation Fields ───────────────────────────────────────────────
 

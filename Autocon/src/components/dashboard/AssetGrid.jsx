@@ -9,12 +9,22 @@ import './styles/dashboard.css';
 const SYMBOLS = ASSET_TOKENS.map((t) => t.binanceId);
 
 export default function AssetGrid({ onSelectCoin }) {
-  const { prices } = useLivePrices(SYMBOLS);
+  const { prices, connectionStatus } = useLivePrices(SYMBOLS);
   const { history } = useHistoricalData(SYMBOLS);
 
   const lastUpdated = new Date().toLocaleTimeString([], {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
+
+  const statusLabel = connectionStatus === 'connected' ? 'Live'
+    : connectionStatus === 'polling' ? 'Polling'
+    : connectionStatus === 'reconnecting' ? 'Reconnecting...'
+    : connectionStatus === 'failed' ? 'Offline'
+    : 'Connecting...';
+
+  const statusDotClass = connectionStatus === 'connected' ? ''
+    : connectionStatus === 'polling' ? 'db-live-dot-polling'
+    : 'db-live-dot-disconnected';
 
   return (
     <>
@@ -25,8 +35,8 @@ export default function AssetGrid({ onSelectCoin }) {
             <span className="mkt-section-title">Market</span>
             <span className="mkt-section-accent">Overview</span>
             <div className="db-live-badge">
-              <div className="db-live-dot" />
-              Live
+              <div className={`db-live-dot ${statusDotClass}`} />
+              {statusLabel}
             </div>
           </div>
           <div className="mkt-section-sub">Real-time prices via Binance WebSocket</div>

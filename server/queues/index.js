@@ -14,13 +14,16 @@
 
 const { verificationQueue, addVerificationJob } = require('./verificationQueue');
 const { auditQueue,        addAuditJob }        = require('./auditQueue');
+const { compileQueue,      addCompileJob }      = require('./compileQueue');
 
 module.exports = {
     // Queue instances (for advanced usage, e.g. draining in tests)
     verificationQueue,
     auditQueue,
+    compileQueue,
 
     // Enqueue helpers (primary API for routes/controllers)
     addVerificationJob,
     addAuditJob,
+    addCompileJob,
 };

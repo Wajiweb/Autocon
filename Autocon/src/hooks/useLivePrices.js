@@ -3,12 +3,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 /**
  * useLivePrices
  * Opens one Binance combined-stream WebSocket for all requested symbols.
- * Returns { prices } where prices[symbol] = { price, change, flashing }.
+ * Returns { prices, connectionStatus } where prices[symbol] = { price, change, flashing }.
  *
- * Flash behaviour:
- *   - price updates are throttled to once per second per symbol
- *   - a flash only triggers when the price *actually changes* AND at least
- *     3 seconds have passed since the last flash (prevents continuous blinking)
+ * Features:
+ *   - Automatic reconnection with exponential backoff (2s → 4s → 8s → 16s → 32s)
+ *   - Falls back to REST polling after 5 failed reconnection attempts
+ *   - Connection status tracking: 'connecting' | 'connected' | 'reconnecting' | 'polling' | 'failed'
  *
  * @param {string[]} symbols  – e.g. ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'MATICUSDT']
  */
@@ -18,19 +18,27 @@ export default function useLivePrices(symbols = []) {
     symbols.forEach((s) => { init[s] = { price: null, change: null, flashing: null }; });
     return init;
   });
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
 
-  const wsRef        = useRef(null);
-  const seedsRef     = useRef({});  // baseline prices from REST (for 24 hr % change)
-  const lastTickRef  = useRef({});  // throttle: last price-update ms per symbol (1 s gate)
-  const lastFlashRef = useRef({});  // flash cooldown: last flash ms per symbol  (3 s gate)
-  const lastPriceRef = useRef({});  // previous displayed price per symbol (detect real change)
+  const wsRef              = useRef(null);
+  const seedsRef           = useRef({});
+  const lastTickRef        = useRef({});
+  const lastFlashRef       = useRef({});
+  const lastPriceRef       = useRef({});
+  const reconnectTimeoutRef = useRef(null);
+  const reconnectAttemptsRef = useRef(0);
+  const pollingRef         = useRef(null);
+  const isUnmountedRef     = useRef(false);
+
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const BASE_RECONNECT_DELAY = 2000;
 
   // ── 1. Seed with REST 24-hr ticker snapshot ──────────────────────────────
   const seedPrices = useCallback(async () => {
     try {
       const joined = symbols.map((s) => `"${s}"`).join(',');
       const res = await fetch(
-        `https://api.binance.com/api/v3/ticker/24hr?symbols=[${joined}]`
+        `/api/binance/api/v3/ticker/24hr?symbols=[${joined}]`
       );
       const data = await res.json();
       if (!Array.isArray(data)) return;
@@ -52,41 +60,118 @@ export default function useLivePrices(symbols = []) {
         });
         return next;
       });
-    } catch (_) { /* silent fail – WS will fill in prices */ }
+    } catch (_) { /* silent fail – WS/polling will fill in prices */ }
   }, [symbols.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── 2. Open combined WebSocket stream ────────────────────────────────────
-  useEffect(() => {
-    if (!symbols.length) return;
+  // ── 2. REST Polling Fallback ─────────────────────────────────────────────
+  const startPolling = useCallback(() => {
+    if (isUnmountedRef.current) return;
+    setConnectionStatus('polling');
+    console.log('🔄 Switching to REST polling fallback...');
+    
+    pollingRef.current = setInterval(async () => {
+      if (isUnmountedRef.current) return;
+      try {
+        const joined = symbols.map((s) => `"${s}"`).join(',');
+        const res = await fetch(`/api/binance/api/v3/ticker/24hr?symbols=[${joined}]`);
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
 
-    seedPrices();
+        data.forEach((item) => {
+          const newPrice = parseFloat(item.lastPrice);
+          const sym = item.symbol;
+          const prevPrice = lastPriceRef.current[sym];
+          
+          if (prevPrice != null && newPrice !== prevPrice) {
+            const flashDir = newPrice >= prevPrice ? 'up' : 'down';
+            lastPriceRef.current[sym] = newPrice;
+            
+            const baseline = seedsRef.current[sym] ?? newPrice;
+            const change = baseline ? ((newPrice - baseline) / baseline) * 100 : 0;
+
+            setPrices((prev) => ({
+              ...prev,
+              [sym]: { price: newPrice, change, flashing: flashDir },
+            }));
+
+            setTimeout(() => {
+              if (!isUnmountedRef.current) {
+                setPrices((prev) => ({
+                  ...prev,
+                  [sym]: { ...prev[sym], flashing: null },
+                }));
+              }
+            }, 900);
+          } else {
+            lastPriceRef.current[sym] = newPrice;
+          }
+        });
+      } catch (err) {
+        console.error('REST polling failed:', err);
+      }
+    }, 5000);
+  }, [symbols.join(',')]);
+
+  // ── 3. Reconnection Logic ────────────────────────────────────────────────
+  const reconnect = useCallback(() => {
+    if (isUnmountedRef.current) return;
+    
+    if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+      console.warn(`⚠️ Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Falling back to REST polling.`);
+      startPolling();
+      return;
+    }
+    
+    const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current);
+    reconnectAttemptsRef.current++;
+    
+    setConnectionStatus('reconnecting');
+    console.log(`🔁 Reconnecting in ${delay / 1000}s (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})...`);
+    
+    reconnectTimeoutRef.current = setTimeout(() => {
+      if (!isUnmountedRef.current) {
+        connectWebSocket();
+      }
+    }, delay);
+  }, [startPolling]);
+
+  // ── 4. WebSocket Connection ─────────────────────────────────────────────
+  const connectWebSocket = useCallback(() => {
+    if (isUnmountedRef.current || !symbols.length) return;
 
     const streams = symbols.map((s) => `${s.toLowerCase()}@trade`).join('/');
     const url     = `wss://stream.binance.com:9443/stream?streams=${streams}`;
-    const ws      = new WebSocket(url);
+    
+    setConnectionStatus('connecting');
+    
+    const ws = new WebSocket(url);
     wsRef.current = ws;
 
+    ws.onopen = () => {
+      if (isUnmountedRef.current) return;
+      console.log(`✅ WebSocket connected for ${symbols.length} symbols`);
+      setConnectionStatus('connected');
+      reconnectAttemptsRef.current = 0;
+    };
+
     ws.onmessage = (event) => {
+      if (isUnmountedRef.current) return;
       try {
         const envelope = JSON.parse(event.data);
         const trade    = envelope.data;
         if (!trade) return;
 
-        const sym = trade.s;   // e.g. "BTCUSDT"
+        const sym = trade.s;
         const now = Date.now();
 
-        // Gate 1: throttle price updates to once per second
         if (now - (lastTickRef.current[sym] || 0) < 1000) return;
         lastTickRef.current[sym] = now;
 
         const newPrice = parseFloat(trade.p);
         if (isNaN(newPrice)) return;
 
-        // Gate 2: only flash when the price truly changed
         const prevPrice     = lastPriceRef.current[sym];
         const priceChanged  = prevPrice != null && newPrice !== prevPrice;
-
-        // Gate 3: enforce a 3-second flash cooldown per symbol
         const flashReady    = now - (lastFlashRef.current[sym] || 0) >= 3000;
         const shouldFlash   = priceChanged && flashReady;
 
@@ -97,7 +182,6 @@ export default function useLivePrices(symbols = []) {
         if (shouldFlash) lastFlashRef.current[sym] = now;
         lastPriceRef.current[sym] = newPrice;
 
-        // Compute running % change from REST baseline
         const baseline = seedsRef.current[sym] ?? newPrice;
         const change   = baseline ? ((newPrice - baseline) / baseline) * 100 : 0;
 
@@ -106,22 +190,59 @@ export default function useLivePrices(symbols = []) {
           [sym]: { price: newPrice, change, flashing: flashDir },
         }));
 
-        // Auto-clear flash after CSS animation completes (900 ms)
         if (shouldFlash) {
           setTimeout(() => {
-            setPrices((prev) => ({
-              ...prev,
-              [sym]: { ...prev[sym], flashing: null },
-            }));
+            if (!isUnmountedRef.current) {
+              setPrices((prev) => ({
+                ...prev,
+                [sym]: { ...prev[sym], flashing: null },
+              }));
+            }
           }, 900);
         }
       } catch (_) { /* ignore malformed messages */ }
     };
 
-    ws.onerror = () => ws.close();
+    ws.onerror = (error) => {
+      if (isUnmountedRef.current) return;
+      console.error(`❌ WebSocket error:`, error);
+      setConnectionStatus('failed');
+    };
 
-    return () => { ws.close(); };
-  }, [symbols.join(','), seedPrices]); // eslint-disable-line react-hooks/exhaustive-deps
+    ws.onclose = (event) => {
+      if (isUnmountedRef.current) return;
+      console.log(`🔌 WebSocket closed (code: ${event.code})`);
+      
+      // Code 1000 = normal closure, 1006 = abnormal (network issue)
+      if (event.code !== 1000 && event.code !== 1001) {
+        reconnect();
+      }
+    };
+  }, [symbols.join(','), reconnect]);
 
-  return { prices };
+  // ─ 5. Main Effect ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!symbols.length) return;
+    isUnmountedRef.current = false;
+
+    seedPrices();
+    connectWebSocket();
+
+    return () => {
+      isUnmountedRef.current = true;
+      
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
+  }, [symbols.join(','), seedPrices, connectWebSocket]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { prices, connectionStatus };
 }

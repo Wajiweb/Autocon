@@ -26,7 +26,7 @@ const jobSchema = new mongoose.Schema(
         type: {
             type:     String,
             required: true,
-            enum:     ['verification', 'audit'],
+            enum:     ['verification', 'audit', 'compile'],
         },
 
         // ─── Ownership ────────────────────────────────────────────────────────

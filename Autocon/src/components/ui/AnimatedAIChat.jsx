@@ -123,6 +123,7 @@ export function AnimatedAIChat({
     errorMessage,
     onClose,
     inline = false,
+    limits = null,
     children,
 }) {
     const [inputFocused, setInputFocused] = useState(false);
@@ -249,6 +250,33 @@ export function AnimatedAIChat({
                         <div style={{ fontWeight: 600, color: "var(--db-t1)", fontSize: 14 }}>AI Contract Assistant</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        {limits && (
+                            <div style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                                fontSize: "10px",
+                            }} title="Rate Limits (Minutely & Daily)">
+                                <span style={{
+                                    padding: "2px 6px",
+                                    borderRadius: "10px",
+                                    background: limits.rpm.remaining === 0 ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)",
+                                    border: limits.rpm.remaining === 0 ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(245,158,11,0.3)",
+                                    color: limits.rpm.remaining === 0 ? "#f87171" : "#fbbf24",
+                                }}>
+                                    {limits.rpm.remaining}/{limits.rpm.total}m
+                                </span>
+                                <span style={{
+                                    padding: "2px 6px",
+                                    borderRadius: "10px",
+                                    background: limits.rpd.remaining === 0 ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)",
+                                    border: limits.rpd.remaining === 0 ? "1px solid rgba(239,68,68,0.3)" : "1px solid var(--db-br)",
+                                    color: limits.rpd.remaining === 0 ? "#f87171" : "var(--db-t3)",
+                                }}>
+                                    {limits.rpd.remaining}/{limits.rpd.total}d
+                                </span>
+                            </div>
+                        )}
                         {messages.length > 0 && (
                             <button
                                 onClick={onClearChat}

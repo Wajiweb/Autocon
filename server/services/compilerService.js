@@ -2,6 +2,7 @@
 const fs   = require('fs');
 const path = require('path');
 const solc = require('solc');
+const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 
 /**
  * Resolves @openzeppelin imports for the solc compiler.
@@ -41,8 +42,10 @@ function compileContract(sourceCode, fileName, className, includeAST = false) {
             },
             evmVersion: 'paris',
             outputSelection: {
-                '*': { '*': ['abi', 'evm.bytecode.object', 'evm.deployedBytecode.object'] },
-                ...(includeAST ? { '': { '': ['ast'] } } : {})
+                '*': {
+                    '*': ['abi', 'evm.bytecode.object', 'evm.deployedBytecode.object'],
+                    ...(includeAST ? { '': ['ast'] } : {})
+                }
             }
         }
     };
@@ -113,4 +116,39 @@ function readTemplate(templateName) {
     return fs.readFileSync(templatePath, 'utf8');
 }
 
-module.exports = { compileContract, findImports, sanitize, toClassName, readTemplate };
+if (!isMainThread) {
+    try {
+        const { sourceCode, fileName, className, includeAST } = workerData;
+        const result = compileContract(sourceCode, fileName, className, includeAST);
+        parentPort.postMessage({ success: true, result });
+    } catch (err) {
+        parentPort.postMessage({ success: false, error: err.message });
+    }
+} else {
+    /**
+     * Compiles a contract asynchronously in a Node.js worker_thread.
+     * Prevents event loop blocking during solc CPU-intensive work.
+     */
+    function compileContractAsync(sourceCode, fileName, className, includeAST = false) {
+        return new Promise((resolve, reject) => {
+            const worker = new Worker(__filename, {
+                workerData: { sourceCode, fileName, className, includeAST }
+            });
+            worker.on('message', (msg) => {
+                if (msg.success) {
+                    resolve(msg.result);
+                } else {
+                    reject(new Error(msg.error));
+                }
+            });
+            worker.on('error', reject);
+            worker.on('exit', (code) => {
+                if (code !== 0) {
+                    reject(new Error(`Solidity compiler worker thread stopped with exit code ${code}`));
+                }
+            });
+        });
+    }
+
+    module.exports = { compileContract, compileContractAsync, findImports, sanitize, toClassName, readTemplate };
+}

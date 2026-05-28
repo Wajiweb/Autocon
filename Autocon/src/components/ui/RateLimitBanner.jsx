@@ -33,3 +33,5 @@ export const RateLimitBanner = ({
     </div>
   );
 };
+
+export default RateLimitBanner;

@@ -1,23 +1,23 @@
 'use strict';
 const { estimateGas, isValidAddress } = require('../services/blockchainService');
+const asyncHandler = require('../utils/asyncHandler');
+const { AppError } = require('../middleware/errorHandler');
 
 /** POST /api/estimate-gas */
-async function estimateGasHandler(req, res) {
+const estimateGasHandler = asyncHandler(async (req, res) => {
+    const { abi, bytecode, ownerAddress, constructorArgs, supply, network } = req.body;
+
+    if (!abi || !bytecode || !ownerAddress) {
+        throw new AppError('abi, bytecode, and ownerAddress are required.', 400, 'BAD_REQUEST');
+    }
+    if (!isValidAddress(ownerAddress)) {
+        throw new AppError('Invalid owner address format.', 400, 'INVALID_ADDRESS');
+    }
+
     try {
-        const { abi, bytecode, ownerAddress, constructorArgs, supply, network } = req.body;
-
-        if (!abi || !bytecode || !ownerAddress) {
-            return res.status(400).json({ success: false, error: 'abi, bytecode, and ownerAddress are required.' });
-        }
-        if (!isValidAddress(ownerAddress)) {
-            return res.status(400).json({ success: false, error: 'Invalid owner address format.' });
-        }
-
         const result = await estimateGas({ abi, bytecode, ownerAddress, constructorArgs, supply, network });
-        res.json({ success: true, ...result });
+        return res.json({ success: true, ...result });
     } catch (error) {
-        console.error('[GasController] estimateGas:', error.message);
-
         let errorMessage = 'Failed to estimate gas. Contract might revert or RPC is unavailable.';
         if (error.code === 'UNSUPPORTED_OPERATION' && error.operation === 'resolveName') {
             errorMessage = 'Invalid Ethereum address used in constructor arguments.';
@@ -27,8 +27,8 @@ async function estimateGasHandler(req, res) {
             errorMessage = error.shortMessage;
         }
 
-        res.status(500).json({ success: false, error: errorMessage, details: error.message });
+        throw new AppError(errorMessage, 500, 'GAS_ESTIMATION_FAILED', { details: error.message });
     }
-}
+});
 
 module.exports = { estimateGasHandler };

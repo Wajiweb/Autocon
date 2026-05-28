@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -10,6 +10,7 @@ import { useWallet } from './useWallet';
 import { useContractStore } from '../store/useContractStore';
 import { useTransactionStore, selectIsDeploying } from '../store/useTransactionStore';
 import { useDraftPersistence } from './useDraftPersistence';
+import { useJobPoller } from './useJobPoller';
 
 export const useWeb3 = () => {
   const { authFetch } = useAuth();
@@ -23,7 +24,7 @@ export const useWeb3 = () => {
     isCapped: false, hasAntiWhale: false, hasTax: false, taxRate: ''
   });
   const { generatedCode, setGeneratedCode, isEditingEnabled, contractData, setContractData } = useContractStore();
-  const { resetTransaction, setStatus, setTxHash, setConfirmed, setError, setNetwork, setStep, setErrorStep } = useTransactionStore();
+  const { resetTransaction, setStatus, setTxHash, setConfirmed, setNetwork, setStep, setErrorStep } = useTransactionStore();
   const txInFlight = useTransactionStore(selectIsDeploying);
   const [ast, setAst] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -31,45 +32,11 @@ export const useWeb3 = () => {
   /* Phase 4: draft persistence — survives browser refresh / navigation */
   const { clearDraft } = useDraftPersistence('autocon_draft_token', formData, setFormData);
 
-  const { connectWallet: baseConnectWallet } = useWallet();
+  const [compileTaskType, setCompileTaskType] = useState(null); // 'generate' | 'recompile' | null
+  const [isDeployPending, setIsDeployPending] = useState(false);
+  const compileToastIdRef = useRef(null);
 
-  const connectWallet = async () => {
-    const address = await baseConnectWallet();
-    if (address) {
-      setFormData(prev => ({ ...prev, ownerAddress: address }));
-    }
-  };
-
-  const generateContract = async (e) => {
-    e.preventDefault();
-    const loadingToast = toast.loading("Compiling smart contract...");
-
-    try {
-      const res = await authFetch('/api/token/generate-token', {
-        method: 'POST',
-        body: JSON.stringify(formData)
-      });
-      const data = await res.json();
-
-      if (data.success && data.data) {
-        setGeneratedCode(data.data.contractCode, 'Token', {
-          abi: data.data.abi,
-          bytecode: data.data.bytecode,
-          contractName: data.data.contractName,
-          compilerVersion: data.data.compilerVersion,
-          sourceFile: data.data.sourceFile,
-        });
-        setAst(data.data.ast ?? null);
-        toast.success("Contract Compiled & Ready!", { id: loadingToast });
-        await calculateGas(data.data.abi, data.data.bytecode); // ⛽ Fetch dynamic estimate
-      } else {
-        toast.error(data.error || "Compilation failed.", { id: loadingToast });
-      }
-    } catch (err) {
-      const msg = err.message || "Backend error. Make sure server is running.";
-      toast.error(msg, { id: loadingToast });
-    }
-  };
+  const { status: compileStatus, result: compileResult, error: compileError, startPolling: startCompilePolling } = useJobPoller();
 
   // --- NEW: Dynamic Backend Gas Estimator ---
   const calculateGas = async (abiToUse, bytecodeToUse) => {
@@ -95,45 +62,9 @@ export const useWeb3 = () => {
     }
   };
 
-  const deployContract = async () => {
-    if (!contractData?.abi || !contractData?.bytecode) return toast.error("Generate code first!");
-    if (!generatedCode || !generatedCode.trim()) return toast.error("Contract code is empty. Generate first.");
-    if (txInFlight) return; // Prevent duplicate deploy clicks
-
-    // Reset tx store before every new deploy
-    resetTransaction();
-    setNetwork(network.name);
-    setStatus('pending');
-
-    setStep(0);
+  const executeDeployment = async (finalAbi, finalBytecode) => {
     let deployed;
-    let finalAbi = contractData.abi;
-    let finalBytecode = contractData.bytecode;
-
     try {
-      if (isEditingEnabled) {
-        toast.loading("Recompiling custom code...", { id: 'recompile' });
-        const compRes = await authFetch('/api/compile', {
-          method: 'POST',
-          body: JSON.stringify({ sourceCode: generatedCode, contractName: formData.name.replace(/\s+/g, '') || 'TokenContract' })
-        });
-        const compData = await compRes.json();
-        if (!compData.success) {
-          setErrorStep(-1, "Compilation Failed: " + compData.error);
-          return toast.error("Compilation Failed: " + compData.error, { id: 'recompile' });
-        }
-        finalAbi = compData.abi;
-        finalBytecode = compData.bytecode;
-        setContractData({
-          ...contractData,
-          abi: finalAbi,
-          bytecode: finalBytecode,
-          contractName: formData.name.replace(/\s+/g, '') || 'TokenContract',
-          sourceFile: 'CustomContract.sol',
-        });
-        toast.success("Compiled successfully!", { id: 'recompile' });
-      }
-
       /* Phase 4: walletGuard — check MetaMask exists before constructing BrowserProvider.
          Prevents opaque "Cannot read properties of undefined" crash.
          security-auditor: validate at every trust boundary. */
@@ -143,8 +74,8 @@ export const useWeb3 = () => {
         setErrorStep(-1, guard.error);
         return;
       }
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const currentNetwork = await provider.getNetwork();
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const currentNetwork = await provider.getNetwork();
 
       if (Number(currentNetwork.chainId) !== network.chainIdDecimal) {
         try {
@@ -171,7 +102,7 @@ export const useWeb3 = () => {
                   },
                 ],
               });
-            } catch (addError) {
+            } catch (_addError) {
               toast.error(`Please add ${network.name} to MetaMask!`);
               setErrorStep(-1, `Failed to add network: ${network.name}`);
               return;
@@ -215,9 +146,6 @@ export const useWeb3 = () => {
       const encodedArgs = iface.encodeDeploy([formData.ownerAddress, formData.supply]);
       const constructorArgsHex = encodedArgs.startsWith('0x') ? encodedArgs.slice(2) : encodedArgs;
 
-      /* Phase 4: removed console.log — security-auditor: no source code
-         length or contract address leakage in production deploy paths. */
-
       // Save to database with source code artifacts
       try {
         const saveRes = await authFetch('/api/token/save-token', {
@@ -226,11 +154,11 @@ export const useWeb3 = () => {
             name: formData.name, symbol: formData.symbol,
             contractAddress: deployed, ownerAddress: formData.ownerAddress,
             network: network.name,
-            abi: contractData.abi,
+            abi: finalAbi,
             sourceCode: generatedCode,
-            contractName: contractData.contractName,
-            sourceFile: contractData.sourceFile,
-            compilerVersion: contractData.compilerVersion || 'v0.8.35+commit.47b9dedd',
+            contractName: contractData.contractName || formData.name.replace(/\s+/g, '') || 'TokenContract',
+            sourceFile: contractData.sourceFile || 'Token.sol',
+            compilerVersion: contractData.compilerVersion || 'v0.8.20+commit.a1b79de6',
             constructorArgs: constructorArgsHex
           })
         });
@@ -255,7 +183,7 @@ export const useWeb3 = () => {
               contractAddress: deployed,
               sourceCode: generatedCode,
               contractName: contractData.contractName || formData.name.replace(/\s+/g, '') || 'TokenContract',
-              compilerVersion: contractData.compilerVersion || 'v0.8.35+commit.47b9dedd',
+              compilerVersion: contractData.compilerVersion || 'v0.8.20+commit.a1b79de6',
               network: network.name,
               constructorArgs: constructorArgsHex,
               sourceFile: contractData.sourceFile || 'Token.sol',
@@ -287,7 +215,6 @@ export const useWeb3 = () => {
       return deployed;
 
     } catch (err) {
-      /* Phase 4: removed console.error — classifyError surfaces message to user via toast */
       const message = classifyError(err);
       const currentStep = useTransactionStore.getState().step;
       setErrorStep(currentStep >= 0 ? currentStep : 0, message);
@@ -298,6 +225,135 @@ export const useWeb3 = () => {
     }
   };
 
+  useEffect(() => {
+    if (!compileTaskType || !compileStatus) return;
+
+    if (compileStatus === 'completed' && compileResult) {
+      setTimeout(() => {
+        if (compileTaskType === 'generate') {
+          setGeneratedCode(compileResult.sourceCode, 'Token', {
+            abi: compileResult.abi,
+            bytecode: compileResult.bytecode,
+            contractName: compileResult.contractName,
+            compilerVersion: compileResult.compilerVersion,
+            sourceFile: compileResult.sourceFile || 'Token.sol',
+          });
+          setAst(compileResult.ast ?? null);
+          if (compileToastIdRef.current) {
+            toast.success("Contract Compiled & Ready!", { id: compileToastIdRef.current });
+          }
+          calculateGas(compileResult.abi, compileResult.bytecode);
+        } else if (compileTaskType === 'recompile') {
+          setContractData({
+            ...contractData,
+            abi: compileResult.abi,
+            bytecode: compileResult.bytecode,
+            contractName: compileResult.contractName,
+            sourceFile: 'CustomContract.sol',
+          });
+          if (compileToastIdRef.current) {
+            toast.success("Compiled successfully!", { id: compileToastIdRef.current });
+          }
+          if (isDeployPending) {
+            setIsDeployPending(false);
+            executeDeployment(compileResult.abi, compileResult.bytecode);
+          }
+        }
+        setCompileTaskType(null);
+        compileToastIdRef.current = null;
+      }, 0);
+    } else if (compileStatus === 'failed') {
+      setTimeout(() => {
+        const errMsg = compileError || "Compilation failed.";
+        if (compileToastIdRef.current) {
+          toast.error(errMsg, { id: compileToastIdRef.current });
+        }
+        if (compileTaskType === 'recompile') {
+          setErrorStep(-1, "Compilation Failed: " + errMsg);
+        }
+        setCompileTaskType(null);
+        compileToastIdRef.current = null;
+        setIsDeployPending(false);
+      }, 0);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compileStatus, compileResult, compileError, compileTaskType, isDeployPending]);
+
+  const { connectWallet: baseConnectWallet } = useWallet();
+
+  const connectWallet = async () => {
+    const address = await baseConnectWallet();
+    if (address) {
+      setFormData(prev => ({ ...prev, ownerAddress: address }));
+    }
+  };
+
+  const generateContract = async (e) => {
+    e.preventDefault();
+    const loadingToast = toast.loading("Compiling smart contract...");
+
+    try {
+      const res = await authFetch('/api/token/generate-token', {
+        method: 'POST',
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        setGeneratedCode(data.data.contractCode, 'Token', {
+          contractName: data.data.contractName,
+          sourceFile: data.data.sourceFile,
+        });
+        compileToastIdRef.current = loadingToast;
+        setCompileTaskType('generate');
+        startCompilePolling(data.data.jobId);
+      } else {
+        toast.error(data.error || "Compilation failed.", { id: loadingToast });
+      }
+    } catch (err) {
+      const msg = err.message || "Backend error. Make sure server is running.";
+      toast.error(msg, { id: loadingToast });
+    }
+  };
+
+  const deployContract = async () => {
+    if (!contractData?.abi || !contractData?.bytecode) return toast.error("Generate code first!");
+    if (!generatedCode || !generatedCode.trim()) return toast.error("Contract code is empty. Generate first.");
+    if (txInFlight) return; // Prevent duplicate deploy clicks
+
+    // Reset tx store before every new deploy
+    resetTransaction();
+    setNetwork(network.name);
+    setStatus('pending');
+    setStep(0);
+
+    if (isEditingEnabled) {
+      const loadingToast = toast.loading("Recompiling custom code...", { id: 'recompile' });
+      try {
+        const compRes = await authFetch('/api/compile', {
+          method: 'POST',
+          body: JSON.stringify({ sourceCode: generatedCode, contractName: formData.name.replace(/\s+/g, '') || 'TokenContract' })
+        });
+        const compData = await compRes.json();
+        if (!compData.success || !compData.data) {
+          setErrorStep(-1, "Compilation Failed: " + (compData.error || 'Unknown error'));
+          return toast.error("Compilation Failed: " + (compData.error || 'Unknown error'), { id: 'recompile' });
+        }
+
+        // Start polling the job!
+        compileToastIdRef.current = loadingToast;
+        setCompileTaskType('recompile');
+        setIsDeployPending(true);
+        startCompilePolling(compData.data.jobId);
+      } catch (err) {
+        setErrorStep(-1, "Compilation Failed: " + err.message);
+        toast.error("Compilation Failed: " + err.message, { id: 'recompile' });
+      }
+    } else {
+      await executeDeployment(contractData.abi, contractData.bytecode);
+    }
+  };
+
   return {
     formData, setFormData, generatedCode, contractData, ast,
     connectWallet, generateContract, deployContract,
@@ -305,3 +361,4 @@ export const useWeb3 = () => {
     showSuccessModal, setShowSuccessModal
   };
 };
+

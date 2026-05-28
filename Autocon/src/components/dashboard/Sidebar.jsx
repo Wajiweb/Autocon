@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useWallet } from '../../hooks/useWallet';
 import { useNetwork } from '../../context/NetworkContext';
 import { useAuth } from '../../context/AuthContext';
@@ -16,12 +16,12 @@ const NAV_GROUPS = [
   {
     label: 'Contracts',
     items: [
-      { label: 'Dashboard',        path: '/dashboard', icon: LayoutDashboard },
-      { label: 'Create Contract',  path: '/create',    icon: Wand2, badge: 'NEW' },
-      { label: 'Token Generator',  path: '/create?type=ERC20',    icon: Coins },
-      { label: 'NFT Generator',    path: '/create?type=ERC721',      icon: ImageIcon },
-      { label: 'Auction Generator',path: '/create?type=Auction',  icon: Gavel },
-      { label: 'Security Audit',   path: '/audit',     icon: ShieldCheck },
+      { label: 'Dashboard',         path: '/dashboard',          icon: LayoutDashboard },
+      { label: 'Create Contract',   path: '/create',             icon: Wand2, badge: 'NEW', end: true },
+      { label: 'Token Generator',   path: '/create?type=ERC20',  icon: Coins,      queryParam: 'ERC20'    },
+      { label: 'NFT Generator',     path: '/create?type=ERC721', icon: ImageIcon,  queryParam: 'ERC721'   },
+      { label: 'Auction Generator', path: '/create?type=Auction',icon: Gavel,      queryParam: 'Auction'  },
+      { label: 'Security Audit',    path: '/audit',              icon: ShieldCheck },
     ],
   },
   {
@@ -30,8 +30,6 @@ const NAV_GROUPS = [
       { label: 'AI Assistant',     path: '/ai-chat',   icon: Bot },
       { label: 'Activity Monitor', path: '/jobs',      icon: Activity },
       { label: 'Analytics',        path: '/analytics', icon: BarChart3 },
-      /* Fix 2: /templates + /ast existed as routes but had no sidebar entry.
-         (architect-review: orphaned routes — unreachable without direct URL) */
       { label: 'Templates',        path: '/templates', icon: LayoutTemplate },
       { label: 'AST Explorer',     path: '/ast',       icon: Network },
       { label: 'Profile',          path: '/profile',   icon: User },
@@ -40,9 +38,11 @@ const NAV_GROUPS = [
 ];
 
 
+
 export default function Sidebar({ isMobileOpen, setIsMobileOpen, isCollapsed, setIsCollapsed }) {
   const { walletAddress } = useWallet();
   const { network } = useNetwork();
+  const location = useLocation();
   const { isAdmin } = useAuth();
   const [blockNum, setBlockNum] = useState(8241036);
 
@@ -104,11 +104,32 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen, isCollapsed, se
               </div>
               {group.items.map((item) => {
                 const Icon = item.icon;
+                // ── Custom active detection ──────────────────────────────
+                // queryParam items (Token/NFT/Auction Generator):
+                //   active ONLY when pathname=/create AND ?type matches exactly.
+                // end items (Create Contract):
+                //   active ONLY when pathname=/create AND no ?type present.
+                // Everything else: standard NavLink isActive.
+                const searchParams = new URLSearchParams(location.search);
+                const currentType  = searchParams.get('type');
+
+                let isItemActive;
+                if (item.queryParam) {
+                  // Generator links — must be on /create with matching type
+                  isItemActive = location.pathname === '/create' && currentType === item.queryParam;
+                } else if (item.end) {
+                  // Create Contract — active on bare /create with NO type param
+                  isItemActive = location.pathname === '/create' && !currentType;
+                } else {
+                  // Standard exact match for all other items
+                  isItemActive = location.pathname === item.path;
+                }
+
                 return (
                   <NavLink
                     key={item.path}
                     to={item.path}
-                    className={({ isActive }) => `db-nav-link${isActive ? ' active' : ''}`}
+                    className={() => `db-nav-link${isItemActive ? ' active' : ''}`}
                     onClick={() => setIsMobileOpen?.(false)}
                     title={isCollapsed ? item.label : undefined}
                   >

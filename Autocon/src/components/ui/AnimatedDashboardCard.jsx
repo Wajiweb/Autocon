@@ -78,11 +78,11 @@ export function AnimatedDashboardCard({
       variants={shouldAnimate ? containerVariants : {}}
     >
       <motion.div
-        className="border rounded-xl overflow-hidden relative backdrop-blur-xl h-full flex flex-col"
+        className="border rounded-xl overflow-hidden relative backdrop-blur-xl h-full flex flex-col db-glass-surface"
         style={{ 
-          background: 'var(--surface-low)',
+          background: 'linear-gradient(145deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.012) 100%)',
           borderColor: tokens.borderAlpha,
-          boxShadow: `${tokens.shadowGlow}, inset 0 1px 0 rgba(255,255,255,0.05)` 
+          boxShadow: `${tokens.shadowGlow}, inset 0 1px 0 rgba(255,255,255,0.07)` 
         }}
       >
         {/* Background glow — design-spells: GPU-accelerated blur micro-interaction */}
@@ -116,7 +116,7 @@ export function AnimatedDashboardCard({
         {hasLowerThird && (
           <div
             className="relative px-5 pb-5 pt-4 flex justify-between w-full z-20 mt-4 border-t"
-            style={{ background: 'var(--bg)', borderColor: 'var(--outline-subtle)' }}
+            style={{ background: 'rgba(0,0,0,0.18)', borderColor: 'rgba(255,255,255,0.07)' }}
           >
             {/* Left Section */}
             {leftLabel && (
@@ -212,3 +212,6 @@ export function AnimatedDashboardCard({
     </motion.div>
   );
 }
+
+export default AnimatedDashboardCard;
+

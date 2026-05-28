@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Zap, CheckCircle } from 'lucide-react';
+import { Zap, CheckCircle } from 'lucide-react';
 import Container from '../layout/Container';
 import Button from '../ui/Button';
 import { fadeUp, staggerContainer, floatYSlow, viewportConfig } from '../../lib/motionVariants';
@@ -151,17 +151,15 @@ export default function CTA({ onGetStarted }) {
           <motion.div variants={fadeUp}>
             <Button
               variant="primary"
+              size="md"
               onClick={onGetStarted}
               aria-label="Get started with AutoCon for free"
               style={{
-                fontSize:   '1rem',
-                padding:    '16px 36px',
-                boxShadow:  '0 0 50px hsla(14,100%,50%,0.35)',
-                borderRadius:'14px',
+                fontSize:   '0.95rem',
+                boxShadow:  '0 0 40px hsla(14,100%,50%,0.25)',
               }}
             >
               Get Started Free
-              <ArrowRight size={18} strokeWidth={2.5} />
             </Button>
           </motion.div>
 

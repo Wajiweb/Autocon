@@ -35,7 +35,7 @@ export default function useHistoricalData(symbols = []) {
         // 2. Otherwise, fetch from Binance
         try {
           // interval=4h, limit=42 exactly covers 7 days (7 * 24 / 4 = 42)
-          const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=4h&limit=42`);
+          const res = await fetch(`/api/binance/api/v3/klines?symbol=${sym}&interval=4h&limit=42`);
           if (!res.ok) throw new Error(`API Error: ${res.status}`);
           const data = await res.json();
           

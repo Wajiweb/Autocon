@@ -29,8 +29,14 @@ const auditQueue = new Queue(QUEUE_NAME, {
             type: 'fixed',
             delay: 8000,                // Wait 8s before retry (LLM throttle)
         },
-        removeOnComplete: true,
-        removeOnFail:     true,
+        removeOnComplete: {
+            count: 100,             // Keep last 100 completed jobs in Redis
+            age: 24 * 3600,         // ...or keep up to 24 hours
+        },
+        removeOnFail: {
+            count: 500,             // Keep last 500 failed jobs for debugging
+            age: 7 * 24 * 3600,     // ...or keep up to 7 days
+        },
     },
 });
 

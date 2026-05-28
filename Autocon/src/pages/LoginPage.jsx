@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { AlertCircle, ArrowLeft, LogIn, UserPlus, Wallet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { AnimatedCard } from '../components/ui/AnimatedCard';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -43,25 +45,42 @@ export default function LoginPage() {
             position: 'relative',
             overflowX: 'hidden',
         }}>
-            <div aria-hidden="true" style={{
-                position: 'absolute', top: '-180px', right: '-120px', pointerEvents: 'none',
-                width: '500px', height: '500px', borderRadius: '50%',
-                background: 'radial-gradient(circle, hsla(14,100%,50%,0.10) 0%, transparent 70%)',
-            }} />
-            <div aria-hidden="true" style={{
-                position: 'absolute', bottom: '-120px', left: '-80px', pointerEvents: 'none',
-                width: '400px', height: '400px', borderRadius: '50%',
-                background: 'radial-gradient(circle, hsla(230,60%,60%,0.07) 0%, transparent 70%)',
-            }} />
+            <motion.div
+                aria-hidden="true"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 0.6, scale: 1 }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+                style={{
+                    position: 'absolute', top: '-180px', right: '-120px', pointerEvents: 'none',
+                    width: '500px', height: '500px', borderRadius: '50%',
+                    background: 'radial-gradient(circle, hsla(14,100%,50%,0.10) 0%, transparent 70%)',
+                }}
+            />
+            <motion.div
+                aria-hidden="true"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 0.5, scale: 1 }}
+                transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
+                style={{
+                    position: 'absolute', bottom: '-120px', left: '-80px', pointerEvents: 'none',
+                    width: '400px', height: '400px', borderRadius: '50%',
+                    background: 'radial-gradient(circle, hsla(230,60%,60%,0.07) 0%, transparent 70%)',
+                }}
+            />
 
-            <a
+            <motion.a
                 href="/"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.3 }}
                 style={{
                     position: 'absolute', top: '20px', left: '20px', zIndex: 50,
                     display: 'inline-flex', alignItems: 'center', gap: '8px',
                     padding: '8px 16px', borderRadius: '10px',
-                    background: 'var(--surface)',
-                    border: '1px solid var(--outline)',
+                    background: 'rgba(255,255,255,0.05)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.09)',
                     color: 'var(--on-surface-variant)',
                     fontSize: '0.82rem', fontWeight: 600,
                     textDecoration: 'none',
@@ -78,41 +97,46 @@ export default function LoginPage() {
             >
                 <ArrowLeft size={15} />
                 Back to Home
-            </a>
+            </motion.a>
 
             <div style={{ width: '100%', maxWidth: '440px', padding: '0 20px', position: 'relative', zIndex: 1 }}>
-                <div style={{
-                    borderRadius: '24px',
-                    textAlign: 'center',
-                    background: 'var(--surface)',
-                    border: '1px solid var(--outline)',
-                    borderTop: '1px solid hsla(14,100%,50%,0.20)',
-                    boxShadow: '0 24px 60px rgba(0,0,0,0.60), 0 0 0 1px var(--outline-subtle)',
-                    padding: '44px 40px',
-                }}>
-                    <div style={{
-                        width: '100%',
-                        maxWidth: '220px',
-                        margin: '0 auto 28px',
-                        overflow: 'hidden',
-                    }}>
+                <AnimatedCard delay={0.15} variant="primary" style={{ padding: '44px 40px', borderRadius: '24px', textAlign: 'center' }}>
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        style={{
+                            width: '100%',
+                            maxWidth: '220px',
+                            margin: '0 auto 28px',
+                            overflow: 'hidden',
+                        }}
+                    >
                         <img
                             src="/autocon-logo-new.png"
                             alt="AutoCon"
                             style={{ width: '100%', height: 'auto', display: 'block' }}
                         />
-                    </div>
-                    <p style={{
-                        color: 'var(--on-surface-variant)', fontSize: '0.9rem',
-                        marginBottom: '24px', lineHeight: 1.65,
-                    }}>
+                    </motion.div>
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        style={{
+                            color: 'var(--on-surface-variant)', fontSize: '0.9rem',
+                            marginBottom: '24px', lineHeight: 1.65,
+                        }}
+                    >
                         No-Code Smart Contract Platform<br />
                         <span style={{ fontSize: '0.78rem', color: 'var(--on-surface-muted)' }}>
                             {isSignup ? 'Create your wallet-secured account' : 'Sign in with your existing wallet'}
                         </span>
-                    </p>
+                    </motion.p>
 
-                    <div
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.45 }}
                         role="tablist"
                         aria-label="Authentication mode"
                         style={{
@@ -122,8 +146,10 @@ export default function LoginPage() {
                             padding: '6px',
                             marginBottom: '24px',
                             borderRadius: '14px',
-                            background: 'var(--surface-elevated)',
-                            border: '1px solid var(--outline-subtle)',
+                            background: 'rgba(255,255,255,0.04)',
+                            backdropFilter: 'blur(14px)',
+                            WebkitBackdropFilter: 'blur(14px)',
+                            border: '1px solid rgba(255,255,255,0.08)',
                         }}
                     >
                         {[
@@ -162,9 +188,12 @@ export default function LoginPage() {
                                 </button>
                             );
                         })}
-                    </div>
+                    </motion.div>
 
-                    <button
+                    <motion.button
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.55 }}
                         onClick={handleAuth}
                         disabled={isConnecting}
                         aria-label={isSignup ? 'Create account with MetaMask' : 'Sign in with MetaMask'}
@@ -203,10 +232,13 @@ export default function LoginPage() {
                                 {isSignup ? 'Create Account with MetaMask' : 'Sign In with MetaMask'}
                             </>
                         )}
-                    </button>
+                    </motion.button>
 
                     {errorMessage && (
-                        <div
+                        <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
                             role="alert"
                             style={{
                                 display: 'flex',
@@ -226,20 +258,30 @@ export default function LoginPage() {
                         >
                             <AlertCircle size={18} style={{ flex: '0 0 auto', marginTop: 1 }} />
                             <span>{errorMessage}</span>
-                        </div>
+                        </motion.div>
                     )}
 
-                    <div style={{
-                        display: 'flex', alignItems: 'center', gap: 14,
-                        margin: '28px 0 20px', color: 'var(--on-surface-muted)', fontSize: '0.72rem',
-                        letterSpacing: '0.06em',
-                    }}>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.65 }}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: 14,
+                            margin: '28px 0 20px', color: 'var(--on-surface-muted)', fontSize: '0.72rem',
+                            letterSpacing: '0.06em',
+                        }}
+                    >
                         <div style={{ flex: 1, height: 1, background: 'var(--outline-subtle)' }} />
                         <span>SECURED BY BLOCKCHAIN</span>
                         <div style={{ flex: 1, height: 1, background: 'var(--outline-subtle)' }} />
-                    </div>
+                    </motion.div>
 
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+                    <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.7 }}
+                        style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}
+                    >
                         {['Non-custodial', 'Nonce signed', 'No passwords'].map(badge => (
                             <span key={badge} style={{
                                 fontSize: '0.72rem', fontWeight: 600,
@@ -251,16 +293,21 @@ export default function LoginPage() {
                                 {badge}
                             </span>
                         ))}
-                    </div>
+                    </motion.div>
 
-                    <p style={{
-                        color: 'var(--on-surface-muted)',
-                        fontSize: '0.72rem',
-                        lineHeight: 1.5,
-                    }}>
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.75 }}
+                        style={{
+                            color: 'var(--on-surface-muted)',
+                            fontSize: '0.72rem',
+                            lineHeight: 1.5,
+                        }}
+                    >
                         AutoCon Platform | Sepolia | BNB Testnet
-                    </p>
-                </div>
+                    </motion.p>
+                </AnimatedCard>
             </div>
         </div>
     );

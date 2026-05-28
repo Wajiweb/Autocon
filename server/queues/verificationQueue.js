@@ -29,8 +29,14 @@ const verificationQueue = new Queue(QUEUE_NAME, {
             type: 'exponential',
             delay: 5000,                // Start with 5s delay, double each retry
         },
-        removeOnComplete: true,
-        removeOnFail:     true,
+        removeOnComplete: {
+            count: 100,
+            age: 24 * 3600,             // Keep last 100 completed jobs up to 24 hours
+        },
+        removeOnFail: {
+            count: 500,
+            age: 7 * 24 * 3600,         // Keep last 500 failed jobs up to 7 days
+        },
     },
 });
 

@@ -16,6 +16,8 @@ export function Button({
   onClick,
   disabled  = false,
   loading   = false,
+  icon      = null,
+  iconPosition = 'left',
   className = '',
   style     = {},
   'aria-label': ariaLabel,
@@ -35,15 +37,17 @@ export function Button({
   ].filter(Boolean).join(' ');
 
   const motionProps = {
-    whileHover: (disabled || loading) ? {} : { scale: 1.02, transition: { duration: 0.18 } },
-    whileTap:   (disabled || loading) ? {} : { scale: 0.98 },
+    whileHover: (disabled || loading) ? {} : { y: -1, transition: { duration: 0.18, ease: "easeOut" } },
+    whileTap:   (disabled || loading) ? {} : { y: 0 },
   };
 
   const content = (
     <>
       {loading && <Loader2 className="btn-spinner" size={16} />}
-      <span className="btn-content" style={{ opacity: loading ? 0 : 1 }}>
+      <span className="btn-content flex items-center justify-center gap-2" style={{ opacity: loading ? 0 : 1 }}>
+        {icon && iconPosition === 'left' && <span className="btn-icon flex items-center">{icon}</span>}
         {children}
+        {icon && iconPosition === 'right' && <span className="btn-icon flex items-center">{icon}</span>}
       </span>
     </>
   );

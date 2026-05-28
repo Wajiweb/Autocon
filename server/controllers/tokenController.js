@@ -9,12 +9,12 @@
  * Errors propagate via asyncHandler → centralized errorHandler.
  */
 
-const mongoose     = require('mongoose');
 const Contract     = require('../models/Contract');
 
 const asyncHandler = require('../utils/asyncHandler');
 const { AppError } = require('../middleware/errorHandler');
-const { compileContract, sanitize, toClassName, readTemplate } = require('../services/compilerService');
+const { sanitize, toClassName } = require('../services/compilerService');
+const { enqueueCompileJobHelper } = require('./jobController');
 const { isValidAddress } = require('../services/blockchainService');
 const { incrementDeployments } = require('../services/usageService');
 
@@ -145,17 +145,14 @@ ${functions}
 }
 `;
 
-    const { abi, bytecode, ast, compilerVersion } = compileContract(finalCode, 'Token.sol', className, true);
+    const jobId = await enqueueCompileJobHelper(finalCode, className, ownerAddress);
 
-    return res.json({
+    return res.status(202).json({
         success: true,
         data: {
+            jobId,
             contractCode: finalCode,
-            abi,
-            bytecode,
-            ast,
             contractName: className,
-            compilerVersion,
             sourceFile: 'Token.sol',
         },
     });

@@ -17,11 +17,11 @@ const DEFAULT_PARAMS = {
 const INITIAL_SESSION = {
   step: 0,
   direction: 'forward',
-  contractType: 'ERC20',
-  params: DEFAULT_PARAMS['ERC20'],
+  contractType: null,
+  params: {},
   generatedCode: '',
-  contractData: null,   // { abi, bytecode }
-  deployResult: null,   // { address, txHash, network, savedAt }
+  contractData: null,
+  deployResult: null,
   deployError: null,
 };
 
@@ -46,7 +46,7 @@ export const useWizardStore = create(
           session: {
             ...state.session,
             contractType,
-            params: DEFAULT_PARAMS[contractType],
+            params: contractType ? DEFAULT_PARAMS[contractType] : {},
             generatedCode: '',
             contractData: null,
             deployResult: null,
@@ -70,7 +70,7 @@ export const useWizardStore = create(
         set(state => ({ session: { ...state.session, deployError: null } })),
 
       resetSession: () =>
-        set({ session: { ...INITIAL_SESSION, params: DEFAULT_PARAMS['ERC20'] } }),
+        set({ session: { ...INITIAL_SESSION, params: {} } }),
 
       // ── Draft actions ──────────────────────────────────
       saveDraft: () => {
@@ -105,7 +105,7 @@ export const useWizardStore = create(
           session: {
             ...INITIAL_SESSION,
             contractType: draft.contractType,
-            params: { ...DEFAULT_PARAMS[draft.contractType], ...draft.params },
+            params: { ...DEFAULT_PARAMS[draft.contractType] || {}, ...draft.params },
             step: draft.step,
             draftId: draft.id,
             generatedCode: '',
@@ -138,6 +138,7 @@ export const useWizardStore = create(
                 contractName: state.session.contractData.contractName,
                 compilerVersion: state.session.contractData.compilerVersion,
                 sourceFile: state.session.contractData.sourceFile,
+                ast: state.session.contractData.ast,
               }
             : null,
         },

@@ -1,35 +1,50 @@
 import { useState, useEffect, memo } from 'react';
 import { useGasTracker } from '../../hooks/useGasTracker';
+import { useNetwork } from '../../context/NetworkContext';
 import { Fuel } from 'lucide-react';
 import './styles/dashboard.css';
 
 /* ══════════════════════════════════════════════════════
    GasWidget — compact topbar gas price chip
-   Polls live via MetaMask or Cloudflare RPC every 15s.
-   Color: green (cheap <15 Gwei) | amber (average) | red (expensive >40 Gwei)
+   • Network-aware: updates when user switches chain
+   • Shows correct currency (ETH / tBNB / etc.)
+   • Polls every 15 s via selected network's RPC
 ══════════════════════════════════════════════════════ */
 const GasWidget = memo(function GasWidget() {
   const { gasPriceGwei, status, isLoading } = useGasTracker();
-  const [ethPriceUsd, setEthPriceUsd] = useState(null);
+  const { network } = useNetwork();
 
+  // Coingecko coin ID per network key
+  const COIN_ID = {
+    sepolia:    'ethereum',
+    bnbTestnet: 'binancecoin',
+  };
+
+  const [nativePriceUsd, setNativePriceUsd] = useState(null);
+  const coinId = COIN_ID[network?.key] ?? 'ethereum';
+
+  // Re-fetch native token price whenever the network changes
   useEffect(() => {
     let mounted = true;
+    setNativePriceUsd(null);
+
     const fetchPrice = async () => {
       try {
         const res = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
+          `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`
         );
         if (!res.ok) return;
         const data = await res.json();
-        if (mounted && data.ethereum?.usd) setEthPriceUsd(data.ethereum.usd);
+        if (mounted && data[coinId]?.usd) setNativePriceUsd(data[coinId].usd);
       } catch (_) {}
     };
+
     fetchPrice();
     const iv = setInterval(fetchPrice, 60_000);
     return () => { mounted = false; clearInterval(iv); };
-  }, []);
+  }, [coinId]);
 
-  // Color tokens matched to db-* design system
+  // Color palette
   const palette = {
     cheap:     { color: 'var(--db-acc)',   glow: 'rgba(34,197,94,.35)',   border: 'rgba(34,197,94,.25)' },
     expensive: { color: 'var(--db-red)',   glow: 'rgba(239,68,68,.3)',    border: 'rgba(239,68,68,.22)' },
@@ -38,21 +53,31 @@ const GasWidget = memo(function GasWidget() {
   const { color, glow, border } = palette[status] || palette.average;
 
   const loading = isLoading || gasPriceGwei === null;
-  const gwei    = loading ? null : Math.round(gasPriceGwei);
+  const gwei    = loading ? null : gasPriceGwei.toFixed(2);
 
-  // Estimate deployment cost in USD (1.5M gas = typical ERC-20 deploy)
-  const fiatStr = (!loading && ethPriceUsd)
-    ? `~$${((gasPriceGwei * 1_500_000 / 1e9) * ethPriceUsd).toFixed(2)}`
+  // USD estimate: realistic gas units for simple contract deploy
+  // BNB chain: gas price is the full price (no tip/base split)
+  // ETH: showing priority tip only → multiply by slightly more for realistic estimate
+  const isBNB         = network?.key?.toLowerCase().includes('bnb');
+  const DEPLOY_GAS    = isBNB ? 1_200_000 : 200_000; // BNB uses full gasPrice (cheap), ETH uses tip only
+  const currency      = network?.currencySymbol ?? 'ETH';
+
+  const fiatStr = (!loading && nativePriceUsd)
+    ? `~$${((gasPriceGwei * DEPLOY_GAS / 1e9) * nativePriceUsd).toFixed(isBNB ? 2 : 3)}`
     : null;
+
+  const tooltipLabel = `${network?.name ?? ''} gas · ${gwei ?? '…'} Gwei (${status}) · est. deploy cost`;
 
   return (
     <div
-      title={`Gas ${status}: ${gwei ?? '…'} Gwei — estimated deploy cost`}
+      title={tooltipLabel}
       style={{
         display: 'flex', alignItems: 'center', gap: 7,
-        padding: '4px 11px', borderRadius: var_r,
+        padding: '4px 11px', borderRadius: VAR_R,
         border: `.5px solid ${border}`,
-        background: 'var(--db-s2)',
+        background: 'rgba(255,255,255,0.055)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         cursor: 'default', userSelect: 'none',
         transition: 'border-color .3s',
         fontFamily: 'var(--db-font)',
@@ -71,7 +96,9 @@ const GasWidget = memo(function GasWidget() {
         {fiatStr
           ? <>
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--db-t1)' }}>{fiatStr}</span>
-              <span style={{ fontSize: 9.5, fontFamily: 'var(--db-mono)', color: 'var(--db-t3)' }}>{gwei} Gwei</span>
+              <span style={{ fontSize: 9.5, fontFamily: 'var(--db-mono)', color: 'var(--db-t3)' }}>
+                {gwei} Gwei · {currency}
+              </span>
             </>
           : <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'var(--db-mono)', color: loading ? 'var(--db-t3)' : color }}>
               {loading ? '…' : `${gwei} Gwei`}
@@ -87,7 +114,5 @@ const GasWidget = memo(function GasWidget() {
   );
 });
 
-// small helper to avoid string template in JSX style object
-const var_r = 'var(--db-r-sm)';
-
+const VAR_R = 'var(--db-r-sm)';
 export default GasWidget;

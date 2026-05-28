@@ -5,6 +5,7 @@
 
 // ─── Node Color Map ──────────────────────────────────────────────────────────
 export const AST_NODE_COLORS = {
+  SourceUnit:                'var(--color-gray,   #6b7280)',
   ContractDefinition:        'var(--color-purple, #7c3aed)',
   FunctionDefinition:        'var(--color-blue,   #2563eb)',
   StateVariableDeclaration:  'var(--color-teal,   #0d9488)',
@@ -20,6 +21,7 @@ export function nodeColor(type) {
 
 // ─── AST Normalizer ──────────────────────────────────────────────────────────
 const KEEP_TYPES = new Set([
+  'SourceUnit',
   'ContractDefinition',
   'FunctionDefinition',
   'StateVariableDeclaration',
@@ -37,7 +39,7 @@ export function normalizeAST(node, parentId = null) {
   if (!node || !KEEP_TYPES.has(node.nodeType)) return null;
   return {
     id:       node.id,
-    label:    node.name ?? node.nodeType,
+    label:    node.absolutePath ?? node.name ?? node.nodeType,
     type:     node.nodeType,
     parentId,
     children: (node.nodes ?? [])

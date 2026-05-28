@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, ArrowRight } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import Container from '../layout/Container';
 import Button from '../ui/Button';
 import { fadeUp } from '../../lib/motionVariants';
@@ -264,12 +264,10 @@ export default function Hero({ onGetStarted }) {
           >
             <Button
               variant="primary"
-              size="lg"
+              size="md"
               onClick={onGetStarted}
-              style={{ gap: '8px' }}
             >
               Start Building Free
-              <ArrowRight size={18} />
             </Button>
             <Button
               variant="ghost"

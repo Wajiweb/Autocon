@@ -1,4 +1,5 @@
 'use strict';
+const logger = require('../utils/logger');
 
 /**
  * errorHandler.js — Centralized Express Error Handler
@@ -12,14 +13,6 @@
  *   "message": "Human-readable message",
  *   "details": [...] | null
  * }
- *
- * Error types handled:
- *  - ValidationError (Joi)
- *  - MongoServerError 11000 (duplicate key)
- *  - CastError (invalid MongoDB ObjectId)
- *  - CORS rejection
- *  - JSON parse errors
- *  - Unexpected / uncaught errors
  */
 
 // ─── Custom Application Error ─────────────────────────────────────────────────
@@ -55,16 +48,13 @@ function buildErrorResponse(code, message, details = null) {
 // ─── Centralized Error Middleware ─────────────────────────────────────────────
 
 function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-vars
-    // Log every error with context (structured for easy log aggregation)
-    console.error(JSON.stringify({
-        level:     'ERROR',
-        timestamp: new Date().toISOString(),
+    // Log every error with context using central logger
+    logger.error(err.message || 'Unhandled error', {
         method:    req.method,
         path:      req.originalUrl,
         name:      err.name,
-        message:   err.message,
         stack:     process.env.NODE_ENV !== 'production' ? err.stack : undefined,
-    }));
+    });
 
     // Send to Sentry (excluding 4xx client errors like validation and bad ID)
     if (process.env.NODE_ENV === 'production' && !['ValidationError', 'CastError'].includes(err.name) && err.message !== 'Not allowed by CORS') {
@@ -133,11 +123,8 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
 
     // ── Rate Limit Exceeded ───────────────────────────────────────────────────
     if (err.status === 429 || res.statusCode === 429) {
-        // Log rate limit events for monitoring
-        console.log(JSON.stringify({
-            level: 'WARN',
+        logger.warn('Rate limit exceeded', {
             event: 'rate_limit_exceeded',
-            timestamp: new Date().toISOString(),
             method: req.method,
             path: req.originalUrl,
             userId: req.user?.id || 'anonymous',
@@ -145,7 +132,7 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
             ip: req.ip,
             userAgent: req.get('User-Agent'),
             retryAfter: res.get('Retry-After') || 'unknown',
-        }));
+        });
 
         return res.status(429).json(buildErrorResponse(
             'RATE_LIMIT_EXCEEDED',

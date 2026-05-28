@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { GlassCard, Button, Input, Modal } from '../components/ui';
 import { Globe, Coins, Ticket, Palette, Heart, Hammer, Zap, Lightbulb, ArrowRight } from 'lucide-react';
 import '../components/dashboard/styles/dashboard.css';
 
@@ -8,7 +10,7 @@ import '../components/dashboard/styles/dashboard.css';
    Each template pre-fills a specific generator with beginner-
    friendly defaults and navigates to the correct generator page
    with state so the hook can initialise the form.
-═══════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════ */
 const TEMPLATES = [
   /* ── Tier 1: ERC-20 ────────────────────────────────────── */
   {
@@ -18,9 +20,9 @@ const TEMPLATES = [
     category: 'ERC-20',
     complexity: 'Beginner',
     gasEstimate: '~0.003 ETH',
-    color: 'var(--primary)',
-    accent: 'rgba(93,169,233,0.10)',
-    border: 'rgba(93,169,233,0.22)',
+    color: '#ff6b00', // unified orange
+    accent: 'rgba(255,107,0,0.10)',
+    border: 'rgba(255,107,0,0.22)',
     route: '/create?type=ERC20',
     description: 'Launch a community governance or rewards token for your DAO, Discord server, or online community.',
     features: ['1,000,000 Initial Supply', 'Owner Minting', 'Burn Support', 'Fully ERC-20 Compliant'],
@@ -38,9 +40,9 @@ const TEMPLATES = [
     category: 'ERC-20',
     complexity: 'Beginner',
     gasEstimate: '~0.003 ETH',
-    color: '#4ade80',
-    accent: 'rgba(74,222,128,0.08)',
-    border: 'rgba(74,222,128,0.20)',
+    color: '#34d399', // emerald green
+    accent: 'rgba(52,211,153,0.08)',
+    border: 'rgba(52,211,153,0.20)',
     route: '/create?type=ERC20',
     description: 'Create a custom cryptocurrency token with minting, burning, and ownership controls.',
     features: ['Custom Name & Symbol', 'Initial Supply', 'Owner Minting', 'ERC20Burnable', 'Ownable'],
@@ -60,9 +62,9 @@ const TEMPLATES = [
     category: 'ERC-721',
     complexity: 'Beginner',
     gasEstimate: '~0.005 ETH',
-    color: '#a78bfa',
-    accent: 'rgba(167,139,250,0.10)',
-    border: 'rgba(167,139,250,0.22)',
+    color: '#8b5cf6', // purple
+    accent: 'rgba(139,92,246,0.10)',
+    border: 'rgba(139,92,246,0.22)',
     route: '/create?type=ERC721',
     description: 'Issue tamper-proof event tickets as NFTs. Each ticket is a unique, transferable on-chain asset.',
     features: ['500 Max Supply', '0.01 ETH Mint Price', 'URI Storage', 'Burn Support', 'Owner Withdraw'],
@@ -82,9 +84,9 @@ const TEMPLATES = [
     category: 'ERC-721',
     complexity: 'Intermediate',
     gasEstimate: '~0.005 ETH',
-    color: '#e879f9',
-    accent: 'rgba(232,121,249,0.08)',
-    border: 'rgba(232,121,249,0.20)',
+    color: '#ec4899', // pink
+    accent: 'rgba(236,72,153,0.08)',
+    border: 'rgba(236,72,153,0.20)',
     route: '/create?type=ERC721',
     description: 'Launch a full NFT collection with individual token metadata, mint pricing, and max supply caps.',
     features: ['Custom Max Supply', 'Mint Pricing', 'URI Storage', 'Burn Support', 'Withdraw Funds'],
@@ -106,7 +108,7 @@ const TEMPLATES = [
     category: 'Auction',
     complexity: 'Beginner',
     gasEstimate: '~0.004 ETH',
-    color: '#fb923c',
+    color: '#fb923c', // soft orange
     accent: 'rgba(251,146,60,0.10)',
     border: 'rgba(251,146,60,0.22)',
     route: '/create?type=Auction',
@@ -128,9 +130,9 @@ const TEMPLATES = [
     category: 'Auction',
     complexity: 'Advanced',
     gasEstimate: '~0.004 ETH',
-    color: '#f59e0b',
-    accent: 'rgba(245,158,11,0.10)',
-    border: 'rgba(245,158,11,0.22)',
+    color: '#fbbf24', // yellow amber
+    accent: 'rgba(251,191,36,0.10)',
+    border: 'rgba(251,191,36,0.22)',
     route: '/create?type=Auction',
     description: 'Deploy a decentralized English Auction with timed bidding, auto-refunds, and minimum bids.',
     features: ['Timed Bidding', 'Min Bid Enforced', 'Auto-Refund', 'Time Extension', 'Beneficiary Payout'],
@@ -148,131 +150,55 @@ const TEMPLATES = [
 const CATEGORY_FILTERS = ['All', 'ERC-20', 'ERC-721', 'Auction'];
 
 const COMPLEXITY_COLOR = {
-  Beginner:     { color: '#4ade80', bg: 'rgba(74,222,128,0.10)', border: 'rgba(74,222,128,0.20)' },
-  Intermediate: { color: '#a78bfa', bg: 'rgba(167,139,250,0.10)', border: 'rgba(167,139,250,0.20)' },
-  Advanced:     { color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.20)' },
+  Beginner:     { color: '#34d399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.15)' },
+  Intermediate: { color: '#a78bfa', bg: 'rgba(167,139,250,0.08)', border: 'rgba(167,139,250,0.15)' },
+  Advanced:     { color: '#fbbf24', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.15)' },
 };
 
 /* ═══════════════════════════════════════════════════════════
-   CUSTOMISE MODAL — shown before navigating to the generator
-═══════════════════════════════════════════════════════════ */
-function CustomiseModal({ template, onClose, onLaunch }) {
-  const [params, setParams] = useState({ ...template.defaults });
-
-  const handleChange = (e) => {
-    setParams(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const fields = Object.entries(template.defaults).map(([key, defaultVal]) => ({
-    key,
-    label: key
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, s => s.toUpperCase()),
-    type: ['supply', 'maxSupply', 'duration'].includes(key) ? 'number' : 'text',
-    step: ['mintPrice', 'minimumBid'].includes(key) ? '0.001' : undefined,
-    placeholder: String(defaultVal) || `Enter ${key}`,
-  }));
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Customise ${template.name} template`}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '20px'
-      }}
-      onClick={onClose}
-      onKeyDown={(e) => e.key === 'Escape' && onClose()}
-    >
-      <div style={{
-        background: 'var(--surface)',
-        border: `1px solid ${template.border}`,
-        borderTop: `3px solid ${template.color}`,
-        borderRadius: '20px',
-        padding: '32px',
-        width: '100%', maxWidth: '480px',
-        boxShadow: '0 32px 80px rgba(0,0,0,0.5)',
-        maxHeight: '90vh', overflowY: 'auto',
-      }} onClick={e => e.stopPropagation()}>
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
-          <div style={{
-            width: 46, height: 46, borderRadius: 13, flexShrink: 0,
-            background: template.accent, border: `1px solid ${template.border}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24
-          }}>{template.icon}</div>
-          <div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--on-surface)', fontFamily: 'var(--db-font)' }}>
-              Customise — {template.name}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--on-surface-variant)', marginTop: 2 }}>
-              {template.beginner_note}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ height: 1, background: 'var(--outline)', margin: '20px 0' }} />
-
-        {/* Fields */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {fields.map(f => (
-            <div key={f.key}>
-              <label className="pg-label">{f.label}</label>
-              <input
-                name={f.key}
-                type={f.type}
-                step={f.step}
-                className="pg-input"
-                value={params[f.key] ?? ''}
-                onChange={handleChange}
-                placeholder={f.placeholder}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-          <button className="pg-btn" onClick={onClose}
-            style={{ flex: 1, background: 'var(--surface-high)', color: 'var(--on-surface-variant)' }}>
-            Cancel
-          </button>
-          <button className="pg-btn pg-btn-primary" onClick={() => onLaunch(params)}
-            style={{ flex: 2, background: template.color, color: 'var(--surface)', boxShadow: `0 4px 20px ${template.accent}` }}>
-            Launch Generator <ArrowRight size={16} style={{ marginLeft: 6 }} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
    MAIN PAGE
-═══════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════ */
 export default function TemplateLibrary() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('All');
   const [modalTemplate, setModalTemplate] = useState(null);
+  const [params, setParams] = useState({});
 
   const filtered = filter === 'All'
     ? TEMPLATES
     : TEMPLATES.filter(t => t.category === filter);
 
-  const openModal = (t) => setModalTemplate(t);
-  const closeModal = () => setModalTemplate(null);
-
-  const handleLaunch = (params) => {
-    // Pass pre-filled params to the generator via router state
-    navigate(modalTemplate.route, { state: { prefill: params } });
+  const openModal = (t) => {
+    setParams({ ...t.defaults });
+    setModalTemplate(t);
   };
 
+  const closeModal = () => setModalTemplate(null);
+
+  const handleLaunch = () => {
+    // Pass pre-filled params to the generator via router state
+    navigate(modalTemplate.route, { state: { prefill: params } });
+    closeModal();
+  };
+
+  const handleParamChange = (e) => {
+    setParams(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const fields = modalTemplate 
+    ? Object.entries(modalTemplate.defaults).map(([key, defaultVal]) => ({
+        key,
+        label: key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, s => s.toUpperCase()),
+        type: ['supply', 'maxSupply', 'duration'].includes(key) ? 'number' : 'text',
+        step: ['mintPrice', 'minimumBid'].includes(key) ? '0.001' : undefined,
+        placeholder: String(defaultVal) || `Enter ${key}`,
+      }))
+    : [];
+
   return (
-    <div className="pg-wrap">
+    <GlassCard className="pg-wrap" delay={0.1} padding="lg" hoverable={false} style={{ background: 'var(--surface-1)' }}>
 
       {/* Header */}
       <div className="pg-head db-enter db-enter-1">
@@ -281,59 +207,71 @@ export default function TemplateLibrary() {
       </div>
 
       {/* Category Filter */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }} className="db-enter db-enter-2">
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }} className="db-enter db-enter-2">
         {CATEGORY_FILTERS.map(f => (
-          <button key={f} onClick={() => setFilter(f)}
+          <button 
+            key={f} 
+            onClick={() => setFilter(f)}
             className="pg-btn"
             aria-pressed={filter === f}
             style={{
-              background: filter === f ? 'var(--primary)' : 'var(--surface-high)',
+              background: filter === f ? 'var(--primary)' : 'rgba(255,255,255,0.02)',
               color: filter === f ? 'var(--surface)' : 'var(--on-surface-variant)',
-              border: filter === f ? 'none' : '1px solid var(--outline)',
-              boxShadow: filter === f ? '0 4px 16px rgba(93,169,233,.25)' : 'none',
-              fontWeight: 700, fontSize: 13,
-            }}>
+              border: filter === f ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.06)',
+              boxShadow: filter === f ? '0 8px 24px rgba(249, 107, 0, 0.25)' : 'none',
+              fontWeight: 700, 
+              fontSize: 13,
+              borderRadius: 10,
+              padding: '8px 16px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
             {f}
           </button>
         ))}
-        <span style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--on-surface-variant)', alignSelf: 'center' }}>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--on-surface-muted)', fontWeight: 600 }}>
           {filtered.length} template{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Template Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
         {filtered.map((t, i) => {
           const cx = COMPLEXITY_COLOR[t.complexity];
           return (
-            <div key={t.id}
-              className={`pg-card db-enter db-enter-${(i % 4) + 2}`}
-              role="button"
-              tabIndex={0}
-              aria-label={`Use ${t.name} template`}
+            <GlassCard 
+              key={t.id}
+              className={`db-enter db-enter-${(i % 4) + 2} flex flex-col justify-between`}
+              hoverable={true}
+              padding="md"
+              accent="none"
               style={{
-                cursor: 'pointer',
+                background: 'rgba(255, 255, 255, 0.015)',
+                border: '1px solid rgba(255,255,255,0.04)',
                 borderTop: `2px solid ${t.color}`,
-                padding: '22px 24px',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.35)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = ''; }}
               onClick={() => openModal(t)}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openModal(t)}
             >
-              {/* Icon + Title Row */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              {/* Card Ambient Glow Layer */}
+              <div 
+                className="absolute top-0 right-0 w-[180px] h-[100px] rounded-full blur-[50px] pointer-events-none" 
+                style={{ background: `radial-gradient(circle, ${t.color}15 0%, transparent 85%)` }}
+              />
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', zIndex: 2 }}>
+                {/* Icon + Title Row */}
+                <div style={{ display: 'flex', gap: 14 }}>
                   <div style={{
-                    width: 46, height: 46, borderRadius: 13, flexShrink: 0,
+                    width: 48, height: 48, borderRadius: 14, flexShrink: 0,
                     background: t.accent, border: `1px solid ${t.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: t.color
                   }}>{t.icon}</div>
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--on-surface)', fontFamily: 'var(--db-font)', marginBottom: 6 }}>
+                    <h2 style={{ fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: 'var(--db-font)', margin: '0 0 6px' }}>
                       {t.name}
-                    </div>
+                    </h2>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                       <span className="pg-badge" style={{ background: t.accent, color: t.color, border: `1px solid ${t.border}` }}>
                         {t.category}
@@ -341,71 +279,150 @@ export default function TemplateLibrary() {
                       <span className="pg-badge" style={{ background: cx.bg, color: cx.color, border: `1px solid ${cx.border}` }}>
                         {t.complexity}
                       </span>
-                      <span style={{ fontFamily: 'var(--db-mono)', fontSize: 11, color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Zap size={12} /> {t.gasEstimate}
+                      <span style={{ fontFamily: 'var(--db-mono)', fontSize: 11, color: 'var(--on-surface-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Zap size={11} style={{ color: '#fbbf24' }} /> {t.gasEstimate}
                       </span>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Description */}
-              <p style={{ fontSize: 13, color: 'var(--on-surface-variant)', lineHeight: 1.6, marginBottom: 14 }}>
-                {t.description}
-              </p>
+                {/* Description */}
+                <p style={{ fontSize: 13, color: 'var(--on-surface-variant)', lineHeight: 1.6, margin: 0 }}>
+                  {t.description}
+                </p>
 
-              {/* Beginner note */}
-              <div style={{
-                padding: '9px 12px', borderRadius: 10,
-                background: t.accent, border: `1px solid ${t.border}`,
-                fontSize: 12, color: t.color, fontWeight: 600, marginBottom: 14,
-                lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: 6
-              }}>
-                <Lightbulb size={14} style={{ flexShrink: 0, marginTop: 2 }} /> {t.beginner_note}
-              </div>
-
-              {/* Feature tags */}
-              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 16 }}>
-                {t.features.map(f => (
-                  <span key={f} className="pg-badge"
-                    style={{ background: 'var(--surface-highest)', color: 'var(--on-surface-variant)', border: '1px solid var(--outline)' }}>
-                    {f}
-                  </span>
-                ))}
-              </div>
-
-              {/* CTA */}
-              <button
-                onClick={(e) => { e.stopPropagation(); openModal(t); }}
-                className="pg-btn"
-                style={{
-                  width: '100%', justifyContent: 'center',
-                  background: t.color, color: 'var(--surface)',
-                  fontWeight: 700, boxShadow: `0 4px 16px ${t.accent}`,
+                {/* Beginner note */}
+                <div style={{
+                  padding: '10px 12px', borderRadius: 10,
+                  background: t.accent, border: `1px solid ${t.border}`,
+                  fontSize: 12, color: t.color, fontWeight: 600,
+                  lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: 8
                 }}>
-                Use Template <ArrowRight size={16} style={{ marginLeft: 6 }} />
-              </button>
-            </div>
+                  <Lightbulb size={15} style={{ flexShrink: 0, marginTop: 1.5 }} /> 
+                  <span>{t.beginner_note}</span>
+                </div>
+
+                {/* Feature tags */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {t.features.map(f => (
+                    <span 
+                      key={f} 
+                      className="pg-badge"
+                      style={{ background: 'rgba(255,255,255,0.02)', color: 'var(--on-surface-muted)', border: '1px solid rgba(255,255,255,0.05)' }}
+                    >
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Launch CTA */}
+              <div style={{ marginTop: 20, position: 'relative', zIndex: 2 }}>
+                <Button 
+                  variant="primary" 
+                  size="md"
+                  onClick={(e) => { e.stopPropagation(); openModal(t); }}
+                  style={{ width: '100%', backgroundColor: t.color, color: 'var(--surface)', fontWeight: 700, boxShadow: `0 4px 18px ${t.accent}` }}
+                  icon={<ArrowRight size={14} />}
+                  iconPosition="right"
+                >
+                  Use Template
+                </Button>
+              </div>
+            </GlassCard>
           );
         })}
       </div>
 
       {/* Footer note */}
-      <div className="pg-card db-enter db-enter-6" style={{ textAlign: 'center', marginTop: 16 }}>
-        <p style={{ fontSize: 13, color: 'var(--on-surface-variant)' }}>
-          All templates use <span style={{ color: 'var(--on-surface)', fontWeight: 700 }}>OpenZeppelin</span> audited contracts
-          and deploy to your selected testnet.
+      <GlassCard 
+        className="db-enter db-enter-6 text-center border border-white/5 bg-black/20" 
+        style={{ marginTop: 24 }}
+        hoverable={false}
+        padding="md"
+      >
+        <p style={{ fontSize: 13, color: 'var(--on-surface-muted)', margin: 0 }}>
+          All templates leverage standard <strong style={{ color: '#fff' }}>OpenZeppelin</strong> audited components 
+          and deploy to your selected sandbox testnet.
         </p>
-      </div>
+      </GlassCard>
 
-      {/* Customise Modal */}
-      {modalTemplate && (
-        <CustomiseModal
-          template={modalTemplate}
-          onClose={closeModal}
-          onLaunch={handleLaunch}
-        />
-      )}
-    </div>
+      {/* Reusable Customize Modal */}
+      <AnimatePresence>
+        {modalTemplate && (
+          <Modal 
+            isOpen={!!modalTemplate} 
+            onClose={closeModal} 
+            title={`Customise Template — ${modalTemplate.name}`}
+            size="md"
+          >
+            {/* Modal Header Intro */}
+            <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 20 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                background: modalTemplate.accent, border: `1px solid ${modalTemplate.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: modalTemplate.color
+              }}>{modalTemplate.icon}</div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', tracking: '0.08em', color: modalTemplate.color }}>
+                  {modalTemplate.category} · {modalTemplate.complexity}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--on-surface-muted)', marginTop: 2 }}>
+                  {modalTemplate.beginner_note}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '16px 0' }} />
+
+            {/* Fields list */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {fields.map(f => (
+                <Input
+                  key={f.key}
+                  label={f.label}
+                  name={f.key}
+                  type={f.type}
+                  step={f.step}
+                  value={params[f.key] ?? ''}
+                  onChange={handleParamChange}
+                  placeholder={f.placeholder}
+                  className="w-full"
+                />
+              ))}
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
+              <Button 
+                variant="ghost" 
+                size="md" 
+                onClick={closeModal} 
+                style={{ flex: 1, border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="primary" 
+                size="md" 
+                onClick={handleLaunch}
+                style={{ 
+                  flex: 2, 
+                  backgroundColor: modalTemplate.color, 
+                  color: 'var(--surface)', 
+                  boxShadow: `0 8px 24px ${modalTemplate.accent}`,
+                  fontWeight: 700
+                }}
+                icon={<ArrowRight size={14} />}
+                iconPosition="right"
+              >
+                Launch Wizard
+              </Button>
+            </div>
+          </Modal>
+        )}
+      </AnimatePresence>
+
+    </GlassCard>
   );
 }

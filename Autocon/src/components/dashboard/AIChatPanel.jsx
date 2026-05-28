@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 import { usePlatformStore } from '../../store/usePlatformStore';
-import { AnimatedAIChat } from '../ui/animated-ai-chat';
+import { AnimatedAIChat } from '../ui/AnimatedAIChat';
 import { RateLimitBanner } from '../ui/RateLimitBanner';
 import { sendChatRequest } from '../../services/chatApi';
 import { RequestThrottler } from '../../utils/throttling';
@@ -40,6 +40,7 @@ export default function AIChatPanel({
   const [rateLimitCountdown, setRateLimitCountdown] = useState(0);
   const [formError, setFormError] = useState('');
   const [streamingText, setStreamingText] = useState('');
+  const [limits, setLimits] = useState(null);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const streamRef = useRef(null);
@@ -100,6 +101,23 @@ export default function AIChatPanel({
       }
     }
   }, []);
+
+  const fetchLimits = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/chat/limits');
+      if (res && res.success) {
+        setLimits(res.limits);
+      }
+    } catch (err) {
+      console.error('Error fetching AI limits:', err);
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    if (isOpen || inline) {
+      fetchLimits();
+    }
+  }, [isOpen, inline, fetchLimits]);
 
   // ── Initial greeting ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -253,6 +271,10 @@ I'm your specialized **Web3 & Smart Contract expert**. I can help you with:
         });
       });
 
+      if (data.limits) {
+        setLimits(data.limits);
+      }
+
       if (!data.success) {
         if (data.retryAfter) {
           setRateLimitCountdown(data.retryAfter);
@@ -371,6 +393,7 @@ I'm your specialized **Web3 & Smart Contract expert**. I can help you with:
       onKeyDown={handleKeyDown}
       onClose={onClose}
       inline={inline}
+      limits={limits}
     >
       {rateLimitCountdown > 0 && (
         <RateLimitBanner

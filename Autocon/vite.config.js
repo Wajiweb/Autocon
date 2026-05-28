@@ -1,7 +1,11 @@
 import path from 'path'
+import { fileURLToPath } from 'url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -18,6 +22,22 @@ export default defineConfig({
         path.resolve(__dirname, '.'),
         path.resolve(__dirname, 'node_modules'),
       ],
+    },
+    proxy: {
+      // REST proxy: /api/binance/... → https://api.binance.com/...
+      '/api/binance': {
+        target: 'https://api.binance.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/binance/, ''),
+      },
+      // WebSocket proxy: /ws/binance/ws/... → wss://stream.binance.com:9443/ws/...
+      // Prevents browser CORS blocks on direct wss:// connections in development
+      '/ws/binance': {
+        target: 'wss://stream.binance.com:9443',
+        changeOrigin: true,
+        ws: true,
+        rewrite: (path) => path.replace(/^\/ws\/binance/, ''),
+      },
     },
   },
   // Phase 6: Code Splitting — Separate heavy vendor libraries from application code

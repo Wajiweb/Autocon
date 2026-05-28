@@ -1,6 +1,8 @@
 'use strict';
 const fs = require('fs');
 const { pinFileToIPFS, pinJSONToIPFS } = require('../services/ipfs.service');
+const asyncHandler = require('../utils/asyncHandler');
+const { AppError } = require('../middleware/errorHandler');
 
 const MAX_METADATA_SIZE = 10 * 1024; // 10KB max metadata JSON
 
@@ -8,9 +10,9 @@ const MAX_METADATA_SIZE = 10 * 1024; // 10KB max metadata JSON
  * PHASE 1: Uploads a physical asset (image) to IPFS.
  * Route: POST /api/ipfs/upload-file
  */
-async function uploadFile(req, res) {
+const uploadFile = asyncHandler(async (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ success: false, error: 'No file provided for upload.' });
+        throw new AppError('No file provided for upload.', 400, 'BAD_REQUEST');
     }
 
     const filePath = req.file.path;
@@ -23,39 +25,38 @@ async function uploadFile(req, res) {
         // Cleanup local file
         try { fs.unlinkSync(filePath); } catch (e) { }
 
-        res.json({ success: true, fileCID, fileUrl });
+        return res.json({ success: true, fileCID, fileUrl });
     } catch (error) {
         try { fs.unlinkSync(filePath); } catch (e) { }
-        console.error('[UploadController] File Upload Error:', error.message);
-        res.status(500).json({ success: false, error: error.message || 'Failed to upload file to IPFS.' });
+        throw new AppError(error.message || 'Failed to upload file to IPFS.', 500, 'IPFS_UPLOAD_FAILED');
     }
-}
+});
 
 /**
  * PHASE 3: Uploads metadata JSON to IPFS.
  * Route: POST /api/ipfs/upload-metadata
  */
-async function uploadMetadata(req, res) {
+const uploadMetadata = asyncHandler(async (req, res) => {
     const { metadata } = req.body;
     if (!metadata) {
-        return res.status(400).json({ success: false, error: 'No metadata JSON provided.' });
+        throw new AppError('No metadata JSON provided.', 400, 'BAD_REQUEST');
     }
 
     // Validate metadata structure and size
     if (typeof metadata !== 'object' || metadata === null) {
-        return res.status(400).json({ success: false, error: 'Metadata must be a valid JSON object.' });
+        throw new AppError('Metadata must be a valid JSON object.', 400, 'INVALID_METADATA');
     }
 
     const metadataString = JSON.stringify(metadata);
     if (metadataString.length > MAX_METADATA_SIZE) {
-        return res.status(400).json({ success: false, error: `Metadata too large. Maximum ${MAX_METADATA_SIZE / 1024}KB allowed.` });
+        throw new AppError(`Metadata too large. Maximum ${MAX_METADATA_SIZE / 1024}KB allowed.`, 400, 'METADATA_TOO_LARGE');
     }
 
     // Prevent prototype pollution
     if (Object.prototype.hasOwnProperty.call(metadata, '__proto__') || 
         Object.prototype.hasOwnProperty.call(metadata, 'constructor') ||
         Object.prototype.hasOwnProperty.call(metadata, 'prototype')) {
-        return res.status(400).json({ success: false, error: 'Invalid metadata: reserved properties not allowed.' });
+        throw new AppError('Invalid metadata: reserved properties not allowed.', 400, 'INVALID_METADATA');
     }
 
     try {
@@ -63,11 +64,10 @@ async function uploadMetadata(req, res) {
         const metadataCID = await pinJSONToIPFS(metadata, `${name.replace(/\s+/g, '_')}_metadata.json`);
         const tokenURI = `ipfs://${metadataCID}`;
 
-        res.json({ success: true, metadataCID, tokenURI });
+        return res.json({ success: true, metadataCID, tokenURI });
     } catch (error) {
-        console.error('[UploadController] Metadata Upload Error:', error.message);
-        res.status(500).json({ success: false, error: error.message || 'Failed to upload metadata to IPFS.' });
+        throw new AppError(error.message || 'Failed to upload metadata to IPFS.', 500, 'IPFS_METADATA_UPLOAD_FAILED');
     }
-}
+});
 
 module.exports = { uploadFile, uploadMetadata };

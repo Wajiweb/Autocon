@@ -1,69 +1,79 @@
 import React from 'react';
 
 export function Toggle({
-  name,
-  checked,
+  checked = false,
   onChange,
   label,
   description,
-  disabled = false
+  disabled = false,
+  variant = 'button', // 'button' (like Wizard select block) or 'switch' (inline classic switch)
+  className = '',
+  ...rest
 }) {
-  const handleChange = () => {
-    onChange({
-      target: {
-        name,
-        value: !checked
-      }
-    });
+  const handleToggle = () => {
+    if (!disabled && onChange) {
+      onChange(!checked);
+    }
   };
 
-  return (
-    <label className={`flex items-center justify-between py-2 px-3 rounded-lg border cursor-pointer transition-all ${checked ? 'bg-[var(--primary)]/10 border-[var(--primary)]/30' : 'bg-transparent border-[var(--border-light)] hover:border-[var(--primary)]/30'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
-      <div className="flex flex-col">
-        <span className="text-sm font-medium text-[var(--on-surface)]">{label}</span>
-        {description && (
-          <span className="text-xs text-[var(--on-surface-muted)]">{description}</span>
-        )}
-      </div>
-      <div 
-        onClick={!disabled ? handleChange : undefined}
-        className={`relative w-11 h-6 rounded-full transition-colors ${checked ? 'bg-[var(--primary)]' : 'bg-[var(--border-light)]'}`}
+  if (variant === 'button') {
+    return (
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={disabled}
+        className={`wz-toggle text-left ${checked ? 'on' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+        {...rest}
       >
-        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
-      </div>
-    </label>
-  );
-}
+        <div className="wz-toggle-knob" aria-hidden="true" />
+        <div className="flex flex-col gap-0.5">
+          {label && <span className="wz-toggle-name">{label}</span>}
+          {description && <span className="text-[10px] text-on-surface-muted leading-tight">{description}</span>}
+        </div>
+      </button>
+    );
+  }
 
-export function Select({
-  name,
-  value,
-  onChange,
-  label,
-  options = [],
-  placeholder = 'Select...',
-  wrapperClassName = ''
-}) {
+  // Classic inline switch layout
   return (
-    <div className={`flex flex-col gap-2 mb-4 ${wrapperClassName}`}>
-      {label && (
-        <label className="text-xs font-bold text-[var(--on-surface-variant)] uppercase tracking-wider">
-          {label}
-        </label>
-      )}
-      <select
-        name={name}
-        value={value || ''}
-        onChange={onChange}
-        className="w-full bg-[var(--bg-secondary)] text-[color:var(--text-primary)] border border-[var(--border-dark)] rounded-[var(--radius-md)] px-4 py-3 text-sm outline-none transition-all duration-200 hover:border-[var(--primary)]/40 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]"
+    <div
+      onClick={handleToggle}
+      className={`flex items-center justify-between gap-4 p-3 border border-white/5 rounded-xl bg-white/[0.015] backdrop-blur-md cursor-pointer select-none transition-colors hover:border-white/10 ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+      {...rest}
+    >
+      <div className="flex flex-col gap-0.5">
+        {label && <span className="text-sm font-semibold text-white">{label}</span>}
+        {description && <span className="text-xs text-on-surface-muted leading-normal">{description}</span>}
+      </div>
+      <div
+        className={`wz-toggle-knob ${checked ? 'bg-primary border-primary' : 'bg-surface'}`}
+        style={{
+          width: '36px',
+          height: '20px',
+          borderRadius: '10px',
+          border: '0.5px solid var(--border-dark)',
+          position: 'relative',
+          flexShrink: 0,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+        }}
       >
-        <option value="">{placeholder}</option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        <div
+          style={{
+            content: "''",
+            position: 'absolute',
+            top: '3px',
+            left: '3px',
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            background: '#fff',
+            transform: checked ? 'translateX(16px)' : 'translateX(0)',
+            transition: 'transform 0.15s ease',
+          }}
+        />
+      </div>
     </div>
   );
 }
+
+export default Toggle;

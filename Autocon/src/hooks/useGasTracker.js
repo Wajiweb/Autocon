@@ -1,67 +1,118 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { useNetwork } from '../context/NetworkContext';
 
 /**
- * useGasTracker - Custom hook to fetch live network gas prices.
- * Polls the current network's RPC node every 15 seconds.
+ * useGasTracker — fetches live gas prices for the *currently selected network*.
+ *
+ * Re-fetches automatically whenever the user switches networks (Sepolia ↔ BNB Testnet etc.)
+ *
+ * Gas price strategy (EIP-1559 aware):
+ *   - Use `maxPriorityFeePerGas` (the miner tip) as the primary display value.
+ *   - Fall back to legacy `gasPrice` on non-EIP-1559 chains (e.g. BNB chain).
+ *   - Avoid `maxFeePerGas` — that's only the theoretical ceiling, not the real cost.
+ *
+ * Thresholds are network-aware:
+ *   BNB chain: fixed 1–3 Gwei normally, so tighter thresholds apply.
+ *   ETH-based: 0.5–10 Gwei priority fee in 2024-2025.
  */
 export function useGasTracker() {
-  const [gasPriceGwei, setGasPriceGwei] = useState(null);
-  const [blockNumber, setBlockNumber] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [status, setStatus] = useState('average'); // 'cheap', 'average', 'expensive'
+  const { network } = useNetwork();
 
+  const [gasPriceGwei, setGasPriceGwei] = useState(null);
+  const [blockNumber, setBlockNumber]   = useState(null);
+  const [isLoading, setIsLoading]       = useState(true);
+  const [status, setStatus]             = useState('average');
+
+  // Re-run the entire effect whenever the selected network changes
   useEffect(() => {
+    let cancelled = false;
     let intervalId;
+    setIsLoading(true);
+    setGasPriceGwei(null);
+    setBlockNumber(null);
+
+    const isBNB = network?.key?.toLowerCase().includes('bnb');
 
     const fetchGasPrice = async () => {
       try {
         let provider;
 
-        // 1. Try to use the user's injected Web3 provider (MetaMask) so it matches their current network
+        // ── Choose provider ──────────────────────────────────────────────
+        // If MetaMask is on the same chain as our selected network, use it.
+        // Otherwise (or if no MetaMask), use the network's own public RPC.
+        let metaMaskChainId = null;
         if (window.ethereum) {
-            provider = new ethers.BrowserProvider(window.ethereum);
-        } else {
-            // 2. Fallback to a highly reliable public Ethereum Mainnet RPC so the widget still works beautifully
-            provider = new ethers.JsonRpcProvider('https://cloudflare-eth.com');
+          try {
+            metaMaskChainId = await window.ethereum.request({ method: 'eth_chainId' });
+          } catch (_) {}
         }
 
-        const feeData = await provider.getFeeData();
+        const metaMaskMatchesNetwork =
+          metaMaskChainId &&
+          network?.chainId &&
+          metaMaskChainId.toLowerCase() === network.chainId.toLowerCase();
 
-        // Calculate current gas price (maxFeePerGas for EIP-1559, or fallback to gasPrice)
-        const currentGasWei = feeData.maxFeePerGas || feeData.gasPrice;
-        if (!currentGasWei) return;
+        if (metaMaskMatchesNetwork) {
+          provider = new ethers.BrowserProvider(window.ethereum);
+        } else {
+          // Use the selected network's own public RPC endpoint directly
+          provider = new ethers.JsonRpcProvider(network.rpcUrl);
+        }
 
-        const gwei = Number(ethers.formatUnits(currentGasWei, 'gwei'));
-        setGasPriceGwei(gwei);
+        const [feeData, blockNum] = await Promise.all([
+          provider.getFeeData(),
+          provider.getBlockNumber(),
+        ]);
 
-        const blockNum = await provider.getBlockNumber();
+        if (cancelled) return;
         setBlockNumber(blockNum);
 
-        // Determine status thresholds based on general network feel
-        if (gwei < 15) {
-          setStatus('cheap');
-        } else if (gwei > 40) {
-          setStatus('expensive');
-        } else {
-          setStatus('average');
-        }
+        // ── Select the right gas price field ────────────────────────────
+        // BNB chain (BSC) is NOT EIP-1559 — it uses legacy gasPrice.
+        // Ethereum / Sepolia is EIP-1559 — use maxPriorityFeePerGas (the tip).
+        const priceWei = isBNB
+          ? (feeData.gasPrice)                          // BSC: legacy fixed gas
+          : (feeData.maxPriorityFeePerGas ?? feeData.gasPrice); // ETH: EIP-1559 tip
 
-      } catch (error) {
-        console.error("Error fetching gas price:", error);
+        if (!priceWei || cancelled) return;
+
+        const gwei = Number(ethers.formatUnits(priceWei, 'gwei'));
+
+        // Sanity clamp: if maxFeePerGas leaked through somehow, cap at 500
+        const safeGwei = gwei > 500
+          ? Number(ethers.formatUnits(feeData.gasPrice ?? priceWei, 'gwei'))
+          : gwei;
+
+        setGasPriceGwei(safeGwei);
+
+        // ── Status thresholds (network-aware) ────────────────────────────
+        if (isBNB) {
+          // BSC Testnet: fixed 10 Gwei; Mainnet: 1–3 Gwei
+          if (safeGwei < 3)       setStatus('cheap');
+          else if (safeGwei > 8)  setStatus('expensive');
+          else                    setStatus('average');
+        } else {
+          // ETH priority tip ranges (2024-2025)
+          if (safeGwei < 2)       setStatus('cheap');
+          else if (safeGwei > 10) setStatus('expensive');
+          else                    setStatus('average');
+        }
+      } catch (err) {
+        console.warn(`[GasTracker] ${network?.name ?? 'unknown'} fetch failed:`, err.message);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
-    // Fetch immediately
     fetchGasPrice();
+    intervalId = setInterval(fetchGasPrice, 15_000);
 
-    // Poll every 15 seconds
-    intervalId = setInterval(fetchGasPrice, 15000);
-
-    return () => clearInterval(intervalId);
-  }, []); // Remove network dependency so it just uses the global provider
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [network?.key, network?.rpcUrl, network?.chainId]); // ← re-runs on network switch
 
   return { gasPriceGwei, status, isLoading, blockNumber };
 }

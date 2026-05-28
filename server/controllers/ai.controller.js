@@ -8,6 +8,61 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { AppError } = require('../middleware/errorHandler');
 const { getGeminiModel, isGeminiAvailable } = require('../services/geminiService');
+const { getAiLimits } = require('../middleware/rateLimiter');
+
+const SUGGEST_RESPONSE_SCHEMA = {
+    type: 'OBJECT',
+    properties: {
+        suggestions: {
+            type: 'OBJECT',
+            properties: {
+                supply: { type: 'INTEGER' },
+                decimals: { type: 'INTEGER' },
+                mintPrice: { type: 'STRING' },
+                maxSupply: { type: 'INTEGER' },
+                duration: { type: 'INTEGER' },
+                minimumBid: { type: 'STRING' },
+                isMintable: { type: 'BOOLEAN' },
+                isBurnable: { type: 'BOOLEAN' },
+                hasTax: { type: 'BOOLEAN' },
+                taxRate: { type: 'NUMBER' }
+            }
+        },
+        reasoning: {
+            type: 'STRING',
+            description: 'A concise 1-2 sentence explanation of why you chose these parameters.'
+        }
+    },
+    required: ['suggestions', 'reasoning']
+};
+
+const EXPLAIN_AUDIT_SCHEMA = {
+    type: 'OBJECT',
+    properties: {
+        summary: { type: 'STRING', description: 'A 1-2 sentence plain English summary of the overall security posture.' },
+        risks: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description: 'Simple plain English explanations of each risk.'
+        },
+        recommendations: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description: 'Actionable steps to fix the risks.'
+        }
+    },
+    required: ['summary', 'risks', 'recommendations']
+};
+
+function parseAIJSON(responseText) {
+    try {
+        const cleanText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanText);
+    } catch (e) {
+        throw new AppError("AI returned malformed JSON", 502, 'AI_PARSE_ERROR');
+    }
+}
+
 
 /**
  * POST /api/ai/suggest
@@ -25,43 +80,21 @@ const suggestConfig = asyncHandler(async (req, res) => {
     // Validate and truncate contract code if too large
     const codeToProcess = (partialInputs?.sourceCode || '').slice(0, MAX_CONTRACT_SIZE);
     
-    const model = getGeminiModel('gemini-2.5-flash');
+    const model = getGeminiModel('gemini-2.5-flash', true, SUGGEST_RESPONSE_SCHEMA);
 
     const prompt = `You are an expert Web3 smart contract architect.
 The user wants to configure a ${contractType} contract.
 Their description of what they want: "${userDescription}"
 Current inputs they have already filled (if any): ${JSON.stringify(partialInputs || {})}
 
-Based on this, suggest optimal smart contract parameters.
-Return ONLY a valid JSON object matching this schema exactly. Only include properties relevant to ${contractType}:
-{
-  "suggestions": {
-    "supply": 1000000,
-    "decimals": 18,
-    "mintPrice": "0.05",
-    "maxSupply": 10000,
-    "duration": 7,
-    "minimumBid": "0.1",
-    "isMintable": true,
-    "isBurnable": false,
-    "hasTax": true,
-    "taxRate": 5
-  },
-  "reasoning": "A concise 1-2 sentence explanation of why you chose these parameters."
-}`;
+Based on this, suggest optimal smart contract parameters. Keep the reasoning highly compact and brief (strictly 1-2 sentences maximum).`;
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-    
-    let jsonResponse;
-    try {
-        const cleanText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
-        jsonResponse = JSON.parse(cleanText);
-    } catch (e) {
-        throw new AppError("AI returned malformed JSON", 502, 'AI_PARSE_ERROR');
-    }
+    const jsonResponse = parseAIJSON(responseText);
+    const limits = await getAiLimits(req);
 
-    return res.json({ success: true, data: jsonResponse });
+    return res.json({ success: true, data: jsonResponse, limits });
 });
 
 /**
@@ -80,37 +113,25 @@ const explainAudit = asyncHandler(async (req, res) => {
     // Validate and truncate contract code
     const truncatedCode = (contractCode || '').slice(0, AUDIT_MAX_CONTRACT_SIZE);
     
-    const model = getGeminiModel('gemini-2.5-flash');
+    const model = getGeminiModel('gemini-2.5-flash', true, EXPLAIN_AUDIT_SCHEMA);
 
     const prompt = `You are an expert Web3 security auditor.
 I have a smart contract and its raw technical audit results (e.g. from Slither).
 DO NOT override or hide any risks. Your job is ONLY to translate the technical jargon into plain English.
+Keep all summaries, risks, and recommendations extremely compact, direct, and brief.
 
 Technical Vulnerabilities:
 ${JSON.stringify(vulnerabilities)}
 
 Contract Code Snippet (first 1500 chars to provide context):
-${truncatedCode.substring(0, 1500)}
-
-Return ONLY a valid JSON object matching this schema exactly:
-{
-  "summary": "A 1-2 sentence plain English summary of the overall security posture.",
-  "risks": ["Simple explanation of risk 1", "Simple explanation of risk 2"],
-  "recommendations": ["Actionable step to fix risk 1", "Actionable step to fix risk 2"]
-}`;
+${truncatedCode.substring(0, 1500)}`;
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-    
-    let jsonResponse;
-    try {
-        const cleanText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
-        jsonResponse = JSON.parse(cleanText);
-    } catch (e) {
-        throw new AppError("AI returned malformed JSON", 502, 'AI_PARSE_ERROR');
-    }
+    const jsonResponse = parseAIJSON(responseText);
+    const limits = await getAiLimits(req);
 
-    return res.json({ success: true, data: jsonResponse });
+    return res.json({ success: true, data: jsonResponse, limits });
 });
 
 module.exports = { suggestConfig, explainAudit };

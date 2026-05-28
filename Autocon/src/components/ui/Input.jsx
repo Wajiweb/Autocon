@@ -1,64 +1,45 @@
 import React, { forwardRef } from 'react';
+import { FormField } from './FormSection';
 
-/**
- * Shared Input Component
- * Standardizes text inputs and textareas across the application.
- */
 export const Input = forwardRef(({
   label,
+  hint,
   error,
-  helperText,
+  required,
+  icon,
   className = '',
-  wrapperClassName = '',
+  id,
   type = 'text',
-  multiline = false,
-  rows = 4,
-  ...props
+  ...rest
 }, ref) => {
-  const baseInputStyles = `
-    w-full bg-[var(--bg-secondary)] text-[color:var(--text-primary)] border border-[var(--border-dark)] 
-    rounded-[var(--radius-md)] px-4 py-3 text-sm outline-none transition-all duration-200
-    placeholder:text-[var(--text-secondary)]
-    hover:border-[var(--primary)]/40
-    focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-glow)]
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `;
-
-  const errorStyles = error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '';
-
-  const inputClasses = `${baseInputStyles} ${errorStyles} ${className}`;
-
-  return (
-    <div className={`flex flex-col gap-2 mb-6 ${wrapperClassName}`}>
-      {label && (
-        <label className="text-xs font-bold text-[var(--on-surface-variant)] uppercase tracking-wider">
-          {label}
-        </label>
+  const inputEl = (
+    <div className="relative flex items-center w-full">
+      {icon && (
+        <span className="absolute left-3.5 text-on-surface-muted pointer-events-none flex items-center justify-center">
+          {icon}
+        </span>
       )}
-      
-      {multiline ? (
-        <textarea
-          ref={ref}
-          className={`${inputClasses} resize-y min-h-[100px]`}
-          rows={rows}
-          {...props}
-        />
-      ) : (
-        <input
-          ref={ref}
-          type={type}
-          className={inputClasses}
-          {...props}
-        />
-      )}
-
-      {(error || helperText) && (
-        <p className={`text-xs mt-1 ${error ? 'text-red-500' : 'text-[var(--on-surface-muted)]'}`}>
-          {error || helperText}
-        </p>
-      )}
+      <input
+        ref={ref}
+        id={id}
+        type={type}
+        className={`input surface-input ${icon ? 'pl-10' : ''} ${error ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20' : ''} ${className}`}
+        required={required}
+        {...rest}
+      />
     </div>
   );
+
+  if (label || hint || error) {
+    return (
+      <FormField label={label} hint={hint} error={error} required={required}>
+        {inputEl}
+      </FormField>
+    );
+  }
+
+  return inputEl;
 });
 
 Input.displayName = 'Input';
+export default Input;

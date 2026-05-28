@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTOCON - TASK DEPENDENCY / FLOW DIAGRAM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; padding: 40px; display: flex; justify-content: center; min-width: 1400px; }
+        .node {
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .node-wide { width: 380px; }
+        
+        .bg-n1 { background-color: #dcfce7; border-color: #4ade80; } 
+        .bg-n2 { background-color: #e0f2fe; border-color: #38bdf8; } 
+        .bg-n3-1 { background-color: #fef08a; border-color: #facc15; } 
+        .bg-n3-2 { background-color: #f3e8ff; border-color: #c084fc; } 
+        .bg-n3-3 { background-color: #fce7f3; border-color: #f472b6; } 
+        .bg-n3-4 { background-color: #cffafe; border-color: #22d3ee; } 
+        .bg-n4-1 { background-color: #dcfce7; border-color: #4ade80; } 
+        .bg-n4-2 { background-color: #ffedd5; border-color: #fb923c; } 
+        .bg-n4-3 { background-color: #e0f2fe; border-color: #38bdf8; } 
+        .bg-n5 { background-color: #fef08a; border-color: #facc15; } 
+        .bg-n6-1 { background-color: #fce7f3; border-color: #f472b6; } 
+        .bg-n6-2 { background-color: #e0f2fe; border-color: #38bdf8; } 
+        .bg-n6-3 { background-color: #dcfce7; border-color: #4ade80; } 
+        .bg-n6-4 { background-color: #f3e8ff; border-color: #c084fc; } 
+        .bg-n7 { background-color: #ffe4e6; border-color: #fb7185; } 
+        .bg-n8 { background-color: #dcfce7; border-color: #4ade80; } 
+
+        .v-line {
+            width: 2px;
+            background-color: #1e293b;
+            margin: 0 auto;
+            position: relative;
+        }
+        .v-line.arrow-down::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: -4px;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid #1e293b;
+        }
+        .h-line {
+            height: 2px;
+            background-color: #1e293b;
+            width: 100%;
+        }
+        
+        .phase-container {
+            display: flex;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .phase-left {
+            width: 200px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-right: 20px;
+        }
+        .phase-label {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .bracket {
+            position: absolute;
+            right: 20px;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            border-left: 2px solid #64748b;
+            border-top: 2px solid #64748b;
+            border-bottom: 2px solid #64748b;
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+        .phase-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="max-w-[1100px] w-full relative ml-[-150px]">
+    <div class="flex justify-center mb-12 ml-48">
+        <div class="bg-[#0f172a] text-white px-10 py-4 rounded-xl font-bold text-2xl tracking-wide shadow-lg">
+            AUTOCON – TASK DEPENDENCY / FLOW DIAGRAM
+        </div>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="phase-container relative">
+        <div class="phase-left">
+            <div class="bracket" style="top: 20px; bottom: 20px;"></div>
+            <div class="phase-label">Phase 1<br><span class="font-normal text-sm text-slate-600">Planning &<br>Design</span></div>
+        </div>
+        <div class="phase-content">
+            <div class="node node-wide bg-n1">
+                <div class="font-bold mb-1">1. Requirement Analysis<br>and System Planning</div>
+                <div class="text-xs text-slate-700">(Smart Contract Wizard, Verification pipeline, Deployment Registry)</div>
+            </div>
+            <div class="v-line arrow-down h-8"></div>
+            <div class="node node-wide bg-n2">
+                <div class="font-bold mb-1">2. System Design</div>
+                <div class="text-xs text-slate-700">(MERN Stack Architecture, Dashboard UI/UX, Solidity Contract Templates)</div>
+            </div>
+            
+            <div class="v-line h-6"></div>
+            
+            <div class="w-[880px]">
+                <div class="h-line"></div>
+                <div class="flex justify-between h-6">
+                    <div class="v-line arrow-down w-[2px] h-full m-0"></div>
+                    <div class="v-line arrow-down w-[2px] h-full m-0"></div>
+                    <div class="v-line arrow-down w-[2px] h-full m-0"></div>
+                    <div class="v-line arrow-down w-[2px] h-full m-0"></div>
+                </div>
+            </div>
+
+            <div class="flex gap-4 relative p-4 border border-dashed border-slate-400 rounded-xl bg-white w-[920px] justify-center">
+                <div class="node w-[210px] bg-n3-1">
+                    <div class="font-bold mb-1">3.1 UI/UX Design</div>
+                    <div class="text-xs text-slate-700">(React Dashboards,<br>Contract Wizard Flow)</div>
+                </div>
+                <div class="node w-[210px] bg-n3-2">
+                    <div class="font-bold mb-1">3.2 Database Design</div>
+                    <div class="text-xs text-slate-700">(MongoDB Token/NFT<br>Schemas, Artifacts)</div>
+                </div>
+                <div class="node w-[210px] bg-n3-3">
+                    <div class="font-bold mb-1">3.3 Backend API<br>Structure Planning</div>
+                    <div class="text-xs text-slate-700">(Node/Express API,<br>Verification Worker)</div>
+                </div>
+                <div class="node w-[210px] bg-n3-4">
+                    <div class="font-bold mb-1">3.4 Blockchain<br>Environment Setup</div>
+                    <div class="text-xs text-slate-700">(Hardhat/Foundry,<br>Ethers.js, Testnets)</div>
+                </div>
+
+                <div class="absolute -right-[230px] top-1/2 -translate-y-1/2 flex items-center text-[#7e22ce] font-semibold text-sm w-[210px]">
+                    <svg class="w-5 h-5 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Parallel Tasks<br>(Independent Activities)
+                </div>
+            </div>
+            
+            <div class="w-[880px] mt-2">
+                <div class="flex justify-between h-6">
+                    <div class="v-line w-[2px] h-full m-0 border-l-2 border-dashed border-purple-500 bg-transparent"></div>
+                    <div class="v-line w-[2px] h-full m-0 border-l-2 border-dashed border-purple-500 bg-transparent"></div>
+                    <div class="v-line w-[2px] h-full m-0 border-l-2 border-dashed border-purple-500 bg-transparent"></div>
+                    <div class="v-line w-[2px] h-full m-0 border-l-2 border-dashed border-purple-500 bg-transparent"></div>
+                </div>
+                <div class="h-line border-t-2 border-dashed border-purple-500 bg-transparent h-0"></div>
+                <div class="flex justify-center h-6">
+                    <div class="v-line arrow-down w-[2px] h-full m-0 border-l-2 border-dashed border-purple-500 bg-transparent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase-container relative">
+        <div class="phase-left">
+            <div class="bracket" style="top: 0px; bottom: 0px;"></div>
+            <div class="phase-label">Phase 2<br><span class="font-normal text-sm text-slate-600">Development</span></div>
+        </div>
+        <div class="phase-content">
+            <div class="flex gap-3 items-center w-[920px] justify-center">
+                <div class="node w-[280px] bg-n4-1">
+                    <div class="font-bold mb-1">4.1 Frontend Development</div>
+                    <div class="text-xs text-slate-700">(React, Vite, Tailwind CSS,<br>Web3 Integration)</div>
+                </div>
+                <svg width="30" height="20" viewBox="0 0 30 20" class="flex-shrink-0">
+                    <line x1="0" y1="10" x2="30" y2="10" stroke="#1e293b" stroke-width="2"/>
+                    <polygon points="5,5 0,10 5,15" fill="#1e293b"/>
+                    <polygon points="25,5 30,10 25,15" fill="#1e293b"/>
+                </svg>
+                <div class="node w-[280px] bg-n4-2">
+                    <div class="font-bold mb-1">4.2 Backend Development</div>
+                    <div class="text-xs text-slate-700">(Express API, Deployment<br>Registry, Audit Worker)</div>
+                </div>
+                <svg width="30" height="20" viewBox="0 0 30 20" class="flex-shrink-0">
+                    <line x1="0" y1="10" x2="30" y2="10" stroke="#1e293b" stroke-width="2"/>
+                    <polygon points="5,5 0,10 5,15" fill="#1e293b"/>
+                    <polygon points="25,5 30,10 25,15" fill="#1e293b"/>
+                </svg>
+                <div class="node w-[280px] bg-n4-3">
+                    <div class="font-bold mb-1">4.3 Smart Contract<br>Development</div>
+                    <div class="text-xs text-slate-700">(ERC20/ERC721/Auction<br>Templates in Solidity)</div>
+                </div>
+            </div>
+            
+            <div class="v-line arrow-down h-10 mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase-container relative">
+        <div class="phase-left">
+            <div class="bracket" style="top: 0px; bottom: 0px;"></div>
+            <div class="phase-label">Phase 3<br><span class="font-normal text-sm text-slate-600">Integration</span></div>
+        </div>
+        <div class="phase-content">
+            <div class="node node-wide bg-n5">
+                <div class="font-bold mb-1">5. System Integration</div>
+                <div class="text-xs text-slate-700">(Connecting Frontend, Backend, Database & Blockchain Modules)</div>
+            </div>
+            
+            <div class="v-line h-8"></div>
+            
+            <div class="w-[880px]">
+                <div class="h-line"></div>
+                <div class="flex justify-between h-6">
+                    <div class="v-line arrow-down w-[2px] h-full m-0"></div>
+                    <div class="v-line arrow-down w-[2px] h-full m-0"></div>
+                    <div class="v-line arrow-down w-[2px] h-full m-0"></div>
+                    <div class="v-line arrow-down w-[2px] h-full m-0"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase-container relative">
+        <div class="phase-left">
+            <div class="bracket" style="top: 0px; bottom: 0px;"></div>
+            <div class="phase-label">Phase 4<br><span class="font-normal text-sm text-slate-600">Testing</span></div>
+        </div>
+        <div class="phase-content">
+            <div class="flex gap-4 w-[920px] justify-center">
+                <div class="node w-[210px] bg-n6-1">
+                    <div class="font-bold mb-1">6.1 Unit Testing</div>
+                    <div class="text-xs text-slate-700">(Jest for Backend,<br>Mocha/Chai for Contracts)</div>
+                </div>
+                <div class="node w-[210px] bg-n6-2">
+                    <div class="font-bold mb-1">6.2 Integration Testing</div>
+                    <div class="text-xs text-slate-700">(End-to-End API flows,<br>Dashboard interaction)</div>
+                </div>
+                <div class="node w-[210px] bg-n6-3">
+                    <div class="font-bold mb-1">6.3 Blockchain Testing</div>
+                    <div class="text-xs text-slate-700">(Testnet Deployments,<br>Transaction checks)</div>
+                </div>
+                <div class="node w-[210px] bg-n6-4">
+                    <div class="font-bold mb-1">6.4 System Testing</div>
+                    <div class="text-xs text-slate-700">(Security Audits, Verification<br>pipeline validation)</div>
+                </div>
+            </div>
+            
+            <div class="w-[880px] mt-2">
+                <div class="flex justify-between h-6">
+                    <div class="v-line w-[2px] h-full m-0"></div>
+                    <div class="v-line w-[2px] h-full m-0"></div>
+                    <div class="v-line w-[2px] h-full m-0"></div>
+                    <div class="v-line w-[2px] h-full m-0"></div>
+                </div>
+                <div class="h-line"></div>
+                <div class="flex justify-center h-8">
+                    <div class="v-line arrow-down w-[2px] h-full m-0"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="phase-container relative">
+        <div class="phase-left">
+            <div class="bracket" style="top: 0px; bottom: 0px;"></div>
+            <div class="phase-label">Phase 5<br><span class="font-normal text-sm text-slate-600">Deployment</span></div>
+        </div>
+        <div class="phase-content">
+            <div class="node node-wide bg-n7">
+                <div class="font-bold mb-1">7. Deployment</div>
+                <div class="text-xs text-slate-700">(Vercel/Render for Web, Mainnet for Contracts)</div>
+            </div>
+            <div class="v-line arrow-down h-8"></div>
+        </div>
+    </div>
+
+    <!-- Phase 6 -->
+    <div class="phase-container relative mb-0">
+        <div class="phase-left">
+            <div class="bracket" style="top: 0px; bottom: 0px;"></div>
+            <div class="phase-label">Phase 6<br><span class="font-normal text-sm text-slate-600">Maintenance</span></div>
+        </div>
+        <div class="phase-content">
+            <div class="node node-wide bg-n8">
+                <div class="font-bold mb-1">8. Maintenance & Updates</div>
+                <div class="text-xs text-slate-700">(Dashboard Monitoring, Bug Fixes, Upgrades)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legends (Absolute position on the right) -->
+    <div class="absolute right-[-240px] top-[400px] flex flex-col gap-6 w-64">
+        <!-- Legend Box -->
+        <div class="border border-slate-300 rounded-lg p-4 bg-white shadow-sm text-sm">
+            <div class="font-bold mb-3 border-b pb-1">LEGEND</div>
+            <div class="flex items-center gap-3 mb-3">
+                <svg width="40" height="10" viewBox="0 0 40 10" fill="none"><line x1="0" y1="5" x2="35" y2="5" stroke="#1e293b" stroke-width="2"/><polygon points="30,0 40,5 30,10" fill="#1e293b"/></svg>
+                <span>Sequential Dependency</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+                <svg width="40" height="10" viewBox="0 0 40 10" fill="none"><line x1="0" y1="5" x2="35" y2="5" stroke="#a855f7" stroke-width="2" stroke-dasharray="4 2"/><polygon points="30,0 40,5 30,10" fill="#a855f7"/></svg>
+                <span>Parallel Dependency</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+                <svg width="40" height="10" viewBox="0 0 40 10" fill="none"><line x1="5" y1="5" x2="35" y2="5" stroke="#1e293b" stroke-width="2"/><polygon points="10,0 0,5 10,10" fill="#1e293b"/><polygon points="30,0 40,5 30,10" fill="#1e293b"/></svg>
+                <span>Interaction</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-6 border border-dashed border-slate-400 rounded bg-slate-50 shrink-0"></div>
+                <span>Parallel Task Group</span>
+            </div>
+        </div>
+
+        <!-- Key Points Box -->
+        <div class="border border-slate-300 rounded-lg p-4 bg-white shadow-sm text-sm">
+            <div class="font-bold mb-3 border-b pb-1">KEY POINTS</div>
+            <ul class="list-disc pl-4 space-y-2 text-slate-700 text-xs">
+                <li>Tasks in the same row can be executed in parallel.</li>
+                <li>Each task must be completed before its dependent task(s) begin.</li>
+                <li>Integration is done after core modules are developed.</li>
+                <li>Testing is performed in multiple levels to ensure reliability.</li>
+                <li>Deployment happens after successful testing.</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

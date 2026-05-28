@@ -11,22 +11,19 @@
  */
 
 const Job         = require('../models/Job');
-const { buildVerificationJob, buildAuditJob } = require('../queues/jobHelpers');
+const { buildVerificationJob, buildAuditJob, buildCompileJob } = require('../queues/jobHelpers');
+const asyncHandler = require('../utils/asyncHandler');
+const { AppError } = require('../middleware/errorHandler');
+const logger = require('../utils/logger');
 
 // ─── Failure Logger ───────────────────────────────────────────────────────────
-// Centralized failure logger — writes structured log entries so all failures
-// are visible in one place (can be wired to external loggers like Winston later).
 function logJobFailure(context, jobId, reason, attempt) {
-    console.error(
-        JSON.stringify({
-            level:     'ERROR',
-            timestamp: new Date().toISOString(),
-            context,
-            jobId,
-            reason,
-            attempt,
-        })
-    );
+    logger.error(`Job failure in context: ${context}`, {
+        jobContext: context,
+        jobId,
+        reason,
+        attempt,
+    });
 }
 
 const shouldRunInlineJobs = () => (
@@ -39,12 +36,21 @@ const runInlineJob = (type, jobData) => {
 
     if (type === 'verification') {
         const { processVerificationJob } = require('../workers/verification.worker');
-        processVerificationJob(mockBullJob).catch(err => console.error('[InlineWorker]', err));
+        processVerificationJob(mockBullJob).catch(err => logger.error('[InlineWorker] Verification failed', { error: err.message }));
         return;
     }
 
-    const { processAuditJob } = require('../workers/audit.worker');
-    processAuditJob(mockBullJob).catch(err => console.error('[InlineWorker]', err));
+    if (type === 'audit') {
+        const { processAuditJob } = require('../workers/audit.worker');
+        processAuditJob(mockBullJob).catch(err => logger.error('[InlineWorker] Audit failed', { error: err.message }));
+        return;
+    }
+
+    if (type === 'compile') {
+        const { processCompileJob } = require('../workers/compile.worker');
+        processCompileJob(mockBullJob).catch(err => logger.error('[InlineWorker] Compile failed', { error: err.message }));
+        return;
+    }
 };
 
 // ─── POST /api/jobs/create ────────────────────────────────────────────────────
@@ -59,164 +65,168 @@ const runInlineJob = (type, jobData) => {
  * Response (202 Accepted — non-blocking):
  *   { success: true, jobId, status: 'pending', message }
  */
-async function createJob(req, res) {
+const createJob = asyncHandler(async (req, res) => {
     const { type, payload } = req.body;
     const ownerAddress = req.user.walletAddress;
 
     if (!type || !payload) {
-        return res.status(400).json({ success: false, error: '`type` and `payload` are required.' });
+        throw new AppError('`type` and `payload` are required.', 400, 'BAD_REQUEST');
     }
-    if (!['verification', 'audit'].includes(type)) {
-        return res.status(400).json({ success: false, error: '`type` must be "verification" or "audit".' });
+    if (!['verification', 'audit', 'compile'].includes(type)) {
+        throw new AppError('`type` must be "verification", "audit", or "compile".', 400, 'BAD_REQUEST');
     }
 
-    try {
-        let jobData;
-        const USE_IN_MEMORY_QUEUE = shouldRunInlineJobs();
+    let jobData;
+    const USE_IN_MEMORY_QUEUE = shouldRunInlineJobs();
 
-        if (type === 'verification') {
-            const { contractAddress, sourceCode, contractName, compilerVersion, network } = payload;
-            if (!contractAddress || !sourceCode || !contractName || !compilerVersion || !network) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Verification requires: contractAddress, sourceCode, contractName, compilerVersion, network.'
-                });
-            }
-            jobData = buildVerificationJob({ ...payload, ownerAddress });
+    if (type === 'verification') {
+        const { contractAddress, sourceCode, contractName, compilerVersion, network } = payload;
+        if (!contractAddress || !sourceCode || !contractName || !compilerVersion || !network) {
+            throw new AppError('Verification requires: contractAddress, sourceCode, contractName, compilerVersion, network.', 400, 'BAD_REQUEST');
+        }
+        jobData = buildVerificationJob({ ...payload, ownerAddress });
 
-            // Persist Job document BEFORE enqueuing so status is immediately pollable
-            await Job.create({
-                jobId:        jobData.jobId,
-                type:         'verification',
-                ownerAddress,
-                status:       'pending',
-                payload:      jobData.payload,
-                maxAttempts:  3,
-            });
+        // Persist Job document BEFORE enqueuing so status is immediately pollable
+        await Job.create({
+            jobId:        jobData.jobId,
+            type:         'verification',
+            ownerAddress,
+            status:       'pending',
+            payload:      jobData.payload,
+            maxAttempts:  3,
+        });
 
-            // Enqueue into Redis/BullMQ or run inline
-            if (USE_IN_MEMORY_QUEUE) {
-                runInlineJob('verification', jobData);
-            } else {
+        // Enqueue into Redis/BullMQ or run inline
+        if (USE_IN_MEMORY_QUEUE) {
+            runInlineJob('verification', jobData);
+        } else {
+            try {
                 const { addVerificationJob } = require('../queues');
                 await addVerificationJob(jobData);
-            }
-
-        } else if (type === 'audit') {
-            const { contractCode } = payload;
-            if (!contractCode) {
-                return res.status(400).json({ success: false, error: 'Audit requires: contractCode.' });
-            }
-            jobData = buildAuditJob({ ...payload, ownerAddress });
-
-            await Job.create({
-                jobId:        jobData.jobId,
-                type:         'audit',
-                ownerAddress,
-                status:       'pending',
-                payload:      jobData.payload,
-                maxAttempts:  2,
-            });
-
-            if (USE_IN_MEMORY_QUEUE) {
-                runInlineJob('audit', jobData);
-            } else {
-                const { addAuditJob } = require('../queues');
-                await addAuditJob(jobData);
+            } catch (enqueueErr) {
+                await Job.markFailed(jobData.jobId, `Enqueuing failed: ${enqueueErr.message}`);
+                throw new AppError(`Failed to enqueue verification job: ${enqueueErr.message}`, 500, 'QUEUE_ERROR');
             }
         }
 
-        // 202 Accepted — work is queued but not yet done
-        return res.status(202).json({
-            success: true,
-            jobId:   jobData.jobId,
-            type,
-            status:  'pending',
-            message: `${type} job queued successfully. Poll /api/jobs/${jobData.jobId} for status.`,
+    } else if (type === 'audit') {
+        const { contractCode } = payload;
+        if (!contractCode) {
+            throw new AppError('Audit requires: contractCode.', 400, 'BAD_REQUEST');
+        }
+        jobData = buildAuditJob({ ...payload, ownerAddress });
+
+        await Job.create({
+            jobId:        jobData.jobId,
+            type:         'audit',
+            ownerAddress,
+            status:       'pending',
+            payload:      jobData.payload,
+            maxAttempts:  2,
         });
 
-    } catch (err) {
-        logJobFailure('createJob', null, err.message, 0);
-        return res.status(500).json({ success: false, error: 'Failed to enqueue job.' });
+        if (USE_IN_MEMORY_QUEUE) {
+            runInlineJob('audit', jobData);
+        } else {
+            try {
+                const { addAuditJob } = require('../queues');
+                await addAuditJob(jobData);
+            } catch (enqueueErr) {
+                await Job.markFailed(jobData.jobId, `Enqueuing failed: ${enqueueErr.message}`);
+                throw new AppError(`Failed to enqueue audit job: ${enqueueErr.message}`, 500, 'QUEUE_ERROR');
+            }
+        }
+    } else if (type === 'compile') {
+        const { sourceCode, contractName } = payload;
+        if (!sourceCode || !contractName) {
+            throw new AppError('Compilation requires: sourceCode and contractName.', 400, 'BAD_REQUEST');
+        }
+        jobData = buildCompileJob({ ...payload, ownerAddress });
+
+        await Job.create({
+            jobId:        jobData.jobId,
+            type:         'compile',
+            ownerAddress,
+            status:       'pending',
+            payload:      jobData.payload,
+            maxAttempts:  1,
+        });
+
+        if (USE_IN_MEMORY_QUEUE) {
+            runInlineJob('compile', jobData);
+        } else {
+            try {
+                const { addCompileJob } = require('../queues');
+                await addCompileJob(jobData);
+            } catch (enqueueErr) {
+                await Job.markFailed(jobData.jobId, `Enqueuing failed: ${enqueueErr.message}`);
+                throw new AppError(`Failed to enqueue compile job: ${enqueueErr.message}`, 500, 'QUEUE_ERROR');
+            }
+        }
     }
-}
+
+    // 202 Accepted — work is queued but not yet done
+    return res.status(202).json({
+        success: true,
+        jobId:   jobData.jobId,
+        type,
+        status:  'pending',
+        message: `${type} job queued successfully. Poll /api/jobs/${jobData.jobId} for status.`,
+    });
+});
 
 // ─── GET /api/jobs/:jobId ──────────────────────────────────────────────────────
 
 /**
  * Returns the current status + result/error for a single job.
  * Used by the frontend to poll progress.
- *
- * Response:
- *   { success, job: { jobId, type, status, attempts, result, error, startedAt, completedAt } }
  */
-async function getJobStatus(req, res) {
+const getJobStatus = asyncHandler(async (req, res) => {
     const { jobId } = req.params;
     const ownerAddress = req.user.walletAddress;
 
-    try {
-        const job = await Job.findOne({ jobId, ownerAddress })
-            .select('jobId type status attempts maxAttempts result error startedAt completedAt createdAt')
-            .lean();
+    const job = await Job.findOne({ jobId, ownerAddress })
+        .select('jobId type status attempts maxAttempts result error startedAt completedAt createdAt')
+        .lean();
 
-        if (!job) {
-            return res.status(404).json({ success: false, error: 'Job not found.' });
-        }
-
-        // Compute processing duration if job has started
-        let durationMs = null;
-        if (job.startedAt && job.completedAt) {
-            durationMs = new Date(job.completedAt) - new Date(job.startedAt);
-        }
-
-        return res.json({
-            success: true,
-            job: { ...job, durationMs },
-        });
-
-    } catch (err) {
-        logJobFailure('getJobStatus', jobId, err.message, 0);
-        return res.status(500).json({ success: false, error: 'Failed to fetch job status.' });
+    if (!job) {
+        throw new AppError('Job not found.', 404, 'NOT_FOUND');
     }
-}
+
+    // Compute processing duration if job has started
+    let durationMs = null;
+    if (job.startedAt && job.completedAt) {
+        durationMs = new Date(job.completedAt) - new Date(job.startedAt);
+    }
+
+    return res.json({
+        success: true,
+        job: { ...job, durationMs },
+    });
+});
 
 // ─── GET /api/jobs ─────────────────────────────────────────────────────────────
 
 /**
  * Lists jobs for the authenticated user with pagination and optional filters.
- *
- * Query params:
- *   page    (default: 1)
- *   limit   (default: 10, max: 50)
- *   type    ('verification' | 'audit')
- *   status  ('pending' | 'processing' | 'completed' | 'failed')
- *
- * Response:
- *   { success, jobs: [...], pagination: { page, limit, total, pages } }
  */
-async function listJobs(req, res) {
+const listJobs = asyncHandler(async (req, res) => {
     const ownerAddress = req.user.walletAddress;
 
-    // ── Pagination ──────────────────────────────────────────────────────────────
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
     const skip  = (page - 1) * limit;
 
-    // ── Filters ─────────────────────────────────────────────────────────────────
     const filter = { ownerAddress };
-    if (['verification', 'audit'].includes(req.query.type))   filter.type   = req.query.type;
+    if (['verification', 'audit', 'compile'].includes(req.query.type))   filter.type   = req.query.type;
     if (['pending','processing','completed','failed'].includes(req.query.status)) filter.status = req.query.status;
 
     try {
-        // Run count + data query in parallel using aggregation pipeline for efficiency
         const [result] = await Job.aggregate([
             { $match: filter },
             {
                 $facet: {
-                    // Total count (for pagination metadata)
                     totalCount: [{ $count: 'count' }],
-
-                    // Paginated data — only fields needed by the frontend
                     jobs: [
                         { $sort: { createdAt: -1 } },
                         { $skip: skip },
@@ -233,7 +243,6 @@ async function listJobs(req, res) {
                                 createdAt:   1,
                                 startedAt:   1,
                                 completedAt: 1,
-                                // Expose result summary (not full payload to keep response lean)
                                 resultSummary: {
                                     $cond: {
                                         if:   { $eq: ['$status', 'completed'] },
@@ -265,30 +274,23 @@ async function listJobs(req, res) {
                 pages: Math.ceil(total / limit),
             },
         });
-
     } catch (err) {
-        /* Phase 5: use structured logJobFailure instead of raw console.error
-           to prevent unstructured stack trace leakage and enable log aggregation. */
         logJobFailure('listJobs', null, err.message, 0);
-        // Return empty result instead of 500 to prevent dashboard breakage
+        // Return empty result instead of failing to prevent dashboard UI breakage
         return res.json({
             success: true,
             jobs: [],
             pagination: { page: 1, limit: 10, total: 0, pages: 0 },
         });
     }
-}
+});
 
 // ─── GET /api/jobs/stats ───────────────────────────────────────────────────────
 
 /**
  * Returns aggregated job statistics per type and status.
- * Used by the dashboard to show a summary widget.
- *
- * Response:
- *   { success, stats: { verification: { pending, processing, completed, failed }, audit: {...} } }
  */
-async function getJobStats(req, res) {
+const getJobStats = asyncHandler(async (req, res) => {
     const ownerAddress = req.user.walletAddress;
 
     try {
@@ -312,9 +314,8 @@ async function getJobStats(req, res) {
 
         const raw = await Job.aggregate(pipeline);
 
-        // Reshape into { verification: { pending: 0, ... }, audit: { ... } }
         const defaultCounts = { pending: 0, processing: 0, completed: 0, failed: 0 };
-        const stats = { verification: { ...defaultCounts }, audit: { ...defaultCounts } };
+        const stats = { verification: { ...defaultCounts }, audit: { ...defaultCounts }, compile: { ...defaultCounts } };
 
         for (const row of raw) {
             const type = row._id;
@@ -325,11 +326,8 @@ async function getJobStats(req, res) {
         }
 
         return res.json({ success: true, stats });
-
     } catch (err) {
-        /* Phase 5: structured logging — consistent with logJobFailure pattern */
         logJobFailure('getJobStats', null, err.message, 0);
-        // Return default stats instead of 500 to prevent dashboard breakage
         return res.json({
             success: true,
             stats: {
@@ -338,6 +336,34 @@ async function getJobStats(req, res) {
             }
         });
     }
+});
+
+async function enqueueCompileJobHelper(sourceCode, contractName, ownerAddress) {
+    const jobData = buildCompileJob({ sourceCode, contractName, ownerAddress });
+
+    await Job.create({
+        jobId:        jobData.jobId,
+        type:         'compile',
+        ownerAddress,
+        status:       'pending',
+        payload:      jobData.payload,
+        maxAttempts:  1,
+    });
+
+    const USE_IN_MEMORY_QUEUE = shouldRunInlineJobs();
+    if (USE_IN_MEMORY_QUEUE) {
+        runInlineJob('compile', jobData);
+    } else {
+        try {
+            const { addCompileJob } = require('../queues');
+            await addCompileJob(jobData);
+        } catch (enqueueErr) {
+            await Job.markFailed(jobData.jobId, `Enqueuing failed: ${enqueueErr.message}`);
+            throw new AppError(`Failed to enqueue compile job: ${enqueueErr.message}`, 500, 'QUEUE_ERROR');
+        }
+    }
+
+    return jobData.jobId;
 }
 
-module.exports = { createJob, getJobStatus, listJobs, getJobStats };
+module.exports = { createJob, getJobStatus, listJobs, getJobStats, enqueueCompileJobHelper };

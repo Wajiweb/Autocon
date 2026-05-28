@@ -12,6 +12,7 @@
 const asyncHandler            = require('../utils/asyncHandler');
 const { AppError }            = require('../middleware/errorHandler');
 const { getGeminiModel, isGeminiAvailable } = require('../services/geminiService');
+const { getAiLimits } = require('../middleware/rateLimiter');
 
 const MAX_CONTRACT_SIZE = 50000; // 50KB max contract code
 const MAX_ANSWER_SIZE = 10000;   // 10KB max answer
@@ -160,7 +161,7 @@ ${truncatedCode}
 User Question: ${text}
 
 RULES:
-1. Provide a helpful, accurate, and easy-to-understand answer.
+1. Provide a highly compact, brief, concise, and easy-to-understand answer. Avoid fluff or wordy explanations. Get straight to the point.
 2. Use markdown formatting inside the answer string (headings, lists, code blocks, bold, etc).
 3. Generate an array of 3 to 4 highly relevant, contextual follow-up questions.
 4. You MUST respond ONLY with valid JSON matching this exact structure:
@@ -180,7 +181,7 @@ Answer the user's question directly and clearly, without contract context.
 User Question: ${text}
 
 RULES:
-1. Provide a helpful, accurate, and easy-to-understand answer.
+1. Provide a highly compact, brief, concise, and easy-to-understand answer. Avoid fluff or wordy explanations. Get straight to the point.
 2. Use markdown formatting inside the answer string (headings, lists, code blocks, bold, etc).
 3. Generate an array of 3 to 4 highly relevant, contextual follow-up questions.
 4. You MUST respond ONLY with valid JSON matching this exact structure:
@@ -249,12 +250,15 @@ If asked about live data (current gas prices, token prices, block numbers, netwo
         hasSuggestedQuestions: Array.isArray(suggestedQuestions) && suggestedQuestions.length > 0,
     }));
 
+    const limits = await getAiLimits(req);
+
     return res.json({
         success: true,
         data: {
             reply: answer,
             suggestedQuestions,
         },
+        limits,
     });
 });
 
