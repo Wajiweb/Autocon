@@ -500,14 +500,7 @@ const REQUIRED_CHAIN = getRequiredChainId();
 /* ── ABI ── */
 let ABI = [];
 try {
-  const raw = JSON.parse(RAW_ABI);
-  if (raw.length && typeof raw[0] === 'string') {
-    ABI = new ethers.Interface(raw).fragments.map(f => ({
-      name: f.name, type: f.type, stateMutability: f.stateMutability,
-      inputs:  Array.from(f.inputs  || []),
-      outputs: Array.from(f.outputs || []),
-    }));
-  } else { ABI = raw; }
+  ABI = JSON.parse(RAW_ABI);
 } catch(e) { console.error('ABI parse error', e); }
 
 /* ── Provider / Signer ── */
@@ -525,12 +518,13 @@ const SHORT_ADDR = `${CONTRACT_ADDRESS.slice(0, 6)}…${CONTRACT_ADDRESS.slice(-
    Now we assign first, then call loadHeroStats. ── */
 async function silentRead() {
   try {
-    if (!window.ethereum) return;
-    provider   = new ethers.BrowserProvider(window.ethereum);
+    // Use the public RPC provider for initial loading to avoid wallet dependency
+    provider   = new ethers.JsonRpcProvider(REQUIRED_CHAIN.rpc);
     roContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-    await roContract.getAddress(); // warm up the connection
     await loadHeroStats();
-  } catch(_) {}
+  } catch(e) {
+    console.error("silentRead stats load error:", e);
+  }
 }
 silentRead();
 
@@ -540,17 +534,22 @@ async function connectWallet() {
   try {
     btn.disabled = true;
     btn.innerHTML = '<span class="spin"></span> Connecting…';
-    provider    = new ethers.BrowserProvider(window.ethereum);
-    const accs  = await provider.send('eth_requestAccounts', []);
-    signer      = await provider.getSigner();
-    rwContract  = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-    roContract  = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+    
+    // Request accounts
+    const tempProvider = new ethers.BrowserProvider(window.ethereum);
+    const accs = await tempProvider.send('eth_requestAccounts', []);
+    
+    // Switch to correct network immediately
+    await ensureCorrectNetwork();
 
     const short = `${accs[0].slice(0,6)}…${accs[0].slice(-4)}`;
     btn.innerHTML  = `✅ ${short}`;
     btn.classList.add('connected');
     document.getElementById('connectTitle').textContent = 'Wallet connected!';
-    document.getElementById('connectSub').textContent   = `You are connected as ${accs[0].slice(0,10)}…${accs[0].slice(-6)}`;
+    
+    const sub = document.getElementById('connectSub');
+    sub.textContent   = `You are connected as ${accs[0].slice(0,10)}…${accs[0].slice(-6)}`;
+    sub.style.color   = '';
 
     // Enable all write buttons
     document.querySelectorAll('[data-requires-wallet]').forEach(b => b.disabled = false);
@@ -565,33 +564,33 @@ async function connectWallet() {
 async function ensureCorrectNetwork() {
   if (!window.ethereum) return;
   const currentChain = await window.ethereum.request({ method: 'eth_chainId' });
-  if (currentChain.toLowerCase() === REQUIRED_CHAIN.chainId.toLowerCase()) return; // already correct
-
-  // Wrong network — try to switch
-  try {
-    await window.ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: REQUIRED_CHAIN.chainId }],
-    });
-  } catch (switchErr) {
-    if (switchErr.code === 4902) {
-      // Network not in MetaMask yet — add it
+  if (currentChain.toLowerCase() !== REQUIRED_CHAIN.chainId.toLowerCase()) {
+    // Wrong network — try to switch
+    try {
       await window.ethereum.request({
-        method: 'wallet_addEthereumChain',
-        params: [{
-          chainId: REQUIRED_CHAIN.chainId,
-          chainName: REQUIRED_CHAIN.name,
-          rpcUrls: [REQUIRED_CHAIN.rpc],
-          blockExplorerUrls: [REQUIRED_CHAIN.explorer],
-          nativeCurrency: { name: REQUIRED_CHAIN.symbol, symbol: REQUIRED_CHAIN.symbol, decimals: 18 },
-        }],
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: REQUIRED_CHAIN.chainId }],
       });
-    } else {
-      throw new Error(`Please switch MetaMask to ${REQUIRED_CHAIN.name} to interact with this contract.`);
+    } catch (switchErr) {
+      if (switchErr.code === 4902) {
+        // Network not in MetaMask yet — add it
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: REQUIRED_CHAIN.chainId,
+            chainName: REQUIRED_CHAIN.name,
+            rpcUrls: [REQUIRED_CHAIN.rpc],
+            blockExplorerUrls: [REQUIRED_CHAIN.explorer],
+            nativeCurrency: { name: REQUIRED_CHAIN.symbol, symbol: REQUIRED_CHAIN.symbol, decimals: 18 },
+          }],
+        });
+      } else {
+        throw new Error(`Please switch MetaMask to ${REQUIRED_CHAIN.name} to interact with this contract.`);
+      }
     }
   }
 
-  // Refresh provider/signer after network change
+  // Refresh provider/signer after network change or verification
   provider   = new ethers.BrowserProvider(window.ethereum);
   signer     = await provider.getSigner();
   rwContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
@@ -660,11 +659,23 @@ async function loadHeroStats() {
   // Contract-type-specific stat attempts using correct function names
   let attempts = [];
   if (CONTRACT_CATEGORY === 'token') {
+    let decimals = 18n;
+    try {
+      decimals = await rc.decimals();
+    } catch(_) {}
+    
     attempts = [
       { fn: 'name',        label: 'Name',         fmt: v => v },
       { fn: 'symbol',      label: 'Symbol',        fmt: v => v },
       { fn: 'totalSupply', label: 'Total Supply',  fmt: v => {
-          try { return parseFloat(ethers.formatUnits(v, 18)).toLocaleString(); } catch { return v.toString(); }
+          try {
+            const formatted = ethers.formatUnits(v, decimals);
+            const parts = formatted.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            return parts[1] && parseInt(parts[1]) > 0 ? parts.join('.') : parts[0];
+          } catch {
+            return v.toString();
+          }
         }
       },
       { fn: 'decimals',    label: 'Decimals',      fmt: v => v.toString() },
@@ -847,6 +858,40 @@ function buildTokenUI(root) {
       showResult(result,
         `📌 Name: ${name}\n🔤 Symbol: ${sym}\n📦 Total Supply: ${supplyFmt} ${sym}\n🔢 Decimals: ${dec}`,
         'success');
+    },
+  }));
+
+  // Mint Tokens (Owner Only)
+  grid.appendChild(makeCard({
+    title: '🪙 Mint Tokens', color: 'green',
+    icon: '🪙', desc: 'Create new tokens and send them to a specific wallet (Only the contract owner can do this).',
+    inputs: [
+      { label: 'Recipient Address', placeholder: '0x...' },
+      { label: 'Amount to Mint', placeholder: 'e.g. 500', type: 'number' },
+    ],
+    btnText: '✨ Mint Tokens',
+    writeAction: async ([to, amount], result) => {
+      if (!to || !ethers.isAddress(to)) throw new Error('Please enter a valid recipient address starting with 0x.');
+      if (!amount || isNaN(amount) || Number(amount) <= 0) throw new Error('Please enter an amount greater than 0.');
+      const dec  = await safeRead('decimals').catch(() => 18n);
+      const val  = ethers.parseUnits(String(amount), dec);
+      await sendTx('mint', [to, val], {}, result, `Successfully minted ${amount} tokens to ${fmtAddr(to)}!`);
+    },
+  }));
+
+  // Burn Tokens
+  grid.appendChild(makeCard({
+    title: '🔥 Burn Tokens', color: 'red',
+    icon: '🔥', desc: 'Permanently destroy tokens from your connected wallet to reduce total supply.',
+    inputs: [
+      { label: 'Amount to Burn', placeholder: 'e.g. 50', type: 'number' },
+    ],
+    btnText: '🔥 Burn Tokens',
+    writeAction: async ([amount], result) => {
+      if (!amount || isNaN(amount) || Number(amount) <= 0) throw new Error('Please enter an amount greater than 0.');
+      const dec  = await safeRead('decimals').catch(() => 18n);
+      const val  = ethers.parseUnits(String(amount), dec);
+      await sendTx('burn', [val], {}, result, `Successfully burned ${amount} tokens!`);
     },
   }));
 

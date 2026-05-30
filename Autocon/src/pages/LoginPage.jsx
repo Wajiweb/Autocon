@@ -203,7 +203,7 @@ export default function LoginPage() {
                             borderRadius: '14px',
                             border: 'none',
                             background: isConnecting ? 'var(--surface-elevated)' : 'var(--primary)',
-                            color: 'var(--surface)',
+                            color: '#000000',
                             fontSize: '0.98rem',
                             fontWeight: 700,
                             cursor: isConnecting ? 'not-allowed' : 'pointer',

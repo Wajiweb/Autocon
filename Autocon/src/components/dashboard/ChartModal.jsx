@@ -250,8 +250,23 @@ export default function ChartModal({ coin, onClose }) {
           <>
             {/* Header */}
             <div className="db-modal-top">
-              <div className="db-m-ico" style={{ background: coinBg, color: coin.iconColor }}>
-                {coin.symbol.slice(0, 2)}
+              <div className="db-m-ico" style={{ background: coinBg, color: coin.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {coin.logo ? (
+                  <img
+                    src={coin.logo}
+                    alt={coin.symbol}
+                    style={{ width: '22px', height: '22px', objectFit: 'contain', display: 'block' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <span
+                  style={{ display: coin.logo ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--db-mono)', fontSize: '11px', fontWeight: 600 }}
+                >
+                  {coin.symbol.slice(0, 2)}
+                </span>
               </div>
               <div>
                 <div className="db-m-name">{coin.name}</div>

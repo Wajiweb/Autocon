@@ -275,7 +275,29 @@ export default function ChainSection() {
         paddingBottom: 'clamp(32px, 6vw, 60px)',
       }}
     >
-
+      {/* Ambient background glows (orange lights) */}
+      <div style={{
+        position: 'absolute',
+        width: '450px',
+        height: '450px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, hsla(25, 100%, 50%, 0.07) 0%, transparent 70%)',
+        top: '5%',
+        left: '-15%',
+        pointerEvents: 'none',
+        filter: 'blur(60px)',
+      }} />
+      <div style={{
+        position: 'absolute',
+        width: '400px',
+        height: '400px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, hsla(25, 100%, 50%, 0.05) 0%, transparent 70%)',
+        bottom: '5%',
+        right: '-10%',
+        pointerEvents: 'none',
+        filter: 'blur(50px)',
+      }} />
 
       <Container>
         {/* Header */}
@@ -284,8 +306,22 @@ export default function ChainSection() {
           whileInView="visible"
           viewport={viewportConfig}
           variants={staggerContainer}
-          style={{ textAlign: 'center', marginBottom: 'clamp(32px, 5vw, 56px)' }}
+          style={{ textAlign: 'center', marginBottom: 'clamp(32px, 5vw, 56px)', position: 'relative' }}
         >
+          {/* Centered title orange glow backlight - Larger & Glowier */}
+          <div style={{
+            position: 'absolute',
+            width: '550px',
+            height: '220px',
+            background: 'radial-gradient(circle, hsla(25, 100%, 50%, 0.33) 0%, hsla(25, 100%, 50%, 0.1) 35%, transparent 70%)',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+            filter: 'blur(50px)',
+            zIndex: 0,
+          }} />
+
           <motion.span
             variants={fadeUp}
             style={{ 
@@ -295,7 +331,9 @@ export default function ChainSection() {
               textTransform:'uppercase', 
               letterSpacing:'0.12em', 
               color: 'hsl(14 100% 55%)', 
-              marginBottom: '14px' 
+              marginBottom: '14px',
+              position: 'relative',
+              zIndex: 1,
             }}
           >
             Platform Comparison
@@ -308,6 +346,8 @@ export default function ChainSection() {
               color: 'hsl(0 0% 95%)', 
               marginBottom:'12px',
               letterSpacing: '-0.02em',
+              position: 'relative',
+              zIndex: 1,
             }}
           >
             Why AutoCon Wins
@@ -319,7 +359,9 @@ export default function ChainSection() {
               fontSize: '1rem', 
               maxWidth: '480px', 
               margin: '0 auto', 
-              lineHeight: 1.6 
+              lineHeight: 1.6,
+              position: 'relative',
+              zIndex: 1,
             }}
           >
             Compare AutoCon against raw chain development. No contest.

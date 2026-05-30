@@ -135,7 +135,7 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
       setActiveStep('confirm');
       const factory = new ethers.ContractFactory(contractData.abi, contractData.bytecode, signer);
       let args = [];
-      if (type === 'ERC20')   args = [walletAddress, BigInt(params.supply || 0) * BigInt(10 ** 18)];
+      if (type === 'ERC20')   args = [walletAddress, BigInt(params.supply || 0)];
       if (type === 'ERC721')  args = [walletAddress, Number(params.maxSupply||10000), params.baseURI||'', ethers.parseEther(params.mintPrice||'0')];
       if (type === 'Auction') args = [walletAddress, Number(params.duration||86400), ethers.parseEther(params.minimumBid||'0.01'), params.itemName||'', params.itemDescription||''];
 

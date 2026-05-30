@@ -27,11 +27,11 @@ export default function Footer() {
   ];
 
   const navLinks = [
-    { label: 'Features', href: '#' },
-    { label: 'Chain Support', href: '#' },
-    { label: 'Templates', href: '#' },
-    { label: 'AI Audit', href: '#' },
-    { label: 'Pricing', href: '#' },
+    { label: 'Features', href: '#features' },
+    { label: 'Chain Support', href: '#chain' },
+    { label: 'Templates', href: '#trading' },
+    { label: 'AI Audit', href: '#features' },
+    { label: 'Pricing', href: '#faq' },
     { label: 'Documentation', href: '#' },
     { label: 'Privacy Policy', href: '#' },
   ];
@@ -44,7 +44,6 @@ export default function Footer() {
       navLinks={navLinks}
       creatorName="Wajiweb"
       creatorUrl="https://github.com/Wajiweb"
-      brandIcon={<Zap className="w-8 sm:w-10 md:w-14 h-8 sm:h-10 md:h-14 text-background drop-shadow-lg fill-current" />}
     />
   );
 }

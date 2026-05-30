@@ -257,21 +257,35 @@ export default function TradingSection({ onGetStarted }) {
             variants={staggerContainer}
             style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}
           >
-            <div>
+            <div style={{ position: 'relative' }}>
+              {/* Centered title orange glow backlight - Larger & Glowier */}
+          <div style={{
+            position: 'absolute',
+            width: '550px',
+            height: '220px',
+            background: 'radial-gradient(circle, hsla(25, 100%, 50%, 0.33) 0%, hsla(25, 100%, 50%, 0.1) 35%, transparent 70%)',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+            filter: 'blur(50px)',
+            zIndex: 0,
+          }} />
+
               <motion.span
                 variants={fadeUp}
-                style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--lp-accent)', marginBottom: '12px' }}
+                style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--lp-accent)', marginBottom: '12px', position: 'relative', zIndex: 1 }}
               >
                 What You Can Build
               </motion.span>
               <motion.h2
                 variants={fadeUp}
-                style={{ fontSize: 'clamp(1.6rem, 3vw, 2.75rem)', fontWeight: 900, color: 'var(--lp-text-primary)', marginBottom: '14px' }}
+                style={{ fontSize: 'clamp(1.6rem, 3vw, 2.75rem)', fontWeight: 900, color: 'var(--lp-text-primary)', marginBottom: '14px', position: 'relative', zIndex: 1 }}
               >
                 Three Contract Types,<br />
                 <span style={{ color: 'var(--lp-accent)' }}>One Unified Platform</span>
               </motion.h2>
-              <motion.p variants={fadeUp} style={{ fontSize: '0.97rem', color: 'var(--lp-text-secondary)', lineHeight: 1.7 }}>
+              <motion.p variants={fadeUp} style={{ fontSize: '0.97rem', color: 'var(--lp-text-secondary)', lineHeight: 1.7, position: 'relative', zIndex: 1 }}>
                 AutoCon gives you everything you need to build production-grade smart contracts — without writing a single line of Solidity.
               </motion.p>
             </div>

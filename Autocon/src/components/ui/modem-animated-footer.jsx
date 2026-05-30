@@ -18,24 +18,38 @@ export const Footer = ({
         <div className="max-w-7xl flex flex-col justify-between mx-auto min-h-[30rem] sm:min-h-[35rem] md:min-h-[40rem] relative p-4 py-10">
           <div className="flex flex-col mb-12 sm:mb-20 md:mb-0 w-full">
             <div className="w-full flex flex-col items-center">
-              <div className="space-y-2 flex flex-col items-center flex-1">
-                <div className="flex items-center gap-2">
+              <div className="space-y-2 flex flex-col items-center flex-1 relative w-full">
+                {/* Brand highlight backlight glow (orange lights) */}
+                <div style={{
+                  position: 'absolute',
+                  width: '320px',
+                  height: '140px',
+                  background: 'radial-gradient(circle, hsla(25, 100%, 50%, 0.16) 0%, transparent 70%)',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  pointerEvents: 'none',
+                  filter: 'blur(35px)',
+                  zIndex: 0,
+                }} />
+
+                <div className="flex items-center gap-2 relative z-10">
                   <span className="text-foreground text-3xl font-bold">
                     {brandName}
                   </span>
                 </div>
-                <p className="text-muted-foreground font-semibold text-center w-full max-w-sm sm:w-96 px-4 sm:px-0">
+                <p className="text-muted-foreground font-semibold text-center w-full max-w-sm sm:w-96 px-4 sm:px-0 relative z-10">
                   {brandDescription}
                 </p>
               </div>
 
               {socialLinks.length > 0 && (
-                <div className="flex mb-8 mt-3 gap-4">
+                <div className="flex mb-8 mt-5 gap-5 relative z-10">
                   {socialLinks.map((link, index) => (
                     <a
                       key={index}
                       href={link.href}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-muted-foreground hover:text-[hsl(25,100%,50%)] transition-colors duration-200"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -49,16 +63,27 @@ export const Footer = ({
               )}
 
               {navLinks.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-4 text-sm font-medium text-muted-foreground max-w-full px-4">
-                  {navLinks.map((link, index) => (
-                    <a
-                      key={index}
-                      className="hover:text-foreground duration-300 hover:font-semibold"
-                      href={link.href}
-                    >
-                      {link.label}
-                    </a>
-                  ))}
+                <div className="flex flex-wrap justify-center gap-6 text-sm font-medium text-muted-foreground max-w-full px-4 relative z-10">
+                  {navLinks.map((link, index) => {
+                    const isAnchor = link.href.startsWith('#');
+                    const handleClick = (e) => {
+                      if (isAnchor && link.href !== '#') {
+                        e.preventDefault();
+                        const id = link.href.substring(1);
+                        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    };
+                    return (
+                      <a
+                        key={index}
+                        className="hover:text-[hsl(25,100%,50%)] duration-300 hover:font-semibold"
+                        href={link.href}
+                        onClick={handleClick}
+                      >
+                        {link.label}
+                      </a>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -85,23 +110,18 @@ export const Footer = ({
 
         {/* Large background text - FIXED */}
         <div 
-          className="bg-gradient-to-b from-foreground/20 via-foreground/10 to-transparent bg-clip-text text-transparent leading-none absolute left-1/2 -translate-x-1/2 bottom-40 md:bottom-32 font-extrabold tracking-tighter pointer-events-none select-none text-center px-4"
+          className="bg-clip-text text-transparent leading-none absolute left-1/2 -translate-x-1/2 bottom-40 md:bottom-32 font-extrabold tracking-tighter pointer-events-none select-none text-center px-4"
           style={{
             fontSize: 'clamp(3rem, 12vw, 10rem)',
-            maxWidth: '95vw'
+            maxWidth: '95vw',
+            backgroundImage: 'linear-gradient(to bottom, var(--primary), transparent)',
+            opacity: 0.6,
+            filter: 'drop-shadow(0 0 15px hsla(25, 100%, 50%, 0.35)) drop-shadow(0 0 30px hsla(25, 100%, 50%, 0.15))'
           }}
         >
           {brandName.toUpperCase()}
         </div>
 
-        {/* Bottom logo */}
-        <div className="absolute hover:border-foreground duration-400 drop-shadow-[0_0px_20px_rgba(0,0,0,0.5)] dark:drop-shadow-[0_0px_20px_rgba(255,255,255,0.3)] bottom-24 md:bottom-20 backdrop-blur-sm rounded-3xl bg-background/60 left-1/2 border-2 border-border flex items-center justify-center p-3 -translate-x-1/2 z-10">
-          <div className="w-12 sm:w-16 md:w-24 h-12 sm:h-16 md:h-24 bg-gradient-to-br from-foreground to-foreground/80 rounded-2xl flex items-center justify-center shadow-lg">
-            {brandIcon || (
-              <NotepadTextDashed className="w-8 sm:w-10 md:w-14 h-8 sm:h-10 md:h-14 text-background drop-shadow-lg" />
-            )}
-          </div>
-        </div>
 
         {/* Bottom line */}
         <div className="absolute bottom-32 sm:bottom-34 backdrop-blur-sm h-1 bg-gradient-to-r from-transparent via-border to-transparent w-full left-1/2 -translate-x-1/2"></div>

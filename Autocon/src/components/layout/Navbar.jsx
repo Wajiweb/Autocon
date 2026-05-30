@@ -16,7 +16,6 @@ const NAV_LINKS = [
   { label: 'Features',    href: 'features'  },
   { label: 'Contracts',   href: 'chain'     },
   { label: 'Templates',   href: 'trading'   },
-  { label: 'Testimonials', href: 'testimonials' },
   { label: 'FAQs',        href: 'faq'        },
 ];
 
@@ -101,8 +100,17 @@ export default function Navbar({ onConnect }) {
             <img 
               src="/autocon-logo-new.png" 
               alt="AutoCon" 
-              style={{ height: '36px', width: 'auto', display: 'block' }} 
+              style={{ height: '52px', width: 'auto', display: 'block' }} 
             />
+            <span style={{
+              fontSize:      '1.15rem',
+              fontWeight:    800,
+              color:         '#ffffff',
+              letterSpacing: '-0.03em',
+              lineHeight:    1,
+            }}>
+              Auto<span style={{ color: '#ff6b00' }}>Con</span>
+            </span>
           </button>
 
           {/* Desktop Nav Links */}
@@ -141,7 +149,7 @@ export default function Navbar({ onConnect }) {
           {/* Desktop CTA */}
           <div className="lp-desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             <Button
-              variant="ghost"
+              variant="primary"
               onClick={onConnect}
               aria-label="Connect Wallet"
               style={{ padding: '10px 20px', fontSize: '0.88rem' }}
@@ -215,7 +223,7 @@ export default function Navbar({ onConnect }) {
                   </button>
                 ))}
                 <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <Button variant="secondary" onClick={() => { onConnect(); setMobileOpen(false); }} style={{ width: '100%', justifyContent: 'center' }}>Connect Wallet</Button>
+                  <Button variant="primary" onClick={() => { onConnect(); setMobileOpen(false); }} style={{ width: '100%', justifyContent: 'center' }}>Connect Wallet</Button>
                 </div>
               </div>
             </motion.div>

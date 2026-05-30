@@ -75,15 +75,25 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen, isCollapsed, se
             src="/autocon-logo-new.png" 
             alt="AutoCon" 
             style={{ 
-              height: isCollapsed ? '28px' : '32px', 
+              height: isCollapsed ? '40px' : '44px', 
               width: 'auto', 
               display: 'block',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
             }} 
           />
           {!isCollapsed && (
-            <div style={{ marginLeft: '12px' }}>
-              <div className="db-logo-tag" style={{ marginTop: '2px' }}>v2.4 · Blockchain Studio</div>
+            <div style={{ marginLeft: '10px', lineHeight: 1 }}>
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: 800,
+                color: '#ffffff',
+                letterSpacing: '-0.03em',
+                lineHeight: 1.15,
+              }}>
+                Auto<span style={{ color: '#ff6b00' }}>Con</span>
+              </div>
+              <div className="db-logo-tag" style={{ marginTop: '3px' }}>v2.4 · Blockchain Studio</div>
             </div>
           )}
           <button 

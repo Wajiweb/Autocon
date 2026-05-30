@@ -1,11 +1,16 @@
 /**
- * LandingPage.jsx — Production Landing Page (V2)
+ * LandingPage.jsx — Production Landing Page (V3 — ScrollGlobe)
  *
  * Architecture note:
  * LandingLayout owns the QueryClientProvider.
  * useLandingQuery() MUST be called inside a child of LandingLayout.
  * Solution: outer shell <LandingPage> renders LandingLayout,
  * inner <LandingPageContent> consumes React Query hooks.
+ *
+ * V3 Changes:
+ * - Replaced static Hero + Logos with scroll-driven ScrollGlobe
+ * - ScrollGlobe provides 4 viewport-height sections with animated globe
+ * - All below-the-fold sections remain unchanged
  */
 import React, { lazy, Suspense } from 'react';
 
@@ -14,15 +19,14 @@ import LandingLayout from '../components/layout/LandingLayout';
 import Navbar        from '../components/layout/Navbar';
 import Footer        from '../components/layout/Footer';
 
-// Hero + Logos — eagerly loaded (above the fold)
-import Hero  from '../components/sections/Hero';
-import Logos from '../components/sections/Logos';
+// ScrollGlobe — eagerly loaded (above the fold, replaces Hero + Logos)
+import ScrollGlobe from '../components/sections/ScrollGlobe';
 
 // Heavy sections — lazy-loaded (below the fold, code-split)
 const Features       = lazy(() => import('../components/sections/Features'));
 const ChainSection   = lazy(() => import('../components/sections/ChainSection'));
 const TradingSection = lazy(() => import('../components/sections/TradingSection'));
-const Testimonials   = lazy(() => import('../components/sections/Testimonials'));
+
 const FAQ            = lazy(() => import('../components/sections/FAQ'));
 const CTA            = lazy(() => import('../components/sections/CTA'));
 
@@ -35,19 +39,18 @@ const SectionFallback = () => null;
 // ── Inner component — lives inside QueryClientProvider ────────────────────
 function LandingPageContent({ onLoginClick }) {
   // Safe to call here: LandingLayout (parent) has already mounted QueryClientProvider
-  const { features, testimonials } = useLandingQuery();
+  const { features } = useLandingQuery();
 
   return (
     <>
       <Navbar onConnect={onLoginClick} />
-      <Hero onGetStarted={onLoginClick} />
-      <Logos />
+      <ScrollGlobe onGetStarted={onLoginClick} />
 
       <Suspense fallback={<SectionFallback />}>
         <Features       features={features}              />
         <ChainSection                                    />
         <TradingSection onGetStarted={onLoginClick}      />
-        <Testimonials   testimonials={testimonials}       />
+
         <FAQ                                             />
         <CTA            onGetStarted={onLoginClick}      />
       </Suspense>

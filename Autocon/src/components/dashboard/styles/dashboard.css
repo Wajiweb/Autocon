@@ -149,12 +149,13 @@
 }
 
 .db-sb-logo {
-  padding: 16px 18px 14px;
+  padding: 16px 18px 16px;
   border-bottom: .5px solid var(--db-br);
   display: flex;
   align-items: center;
   gap: 11px;
   flex-shrink: 0;
+  min-height: 76px;
 }
 .db-logo-mark {
   width: 34px; height: 34px;

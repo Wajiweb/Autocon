@@ -20,14 +20,8 @@ function escapeHtml(str) {
         .replace(/\//g, '&#x2F;');
 }
 
-// 1. Load HTML Template at startup (cache)
+// 1. Load HTML Template path
 const templatePath = path.join(__dirname, '../templates/MiniSiteTemplate.html');
-let SITE_TEMPLATE = '';
-if (fs.existsSync(templatePath)) {
-    SITE_TEMPLATE = fs.readFileSync(templatePath, 'utf8');
-} else {
-    console.error('❌ Mini-Site template not found on server at:', templatePath);
-}
 
 /**
  * GET /api/site/view
@@ -48,10 +42,10 @@ router.get('/view', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Invalid contract type for site generation.' });
         }
 
-        if (!SITE_TEMPLATE) {
+        if (!fs.existsSync(templatePath)) {
             return res.status(500).json({ success: false, error: 'Mini-Site template not found on server.' });
         }
-        let htmlContent = SITE_TEMPLATE;
+        let htmlContent = fs.readFileSync(templatePath, 'utf8');
 
         // 2. Normalise type & build minimal ABI + friendly metadata per type
         let normalizedType = type;
@@ -134,7 +128,7 @@ router.get('/view', async (req, res) => {
         //    contractEmoji/contractDesc are hardcoded per type — safe
         htmlContent = htmlContent
             .replace(/%%PROJECT_NAME%%/g,           escapeHtml(name))
-            .replace(/%%CONTRACT_ADDRESS%%/g,       contractAddress)
+            .replace(/%%CONTRACT_ADDRESS%%/g,       contractAddress.toLowerCase())
             .replace(/%%CONTRACT_ADDRESS_SHORT%%/g, escapeHtml(shortAddr))
             .replace(/%%NETWORK_NAME%%/g,           escapeHtml(network))
             .replace(/%%SMART_CONTRACT_ABI%%/g,     abiString)

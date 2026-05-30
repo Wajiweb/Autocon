@@ -113,21 +113,35 @@ export default function Testimonials({ testimonials = [] }) {
           whileInView="visible"
           viewport={viewportConfig}
           variants={staggerContainer}
-          style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 72px)' }}
+          style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 72px)', position: 'relative' }}
         >
+            {/* Centered title orange glow backlight - Larger & Glowier */}
+            <div style={{
+              position: 'absolute',
+              width: '550px',
+              height: '220px',
+              background: 'radial-gradient(circle, hsla(25, 100%, 50%, 0.33) 0%, hsla(25, 100%, 50%, 0.1) 35%, transparent 70%)',
+              top: '50%',
+              left: '40%',
+              transform: 'translate(-50%, -50%)',
+              pointerEvents: 'none',
+              filter: 'blur(50px)',
+              zIndex: 0,
+            }} />
+
           <motion.span
             variants={fadeUp}
-            style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--lp-accent)', marginBottom: '12px' }}
+            style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--lp-accent)', marginBottom: '12px', position: 'relative', zIndex: 1 }}
           >
             What Developers Say
           </motion.span>
           <motion.h2
             variants={fadeUp}
-            style={{ fontSize: 'clamp(1.75rem, 3.5vw, 3rem)', fontWeight: 900, color: 'var(--lp-text-primary)', marginBottom: '14px' }}
+            style={{ fontSize: 'clamp(1.75rem, 3.5vw, 3rem)', fontWeight: 900, color: 'var(--lp-text-primary)', marginBottom: '14px', position: 'relative', zIndex: 1 }}
           >
             Loved by Web3 Builders
           </motion.h2>
-          <motion.p variants={fadeUp} style={{ color: 'var(--lp-text-secondary)', fontSize: '1.05rem', maxWidth: '460px', margin: '0 auto', lineHeight: 1.7 }}>
+          <motion.p variants={fadeUp} style={{ color: 'var(--lp-text-secondary)', fontSize: '1.05rem', maxWidth: '460px', margin: '0 auto', lineHeight: 1.7, position: 'relative', zIndex: 1 }}>
             Thousands of developers trust AutoCon to ship their smart contracts faster.
           </motion.p>
         </motion.div>

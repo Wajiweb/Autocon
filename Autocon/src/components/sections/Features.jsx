@@ -32,8 +32,31 @@ export default function Features({ features = [] }) {
       id="features"
       className="landing-section"
       aria-label="Features section"
-      style={{ position: 'relative', paddingTop: 'clamp(48px, 8vw, 80px)', paddingBottom: 'clamp(32px, 6vw, 60px)' }}
+      style={{ position: 'relative', paddingTop: 'clamp(48px, 8vw, 80px)', paddingBottom: 'clamp(32px, 6vw, 60px)', overflow: 'hidden' }}
     >
+      {/* Ambient background glows (orange lights) */}
+      <div style={{
+        position: 'absolute',
+        width: '400px',
+        height: '400px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, hsla(25, 100%, 50%, 0.08) 0%, transparent 70%)',
+        top: '-10%',
+        right: '-10%',
+        pointerEvents: 'none',
+        filter: 'blur(50px)',
+      }} />
+      <div style={{
+        position: 'absolute',
+        width: '350px',
+        height: '350px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, hsla(25, 100%, 50%, 0.05) 0%, transparent 70%)',
+        bottom: '-15%',
+        left: '-5%',
+        pointerEvents: 'none',
+        filter: 'blur(60px)',
+      }} />
 
       <Container>
         {/* Section header */}
@@ -42,8 +65,22 @@ export default function Features({ features = [] }) {
           initial="hidden"
           animate={controls}
           variants={staggerContainer}
-          style={{ textAlign: 'center', marginBottom: 'clamp(32px, 5vw, 56px)' }}
+          style={{ textAlign: 'center', marginBottom: 'clamp(32px, 5vw, 56px)', position: 'relative' }}
         >
+          {/* Centered title orange glow backlight - Larger & Glowier */}
+          <div style={{
+            position: 'absolute',
+            width: '600px',
+            height: '240px',
+            background: 'radial-gradient(circle, hsla(25, 100%, 50%, 0.35) 0%, hsla(25, 100%, 50%, 0.12) 35%, transparent 70%)',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+            filter: 'blur(50px)',
+            zIndex: 0,
+          }} />
+
           <motion.span
             variants={fadeUp}
             style={{
@@ -54,6 +91,8 @@ export default function Features({ features = [] }) {
               letterSpacing:'0.1em',
               color:        'var(--lp-accent)',
               marginBottom: '12px',
+              position: 'relative',
+              zIndex: 1,
             }}
           >
             Why Choose AutoCon
@@ -65,6 +104,8 @@ export default function Features({ features = [] }) {
               fontWeight: 900,
               color:      'var(--lp-text-primary)',
               marginBottom:'16px',
+              position: 'relative',
+              zIndex: 1,
             }}
           >
             Everything You Need to
@@ -73,7 +114,7 @@ export default function Features({ features = [] }) {
           </motion.h2>
           <motion.p
             variants={fadeUp}
-            style={{ fontSize: '1.05rem', color: 'var(--lp-text-secondary)', maxWidth: '540px', margin: '0 auto', lineHeight: 1.7 }}
+            style={{ fontSize: '1.05rem', color: 'var(--lp-text-secondary)', maxWidth: '540px', margin: '0 auto', lineHeight: 1.7, position: 'relative', zIndex: 1 }}
           >
             From generation to deployment — AutoCon handles the full smart contract lifecycle.
           </motion.p>
