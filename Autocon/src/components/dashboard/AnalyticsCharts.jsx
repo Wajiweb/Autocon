@@ -5,6 +5,7 @@ import {
   CategoryScale, LinearScale, BarElement, Title
 } from 'chart.js';
 import { usePlatformStore } from '../../store/usePlatformStore';
+import { useTheme } from '../../context/ThemeContext';
 import './styles/dashboard.css';
 
 // 1. Custom Plugin for Native Canvas Doughnut Center Text
@@ -16,18 +17,19 @@ const centerTextPlugin = {
     ctx.restore();
     
     const { text, label } = chart.config.options.elements.center;
+    const isLight = document.documentElement.classList.contains('light-theme');
     
     // Draw Value (e.g. 15)
     ctx.font = 'bold 42px "Outfit", sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = isLight ? 'var(--on-surface)' : '#ffffff';
     const textX = Math.round((width - ctx.measureText(text).width) / 2);
     const textY = height / 2 - 8;
     ctx.fillText(text, textX, textY);
     
     // Draw Label (e.g. Total)
     ctx.font = '500 11px "Outfit", sans-serif';
-    ctx.fillStyle = '#a1a1aa'; // text-gray-400
+    ctx.fillStyle = isLight ? 'var(--on-surface-variant)' : '#a1a1aa'; // text-gray-400
     // uppercase tracking-widest emulation
     const lblX = Math.round((width - ctx.measureText(label.toUpperCase()).width) / 2);
     const lblY = height / 2 + 22;
@@ -42,6 +44,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 export default function AnalyticsCharts({ deployments = [], networkName = 'Network' }) {
   const jobs = usePlatformStore(s => s.jobs) || [];
   const stats = usePlatformStore(s => s.stats);
+  const { theme } = useTheme();
 
   if (deployments.length === 0 && jobs.length === 0 && !stats) return null;
 
@@ -68,7 +71,7 @@ export default function AnalyticsCharts({ deployments = [], networkName = 'Netwo
   const ORANGE = '#ff6b00';
   const BLUE = '#3b82f6';
   const GREEN = '#22c55e';
-  const BG_DARK = '#0a0a0a';
+  const BG_DARK = theme === 'light' ? '#ffffff' : '#0a0a0a';
 
   const doughnutData = deployments.length > 0 ? {
     datasets: [{
@@ -141,28 +144,28 @@ export default function AnalyticsCharts({ deployments = [], networkName = 'Netwo
   };
 
   const tooltipDefaults = {
-    backgroundColor: 'rgba(10, 10, 10, 0.95)',
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.98)' : 'rgba(10, 10, 10, 0.95)',
+    borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
     titleFont: { family: '"Outfit", sans-serif', size: 12, weight: '600' },
     bodyFont: { family: 'var(--db-mono)', size: 14 },
-    titleColor: '#a1a1aa',
-    bodyColor: '#ffffff',
+    titleColor: theme === 'light' ? 'var(--on-surface-variant)' : '#a1a1aa',
+    bodyColor: theme === 'light' ? 'var(--on-surface)' : '#ffffff',
     padding: 12,
     cornerRadius: 8,
     displayColors: true,
     boxPadding: 4,
   };
 
-  const cardStyle = "bg-[#0a0a0a]/80 border border-white/5 rounded-2xl relative overflow-hidden backdrop-blur-xl p-6 flex flex-col min-h-[340px]";
+  const cardStyle = "db-glass-surface rounded-2xl relative overflow-hidden p-6 flex flex-col min-h-[340px]";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 db-enter db-enter-5">
       
       {/* 1. Donut — Asset Distribution */}
-      <div className={cardStyle} style={{ boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+      <div className={cardStyle} style={{ boxShadow: theme === 'light' ? '0 10px 30px rgba(0,0,0,0.05)' : '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
         <div className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">Asset Distribution</div>
-        <div className="text-sm text-gray-500 mb-6 font-mono border-b border-white/5 pb-4">Network · {networkName}</div>
+        <div className="text-sm text-gray-500 mb-6 font-mono border-b border-[var(--outline-subtle)] pb-4">Network · {networkName}</div>
         
         <div className="flex-1 flex flex-col justify-center items-center relative">
           <div className="w-full max-w-[200px] aspect-square relative z-10">
@@ -191,9 +194,9 @@ export default function AnalyticsCharts({ deployments = [], networkName = 'Netwo
               <div key={item.label} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color, boxShadow: `0 0 10px ${item.color}` }} />
-                  <span className="text-xs font-medium text-gray-300 uppercase tracking-wider">{item.label}</span>
+                  <span className="text-xs font-medium text-[var(--on-surface-variant)] uppercase tracking-wider">{item.label}</span>
                 </div>
-                <span className="text-sm font-bold text-white font-mono">{item.count}</span>
+                <span className="text-sm font-bold text-[var(--on-surface)] font-mono">{item.count}</span>
               </div>
             ))}
           </div>
@@ -207,7 +210,7 @@ export default function AnalyticsCharts({ deployments = [], networkName = 'Netwo
         
         <div className="relative z-10">
           <div className="text-xs font-medium text-orange-500 uppercase tracking-widest mb-1">Monthly Activity</div>
-          <div className="text-sm text-gray-500 mb-6 font-mono border-b border-white/5 pb-4">Last 6 Months Volume</div>
+          <div className="text-sm text-gray-500 mb-6 font-mono border-b border-[var(--outline-subtle)] pb-4">Last 6 Months Volume</div>
         </div>
 
         <div className="flex-1 w-full relative z-10 min-h-[220px]">
@@ -241,9 +244,9 @@ export default function AnalyticsCharts({ deployments = [], networkName = 'Netwo
       </div>
 
       {/* 3. Donut — Security Audits */}
-      <div className={cardStyle} style={{ boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+      <div className={cardStyle} style={{ boxShadow: theme === 'light' ? '0 10px 30px rgba(0,0,0,0.05)' : '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
         <div className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">Security Audits</div>
-        <div className="text-sm text-gray-500 mb-6 font-mono border-b border-white/5 pb-4">AI Smart Contract Scanning</div>
+        <div className="text-sm text-gray-500 mb-6 font-mono border-b border-[var(--outline-subtle)] pb-4">AI Smart Contract Scanning</div>
         
         <div className="flex-1 flex flex-col justify-center items-center relative">
           <div className="w-full max-w-[200px] aspect-square relative z-10">
@@ -272,9 +275,9 @@ export default function AnalyticsCharts({ deployments = [], networkName = 'Netwo
               <div key={item.label} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color, boxShadow: `0 0 10px ${item.color}` }} />
-                  <span className="text-xs font-medium text-gray-300 uppercase tracking-wider">{item.label}</span>
+                  <span className="text-xs font-medium text-[var(--on-surface-variant)] uppercase tracking-wider">{item.label}</span>
                 </div>
-                <span className="text-sm font-bold text-white font-mono">{item.count}</span>
+                <span className="text-sm font-bold text-[var(--on-surface)] font-mono">{item.count}</span>
               </div>
             ))}
           </div>

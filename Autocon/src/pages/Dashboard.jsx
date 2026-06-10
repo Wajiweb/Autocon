@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
+import { useTheme } from '../context/ThemeContext';
 import AssetGrid from '../components/dashboard/AssetGrid';
 import ChartModal from '../components/dashboard/ChartModal';
 import AnalyticsCharts from '../components/dashboard/AnalyticsCharts';
@@ -22,6 +23,7 @@ import Button from '../components/ui/Button';
 export default function Dashboard() {
   const { user, authFetch } = useAuth();
   const { network } = useNetwork();
+  const { theme } = useTheme();
   const { deployments, setDeployments, isInitialLoad } = usePlatformStore();
   const [activeFilter, setActiveFilter] = useState('all');
   const isLoading = isInitialLoad;
@@ -167,7 +169,10 @@ export default function Dashboard() {
         <section className="mb-8">
           <div
             className="flex items-center justify-between p-4 px-6 rounded-2xl db-glass-surface db-enter db-enter-2 transition-transform hover:scale-[1.01]"
-            style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)' }}
+            style={{ 
+              background: theme === 'light' ? 'var(--surface-2)' : 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)',
+              boxShadow: theme === 'light' ? '0 10px 30px rgba(0,0,0,0.04)' : undefined
+            }}
           >
             <div className="flex items-center gap-4">
               <div className="relative flex h-3 w-3">
@@ -175,17 +180,17 @@ export default function Dashboard() {
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white tracking-wide">Systems Online</h3>
+                <h3 className="text-sm font-semibold text-[var(--on-surface)] tracking-wide">Systems Online</h3>
                 <p className="text-[11px] mt-0.5 tracking-wide" style={{ color: 'var(--on-surface-variant)' }}>All services operational · Wallet {shortAddr || 'not connected'}</p>
               </div>
             </div>
             <div className="flex gap-8 text-right">
               <div>
-                <p className="text-lg font-mono font-semibold text-white leading-none">{deployments.length}</p>
+                <p className="text-lg font-mono font-semibold text-[var(--on-surface)] leading-none">{deployments.length}</p>
                 <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: 'var(--on-surface-muted)' }}>Contracts</p>
               </div>
               <div>
-                <p className="text-lg font-mono font-semibold text-white leading-none">{auctionCount}</p>
+                <p className="text-lg font-mono font-semibold text-[var(--on-surface)] leading-none">{auctionCount}</p>
                 <p className="text-[10px] uppercase tracking-wider mt-1" style={{ color: 'var(--on-surface-muted)' }}>Auctions</p>
               </div>
               <div>

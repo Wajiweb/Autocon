@@ -18,7 +18,7 @@
   --surface-3:        rgba(7, 8, 10, 0.90);      /* Deep modal/flyout container layer (24px blur) */
 
   /* ── Backward-compatible Aliases ── */
-  --bg:               rgba(10, 11, 15, 0.97);
+  --bg:               rgba(6, 7, 9, 0.95);
   --surface:          var(--surface-1);
   --surface-low:      rgba(10, 11, 15, 0.40);
   --surface-elevated: var(--surface-2);
@@ -54,10 +54,10 @@
   --primary-glow:     0 0 0 3px hsla(25, 100%, 50%, 0.15);
 
   /* ── Neutral Glass Borders ── */
-  --outline:          rgba(255, 255, 255, 0.08);
-  --outline-subtle:   rgba(255, 255, 255, 0.05);
-  --border-dark:      rgba(255, 255, 255, 0.06);
-  --border-light:     rgba(255, 255, 255, 0.08);
+  --outline:          rgba(255, 255, 255, 0.12);
+  --outline-subtle:   rgba(255, 255, 255, 0.08);
+  --border-dark:      rgba(255, 255, 255, 0.10);
+  --border-light:     rgba(255, 255, 255, 0.14);
   --border:           var(--outline);
 
   /* ── Status ── */
@@ -106,16 +106,128 @@
   --border-color:  var(--outline-subtle);
 }
 
+/* ═══════════════════════════════════════════════════════
+   AutoCon — Premium Light Web3 Theme System (White Theme)
+   Designed for visual clarity on projectors and high usability.
+   ═══════════════════════════════════════════════════════ */
+
+html.light-theme {
+  --surface-1:        rgba(255, 255, 255, 0.70);
+  --surface-2:        rgba(240, 242, 245, 0.80);
+  --surface-3:        rgba(255, 255, 255, 0.98);
+
+  --bg:               rgba(246, 248, 250, 0.96);
+  --surface:          var(--surface-1);
+  --surface-low:      rgba(241, 245, 249, 0.55);
+  --surface-elevated: var(--surface-2);
+  --surface-high:     var(--surface-3);
+  --surface-highest:  rgba(255, 255, 255, 0.98);
+  --surface-bright:   rgba(0, 0, 0, 0.04);
+
+  --card:             var(--surface-2);
+  --card-elevated:    var(--surface-2);
+  --card-hover:       rgba(230, 236, 242, 0.85);
+  --card-active:      rgba(222, 230, 238, 0.90);
+
+  --on-surface:          hsl(220 15% 15%);
+  --on-surface-variant:  hsl(220 10% 35%);
+  --on-surface-muted:    hsl(220 10% 55%);
+
+  --text-primary:        hsl(220 15% 15%);
+  --text-secondary:      hsl(220 10% 35%);
+  --text-muted:          hsl(220 10% 55%);
+  --text-dark-primary:   hsl(220 15% 15%);
+  --text-dark-secondary: hsl(220 10% 35%);
+  --text-dark-muted:     hsl(220 10% 52%);
+
+  --primary:          hsl(25 100% 45%);
+  --primary-hover:    hsl(25 100% 40%);
+  --primary-subtle:   hsla(25, 100%, 50%, 0.06);
+  --primary-muted:    hsla(25, 100%, 50%, 0.12);
+  --primary-glow:     0 0 0 3px hsla(25, 100%, 50%, 0.12);
+
+  --outline:          rgba(0, 0, 0, 0.08);
+  --outline-subtle:   rgba(0, 0, 0, 0.05);
+  --border-dark:      rgba(0, 0, 0, 0.07);
+  --border-light:     rgba(0, 0, 0, 0.05);
+
+  --success: #059669;
+  --warning: #d97706;
+  --error:   #dc2626;
+
+  --lg-bg:          rgba(255, 255, 255, 0.65);
+  --lg-border:      rgba(0, 0, 0, 0.08);
+  --lg-specular:    rgba(255, 255, 255, 0.45);
+  --lg-shimmer:     rgba(0, 0, 0, 0.035);
+  --lg-shadow:      0 8px 32px rgba(0, 0, 0, 0.06), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  --lg-glow-color:  hsla(25, 100%, 50%, 0.08);
+
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+/* Light Theme HTML Background and Radial Spotlight overlays */
+html.light-theme {
+  background-color: #f4f6f9;
+  background-image:
+    radial-gradient(circle 800px at 15% 15%, hsla(25, 100%, 50%, 0.06) 0%, transparent 80%),
+    radial-gradient(circle 600px at 85% 85%, hsla(25, 100%, 50%, 0.04) 0%, transparent 80%),
+    radial-gradient(circle 1000px at 50% 50%, hsla(220, 80%, 50%, 0.03) 0%, transparent 80%);
+}
+
+/* Light theme input adjustments */
+html.light-theme input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+html.light-theme select,
+html.light-theme textarea {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: var(--on-surface) !important;
+}
+html.light-theme input:not([type="checkbox"]):not([type="radio"]):focus,
+html.light-theme select:focus,
+html.light-theme textarea:focus {
+  background: rgba(255, 255, 255, 1) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px hsla(25, 100%, 50%, 0.14) !important;
+}
+
+html.light-theme .surface-input {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: var(--on-surface) !important;
+}
+html.light-theme .surface-input:focus {
+  background: rgba(255, 255, 255, 1) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Light theme scrollbars */
+html.light-theme *::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+html.light-theme *::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
+
+/* Custom light-theme safety net to override stray inline dark theme styles */
+html.light-theme [style*="color:"][style*="#fff"]:not(.btn):not(.badge):not(.db-logo-mark):not([class*="badge"]):not([class*="btn"]):not([class*="accent"]),
+html.light-theme [style*="color:"][style*="#ffffff"]:not(.btn):not(.badge):not(.db-logo-mark):not([class*="badge"]):not([class*="btn"]):not([class*="accent"]),
+html.light-theme [style*="color:"][style*="rgb(255, 255, 255)"]:not(.btn):not(.badge):not(.db-logo-mark):not([class*="badge"]):not([class*="btn"]):not([class*="accent"]) {
+  color: var(--on-surface) !important;
+}
+
+html.light-theme [style*="background-color:"][style*="#fff"]:not(.btn):not(.badge):not(.db-logo-mark):not([class*="badge"]):not([class*="btn"]),
+html.light-theme [style*="background-color:"][style*="#ffffff"]:not(.btn):not(.badge):not(.db-logo-mark):not([class*="badge"]):not([class*="btn"]) {
+  background-color: var(--surface-2) !important;
+}
+
+
 /* ─── Global Base ─── */
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
   scroll-behavior: smooth;
-  background-color: var(--bg);
-  /* Subtle gradient so glass blur has interesting depth to refract */
+  background-color: #060709; /* Deep pitch black for high projector contrast */
+  /* Vivid ambient orange spotlights backlighting cards for dynamic glass refraction */
   background-image:
-    radial-gradient(ellipse 80% 50% at 20% 10%, hsla(14,100%,50%,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 80%, hsla(220,80%,50%,0.04) 0%, transparent 55%);
+    radial-gradient(circle 800px at 15% 15%, hsla(25, 100%, 50%, 0.14) 0%, transparent 80%),
+    radial-gradient(circle 600px at 85% 85%, hsla(25, 100%, 50%, 0.08) 0%, transparent 80%),
+    radial-gradient(circle 1000px at 50% 50%, hsla(220, 80%, 50%, 0.05) 0%, transparent 80%);
   background-attachment: fixed;
 }
 
@@ -242,7 +354,7 @@ textarea:focus {
 :root {
   --lg-blur:        18px;
   --lg-bg:          rgba(255,255,255,0.035);
-  --lg-border:      rgba(255,255,255,0.09);
+  --lg-border:      rgba(255,255,255,0.13);
   --lg-specular:    rgba(255,255,255,0.07);
   --lg-shimmer:     rgba(255,255,255,0.06);
   --lg-shadow:      0 8px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.04) inset;
@@ -257,7 +369,7 @@ textarea:focus {
 .glass {
   position: relative;
   background: var(--lg-bg);
-  border: 0.5px solid var(--lg-border);
+  border: 1px solid var(--lg-border);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(var(--lg-blur));
   -webkit-backdrop-filter: blur(var(--lg-blur));
@@ -315,7 +427,7 @@ textarea:focus {
 .glass-strong {
   position: relative;
   background: rgba(255,255,255,0.055);
-  border: 0.5px solid rgba(255,255,255,0.13);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -340,7 +452,7 @@ textarea:focus {
     rgba(255,255,255,0.04) 0%,
     rgba(255,255,255,0.01) 100%
   );
-  border: 0.5px solid var(--lg-border);
+  border: 1px solid var(--lg-border);
   border-radius: var(--lg-radius);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -402,7 +514,7 @@ textarea:focus {
     rgba(255,255,255,0.045) 0%,
     rgba(255,255,255,0.01) 100%
   );
-  border: 0.5px solid var(--lg-border);
+  border: 1px solid var(--lg-border);
   border-radius: var(--radius-xl);
   padding: var(--space-3);
   backdrop-filter: blur(14px);
@@ -430,7 +542,7 @@ textarea:focus {
   width: 100%;
   padding: 13px 16px;
   background: rgba(255,255,255,0.035);
-  border: 0.5px solid rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.14);
   border-radius: var(--radius-md);
   color: var(--on-surface);
   font-size: 0.9rem;
@@ -457,7 +569,7 @@ textarea:focus {
     rgba(255,255,255,0.04),
     rgba(255,255,255,0.01)
   );
-  border: 0.5px solid var(--lg-border);
+  border: 1px solid var(--lg-border);
   border-radius: var(--radius-xl);
   padding: 24px;
   backdrop-filter: blur(14px);
@@ -608,7 +720,7 @@ select:focus-visible {
   width: 100%;
   padding: 13px 16px;
   background: rgba(255, 255, 255, 0.035);
-  border: 0.5px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-md);
   color: var(--on-surface);
   font-size: 0.9rem;
@@ -631,7 +743,7 @@ select:focus-visible {
 /* ─── Layered Surface System Classes ─── */
 .surface-card {
   background: var(--surface-2) !important;
-  border: 0.5px solid var(--outline) !important;
+  border: 1px solid var(--outline) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
   box-shadow: var(--shadow-card) !important;
@@ -645,7 +757,7 @@ select:focus-visible {
 
 .surface-panel {
   background: var(--surface-1) !important;
-  border: 0.5px solid var(--outline-subtle) !important;
+  border: 1px solid var(--outline-subtle) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
   border-radius: var(--radius-xl);
@@ -653,7 +765,7 @@ select:focus-visible {
 
 .surface-modal {
   background: var(--surface-3) !important;
-  border: 0.5px solid var(--outline) !important;
+  border: 1px solid var(--outline) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
   box-shadow: var(--shadow-lg) !important;
@@ -662,7 +774,7 @@ select:focus-visible {
 
 .surface-input {
   background: rgba(255, 255, 255, 0.035) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.09) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
   color: var(--on-surface) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
@@ -821,7 +933,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 /* ─── Dashboard Layout Shell ─── */
 .dashboard-theme {
-  background-color: var(--bg);
+  background-color: transparent;
   color: var(--on-surface);
 }
 
@@ -830,7 +942,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--bg);
+  background: transparent;
   color: var(--on-surface);
 }
 
@@ -914,7 +1026,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 /* Convenience aliases for landing components (same values as :root) */
 .landing-theme {
-  --lp-bg:               var(--bg);
+  --lp-bg:               transparent;
   --lp-surface:          var(--surface);
   --lp-surface-elevated: var(--surface-elevated);
   --lp-text-primary:     var(--on-surface);
@@ -1358,7 +1470,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* Responsive: hide side nav on mobile */
+.sg-side-nav {
+  display: none !important;
+}
+
+/* Responsive: side nav stays hidden on mobile */
 @media (max-width: 639px) {
   .sg-side-nav { display: none !important; }
 }

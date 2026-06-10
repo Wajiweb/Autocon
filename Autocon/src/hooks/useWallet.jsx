@@ -62,8 +62,7 @@ export const WalletProvider = ({ children }) => {
 export const useWallet = () => {
     const context = useContext(WalletContext);
     if (!context) {
-        console.warn('useWallet must be used within a WalletProvider');
-        return { walletAddress: '', setWalletAddress: () => {}, connectWallet: async () => null };
+        throw new Error('useWallet must be used within a WalletProvider');
     }
     return context;
 };

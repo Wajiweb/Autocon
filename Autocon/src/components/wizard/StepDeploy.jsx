@@ -17,7 +17,7 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
   const navigate = useNavigate();
   const { authFetch } = useAuth();
   const { walletAddress, connectWallet } = useWallet();
-  const { setDeployResult, setDeployError, clearDeployError, addDeployedContract, session } = useWizardStore();
+  const { setDeployResult, setDeployError, clearDeployError, addDeployedContract, session, setStep } = useWizardStore();
   const { selectedNetwork } = useNetwork();
 
   const [activeStep, setActiveStep] = useState(null);
@@ -37,7 +37,11 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
   const handleDeploy = useCallback(async () => {
     if (!walletAddress) { toast.error('Connect your wallet first'); return; }
     if (!contractData?.abi) { toast.error('Generate the contract first'); return; }
-    if (!contractData?.bytecode) { toast.error('Contract bytecode expired after page refresh. Please go back and regenerate.'); return; }
+    if (!contractData?.bytecode) {
+      toast.error('Bytecode expired after page refresh. Going back to re-generate...');
+      setTimeout(() => setStep(2, 'back'), 800);
+      return;
+    }
 
     // If we already mined but save failed, retry only the save step
     if (minedContract && errorStep === 'save') {
@@ -195,9 +199,37 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
       setDeployError(msg);
       toast.error(msg);
     }
-  }, [walletAddress, contractData, params, type, selNet, authFetch, code, minedContract, errorStep, clearDeployError, setDeployResult, addDeployedContract, setDeployError, onSuccess]);
+  }, [walletAddress, contractData, params, type, selNet, authFetch, code, minedContract, errorStep, clearDeployError, setDeployResult, addDeployedContract, setDeployError, setStep, onSuccess]);
 
   /* ── Success Screen ─────────────────────────────────── */
+  const handleAddTokenToMetaMask = async () => {
+    if (!window.ethereum) {
+      toast.error('MetaMask is not installed!');
+      return;
+    }
+    try {
+      const wasAdded = await window.ethereum.request({
+        method: 'wallet_watchAsset',
+        params: {
+          type: 'ERC20',
+          options: {
+            address: deployResult.address,
+            symbol: params.symbol || 'TOKEN',
+            decimals: 18,
+          },
+        },
+      });
+      if (wasAdded) {
+        toast.success('Token imported to MetaMask!');
+      } else {
+        toast.error('Token import rejected.');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to import token to MetaMask.');
+    }
+  };
+
   if (deployResult) {
     const explorerUrl = `${netMeta.explorer}/address/${deployResult.address}`;
     return (
@@ -216,7 +248,39 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
             <a href={explorerUrl} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: 'none' }}>
               View on Explorer <ExternalLink size={14} strokeWidth={2} />
             </a>
-            <button className="btn btn-ghost" onClick={() => { navigator.clipboard.writeText(deployResult.address); toast.success('Copied'); }}>
+            {type === 'ERC20' && (
+              <button className="btn btn-primary" onClick={handleAddTokenToMetaMask} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                Import to MetaMask <Wallet size={14} strokeWidth={2} />
+              </button>
+            )}
+            <button className="btn btn-ghost" onClick={() => {
+              const address = (deployResult.address || '').trim();
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(address)
+                  .then(() => toast.success('Copied!'))
+                  .catch(() => {
+                    const ta = document.createElement('textarea');
+                    ta.value = address;
+                    ta.style.position = 'fixed';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.focus();
+                    ta.select();
+                    try { document.execCommand('copy'); toast.success('Copied!'); } catch { toast.error('Failed to copy'); }
+                    document.body.removeChild(ta);
+                  });
+              } else {
+                const ta = document.createElement('textarea');
+                ta.value = address;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                try { document.execCommand('copy'); toast.success('Copied!'); } catch { toast.error('Failed to copy'); }
+                document.body.removeChild(ta);
+              }
+            }}>
               Copy Address <Copy size={14} strokeWidth={2} />
             </button>
           </div>
@@ -237,6 +301,25 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
     <div className="wz-card">
       <div className="wz-card-title">Deploy Contract</div>
       <div className="wz-card-sub">Select a network, connect wallet, and deploy on-chain.</div>
+
+      {/* Missing ABI warning — shown when user arrived before compilation finished */}
+      {!contractData?.abi && (
+        <div className="wz-alert error" style={{ marginBottom: 18, flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+          <div style={{ fontWeight: 700 }}><X size={14} strokeWidth={3} /> Contract Not Compiled</div>
+          <div style={{ fontSize: 12, lineHeight: 1.5 }}>
+            The contract ABI is missing — this happens when you advance to this step before
+            background compilation finishes, or after a page refresh. Please go back to Step 3
+            and click <strong>Generate &amp; Compile</strong> again.
+          </div>
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ marginTop: 4 }}
+            onClick={() => setStep(2, 'back')}
+          >
+            ← Go Back &amp; Re-Generate
+          </button>
+        </div>
+      )}
 
       {deployError && (
         <div className="wz-alert error" style={{ marginBottom: 18, flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
@@ -261,7 +344,7 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
         <div className="wz-wallet-icon"><Wallet size={22} strokeWidth={1.5} color="var(--primary)" /></div>
         <div className="wz-wallet-info">
           <div className="wz-wallet-label">Connected Wallet</div>
-          <div className="wz-wallet-addr">{walletAddress ? `${walletAddress.slice(0,8)}...${walletAddress.slice(-6)}` : 'Not connected'}</div>
+          <div className="wz-wallet-addr">{walletAddress ? `${walletAddress.slice(0,8)}...${walletAddress.slice(-6)}` : 'Not connected — click Connect to enable deployment'}</div>
         </div>
         {!walletAddress && <button className="wz-wallet-connect" onClick={connectWallet}>Connect</button>}
       </div>
@@ -289,16 +372,22 @@ export function StepDeploy({ type, params, contractData, code, onSuccess }) {
           style={{ width: '100%' }}
           onClick={handleDeploy}
           disabled={!walletAddress || !contractData?.abi || !!activeStep}
+          title={!walletAddress ? 'Connect your MetaMask wallet first' : !contractData?.abi ? 'Go back and re-generate the contract' : ''}
         >
           {activeStep
             ? <><span className="wz-ds-spin" style={{ width: 16, height: 16 }} /> Deploying…</>
+            : !walletAddress
+            ? <><Wallet size={18} strokeWidth={2} /> Connect Wallet to Deploy</>
+            : !contractData?.abi
+            ? <><X size={18} strokeWidth={2} /> ABI Missing — Go Back</>  
             : <><Zap size={18} strokeWidth={2} /> Deploy Contract</>}
         </button>
         <button
           className="btn btn-ghost btn-md glass-btn"
           style={{ width: '100%' }}
-          onClick={() => navigate('/audit', { state: { code: contractData?.sourceCode || '', type } })}
+          onClick={() => navigate('/audit', { state: { code: contractData?.sourceCode || code || '', type } })}
           disabled={!contractData?.abi || !!activeStep}
+          title={!contractData?.abi ? 'Go back and re-generate the contract first' : ''}
         >
           <Flag size={16} strokeWidth={2} /> Optional: Run AI Audit
         </button>

@@ -100,7 +100,12 @@ export default function Navbar({ onConnect }) {
             <img 
               src="/autocon-logo-new.png" 
               alt="AutoCon" 
-              style={{ height: '52px', width: 'auto', display: 'block' }} 
+              style={{ 
+                height: '52px', 
+                width: 'auto', 
+                display: 'block',
+                mixBlendMode: 'screen',
+              }} 
             />
             <span style={{
               fontSize:      '1.15rem',

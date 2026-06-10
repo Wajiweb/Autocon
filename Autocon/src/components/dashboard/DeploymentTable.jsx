@@ -259,7 +259,34 @@ export default function DeploymentTable({ filteredDeployments, isLoading, active
                       <div className="db-addr-wrap">
                         <span className="db-addr-txt">{item.contractAddress.slice(0, 6)}…{item.contractAddress.slice(-4)}</span>
                         <button className="db-copy-btn" title="Copy address"
-                          onClick={() => { navigator.clipboard.writeText(item.contractAddress); toast.success('Copied!'); }}>
+                          onClick={() => {
+                            const address = (item.contractAddress || '').trim();
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                              navigator.clipboard.writeText(address)
+                                .then(() => toast.success('Copied!'))
+                                .catch(() => {
+                                  const ta = document.createElement('textarea');
+                                  ta.value = address;
+                                  ta.style.position = 'fixed';
+                                  ta.style.left = '-9999px';
+                                  document.body.appendChild(ta);
+                                  ta.focus();
+                                  ta.select();
+                                  try { document.execCommand('copy'); toast.success('Copied!'); } catch { toast.error('Failed to copy'); }
+                                  document.body.removeChild(ta);
+                                });
+                            } else {
+                              const ta = document.createElement('textarea');
+                              ta.value = address;
+                              ta.style.position = 'fixed';
+                              ta.style.left = '-9999px';
+                              document.body.appendChild(ta);
+                              ta.focus();
+                              ta.select();
+                              try { document.execCommand('copy'); toast.success('Copied!'); } catch { toast.error('Failed to copy'); }
+                              document.body.removeChild(ta);
+                            }
+                          }}>
                           <Copy size={12} />
                         </button>
                       </div>

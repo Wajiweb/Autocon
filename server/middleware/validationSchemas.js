@@ -35,8 +35,8 @@ const eth = {
     largeSolidity: Joi.string().min(10).max(500000), // 500KB max for large contracts
 };
 
-const name  = Joi.string().min(1).max(64).trim().pattern(/^[a-zA-Z0-9 ]+$/).messages({ 'string.pattern.base': '{{#label}} may only contain letters, numbers, and spaces' });
-const symbol = Joi.string().min(1).max(12).uppercase().trim().pattern(/^[a-zA-Z0-9]+$/).messages({ 'string.pattern.base': '{{#label}} may only contain letters and numbers' });
+const name  = Joi.string().min(1).max(64).trim();
+const symbol = Joi.string().min(1).max(12).uppercase().trim().pattern(/^[A-Z0-9_.-]+$/).messages({ 'string.pattern.base': '{{#label}} may only contain uppercase letters, numbers, dashes, underscores, and dots' });
 const solidityIdentifier = Joi.string().min(1).max(64).trim().pattern(/^[A-Za-z_][A-Za-z0-9_]*$/)
     .messages({ 'string.pattern.base': '{{#label}} must be a valid Solidity identifier' });
 const sourceFile = Joi.string().min(1).max(128).trim().pattern(/^[A-Za-z0-9_./-]+\.sol$/)
@@ -179,7 +179,7 @@ const schemas = {
         ownerAddress:    eth.address.required(),
         network:         eth.network.optional().default('sepolia'),
         maxSupply:       Joi.number().integer().positive().optional(),
-        mintPrice:       Joi.string().pattern(/^\d*\.?\d+$/).optional(),
+        mintPrice:       Joi.string().pattern(/^\d*\.?\d+$/).optional().allow('', null),
         baseURI:         Joi.string().optional().allow(''),
         abi:             Joi.array().optional(),
         sourceCode:      Joi.string().optional().allow(''),
@@ -197,7 +197,8 @@ const schemas = {
         ownerAddress:    eth.address.required(),
         network:         eth.network.optional().default('sepolia'),
         duration:        Joi.number().integer().optional(),
-        minimumBid:      Joi.string().pattern(/^\d*\.?\d+$/).optional(),
+        minimumBid:      Joi.string().pattern(/^\d*\.?\d+$/).optional().allow('', null),
+        abi:             Joi.array().optional(),
         sourceCode:      Joi.string().optional().allow(''),
         contractName:    solidityIdentifier.optional(),
         sourceFile:      sourceFile.optional(),

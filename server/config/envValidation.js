@@ -109,7 +109,7 @@ function validateEnv() {
         }
 
         if (isWeak) {
-            const errorMsg = `❌ JWT_SECRET Strength Check Failed: ${failReason}`;
+            const errorMsg = ` JWT_SECRET Strength Check Failed: ${failReason}`;
             if (isProduction) {
                 console.error(JSON.stringify({
                     level: 'FATAL',

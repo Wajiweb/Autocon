@@ -5,7 +5,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('autocon_token'));
+    const [token, setToken] = useState(sessionStorage.getItem('autocon_token'));
     const [isLoading, setIsLoading] = useState(true);
     const isLoggingOut = useRef(false);
 
@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
         if (isLoggingOut.current) return;
         isLoggingOut.current = true;
 
-        const currentToken = localStorage.getItem('autocon_token');
+        const currentToken = sessionStorage.getItem('autocon_token');
         if (currentToken) {
             try {
                 await fetch(`${API_BASE}/api/auth/logout`, {
@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
             }
         }
 
-        localStorage.removeItem('autocon_token');
+        sessionStorage.removeItem('autocon_token');
         setToken(null);
         setUser(null);
         isLoggingOut.current = false;
@@ -63,12 +63,17 @@ export function AuthProvider({ children }) {
 
     // Helper: fetch with auth header
     const authFetch = useCallback(async (url, options = {}) => {
-        const currentToken = localStorage.getItem('autocon_token');
+        const currentToken = sessionStorage.getItem('autocon_token');
         const headers = {
-            'Content-Type': 'application/json',
+            ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
             ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
             ...(options.headers || {})
         };
+
+        if (headers['Content-Type'] === undefined || headers['Content-Type'] === null) {
+            delete headers['Content-Type'];
+        }
+
         const response = await fetch(url.startsWith('http') ? url : `${API_BASE}${url}`, {
             ...options,
             headers
@@ -86,7 +91,7 @@ export function AuthProvider({ children }) {
     // Check existing session on mount
     useEffect(() => {
         const checkSession = async () => {
-            const savedToken = localStorage.getItem('autocon_token');
+            const savedToken = sessionStorage.getItem('autocon_token');
             if (!savedToken) {
                 setIsLoading(false);
                 return;
@@ -101,12 +106,12 @@ export function AuthProvider({ children }) {
                     setUser(data.data.user);
                     setToken(savedToken);
                 } else {
-                    localStorage.removeItem('autocon_token');
+                    sessionStorage.removeItem('autocon_token');
                     setToken(null);
                     setUser(null);
                 }
             } catch {
-                localStorage.removeItem('autocon_token');
+                sessionStorage.removeItem('autocon_token');
                 setToken(null);
                 setUser(null);
             } finally {
@@ -182,7 +187,7 @@ export function AuthProvider({ children }) {
             mode === 'signup' ? 'Failed to create account.' : 'Failed to sign in.'
         );
 
-        localStorage.setItem('autocon_token', authData.token);
+        sessionStorage.setItem('autocon_token', authData.token);
         setToken(authData.token);
         setUser(authData.user);
 

@@ -5,11 +5,13 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useContractStore } from '../../store/useContractStore';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function CodeViewer({ style = {} }) {
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const { generatedCode, isEditingEnabled, updateManualCode, snapshots, saveSnapshot, restoreSnapshot, resetCode } = useContractStore();
+  const { theme } = useTheme();
 
   const now = Date.now();
 
@@ -68,7 +70,7 @@ export default function CodeViewer({ style = {} }) {
                       {showHistory && (
                           <div style={{
                               position: 'absolute', top: '110%', right: 0, width: '200px',
-                              background: '#0a0a0f', border: '1px solid var(--border-color)',
+                              background: 'var(--surface-high, var(--surface-3))', border: '1px solid var(--border-color)',
                               borderRadius: '8px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px',
                               boxShadow: '0 4px 16px rgba(0,0,0,0.4)'
                           }}>
@@ -109,7 +111,7 @@ export default function CodeViewer({ style = {} }) {
         <Editor
           height="400px"
           language="solidity"
-          theme="vs-dark"
+          theme={theme === 'dark' ? 'vs-dark' : 'light'}
           value={generatedCode}
           onChange={handleEditorChange}
           options={{
@@ -130,7 +132,7 @@ export default function CodeViewer({ style = {} }) {
 const btnStyle = {
   background: 'var(--surface)',
   border: '1px solid var(--surface)',
-  color: '#e2e8f0',
+  color: 'var(--on-surface)',
   padding: '4px 10px',
   borderRadius: 6,
   fontSize: 12,

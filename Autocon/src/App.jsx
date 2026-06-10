@@ -154,7 +154,7 @@ function App() {
         <NetworkProvider>
           <WalletProvider>
             <AuthProvider>
-              <div className="min-h-screen bg-[color:var(--bg)] text-white">
+              <div className="min-h-screen bg-transparent text-white">
                 <Toaster
                   position="bottom-right"
                   reverseOrder={false}

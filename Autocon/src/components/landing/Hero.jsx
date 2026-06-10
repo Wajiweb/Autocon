@@ -202,27 +202,7 @@ export default function Hero({ onGetStarted }) {
             zIndex: 1,
           }}
         >
-          <motion.div variants={fadeUp}>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 16px',
-                borderRadius: '99px',
-                background: 'var(--lp-accent-soft)',
-                border: '1px solid hsla(14,100%,50%,0.25)',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: 'var(--lp-accent)',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-              }}
-            >
-              <Zap size={12} strokeWidth={2.5} />
-              Web3 Smart Contract Generator
-            </span>
-          </motion.div>
+
 
           <motion.h1
             variants={fadeUp}

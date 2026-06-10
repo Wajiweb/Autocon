@@ -80,6 +80,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen, isCollapsed, se
               display: 'block',
               transition: 'all 0.3s ease',
               flexShrink: 0,
+              mixBlendMode: 'screen',
             }} 
           />
           {!isCollapsed && (
@@ -87,7 +88,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen, isCollapsed, se
               <div style={{
                 fontSize: '1rem',
                 fontWeight: 800,
-                color: '#ffffff',
+                color: 'var(--on-surface)',
                 letterSpacing: '-0.03em',
                 lineHeight: 1.15,
               }}>

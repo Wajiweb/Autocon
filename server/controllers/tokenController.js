@@ -145,7 +145,7 @@ ${functions}
 }
 `;
 
-    const jobId = await enqueueCompileJobHelper(finalCode, className, ownerAddress);
+    const jobId = await enqueueCompileJobHelper(finalCode, className, req.user.walletAddress);
 
     return res.status(202).json({
         success: true,

@@ -6,7 +6,8 @@
     "backend": "npm --prefix server run start",
     "worker": "npm --prefix server run worker",
     "frontend": "npm --prefix Autocon run dev",
-    "dev": "concurrently --kill-others \"npm run backend\" \"npm run worker\" \"npm run frontend\""
+    "dev": "concurrently --kill-others \"npm run backend\" \"npm run worker\" \"npm run frontend\"",
+    "test": "npm --prefix server test"
   },
   "dependencies": {
     "antigravity-awesome-skills": "^11.1.0"

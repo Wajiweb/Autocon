@@ -106,7 +106,7 @@ export const useWizardStore = create(
             ...INITIAL_SESSION,
             contractType: draft.contractType,
             params: { ...DEFAULT_PARAMS[draft.contractType] || {}, ...draft.params },
-            step: draft.step,
+            step: Math.min(draft.step, 2),
             draftId: draft.id,
             generatedCode: '',
             contractData: null,

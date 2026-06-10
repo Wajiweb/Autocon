@@ -163,7 +163,7 @@ ${extendFn}
 }
 `;
 
-    const jobId = await enqueueCompileJobHelper(finalCode, className, ownerAddress);
+    const jobId = await enqueueCompileJobHelper(finalCode, className, req.user.walletAddress);
 
     return res.status(202).json({
         success: true,
@@ -178,7 +178,7 @@ ${extendFn}
 
 /** POST /api/auction/save */
 const saveAuction = asyncHandler(async (req, res) => {
-    const { name, itemName, itemDescription, contractAddress, ownerAddress, network, duration, minimumBid, sourceCode, compilerVersion, constructorArgs, contractName, sourceFile } = req.body;
+    const { name, itemName, itemDescription, contractAddress, ownerAddress, network, duration, minimumBid, abi, sourceCode, compilerVersion, constructorArgs, contractName, sourceFile } = req.body;
 
     if (req.user.walletAddress !== ownerAddress.toLowerCase()) {
         throw new AppError('You can only save your own auctions.', 403, 'FORBIDDEN');
@@ -193,6 +193,7 @@ const saveAuction = asyncHandler(async (req, res) => {
         name, contractAddress,
         ownerAddress: ownerAddress.toLowerCase(),
         network:      safeNetwork,
+        abi:          abi || null,
         sourceCode: sourceCode || '',
         contractName: contractName || toClassName(sanitize(name || ''), 'AuctionContract'),
         sourceFile: sourceFile || 'Auction.sol',

@@ -38,7 +38,7 @@ export default function LoginPage() {
     return (
         <div style={{
             minHeight: '100vh',
-            background: 'var(--bg)',
+            background: 'transparent',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -53,7 +53,7 @@ export default function LoginPage() {
                 style={{
                     position: 'absolute', top: '-180px', right: '-120px', pointerEvents: 'none',
                     width: '500px', height: '500px', borderRadius: '50%',
-                    background: 'radial-gradient(circle, hsla(14,100%,50%,0.10) 0%, transparent 70%)',
+                    background: 'radial-gradient(circle, hsla(25,100%,50%,0.18) 0%, transparent 70%)',
                 }}
             />
             <motion.div
@@ -64,7 +64,7 @@ export default function LoginPage() {
                 style={{
                     position: 'absolute', bottom: '-120px', left: '-80px', pointerEvents: 'none',
                     width: '400px', height: '400px', borderRadius: '50%',
-                    background: 'radial-gradient(circle, hsla(230,60%,60%,0.07) 0%, transparent 70%)',
+                    background: 'radial-gradient(circle, hsla(230,80%,60%,0.12) 0%, transparent 70%)',
                 }}
             />
 
@@ -115,7 +115,12 @@ export default function LoginPage() {
                         <img
                             src="/autocon-logo-new.png"
                             alt="AutoCon"
-                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                            style={{ 
+                                width: '100%', 
+                                height: 'auto', 
+                                display: 'block',
+                                mixBlendMode: 'screen',
+                            }}
                         />
                     </motion.div>
                     <motion.p

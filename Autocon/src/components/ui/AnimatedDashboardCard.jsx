@@ -1,5 +1,6 @@
 import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { useTheme } from "../../context/ThemeContext";
 
 /**
  * AnimatedDashboardCard
@@ -54,6 +55,7 @@ export function AnimatedDashboardCard({
 }) {
   const shouldReduceMotion = useReducedMotion();
   const shouldAnimate = enableAnimations && !shouldReduceMotion;
+  const { theme } = useTheme();
 
   // Resolve variant tokens (fall back to 'primary' for unknown values)
   const tokens = VARIANT_MAP[variant] ?? VARIANT_MAP.primary;
@@ -80,9 +82,9 @@ export function AnimatedDashboardCard({
       <motion.div
         className="border rounded-xl overflow-hidden relative backdrop-blur-xl h-full flex flex-col db-glass-surface"
         style={{ 
-          background: 'linear-gradient(145deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.012) 100%)',
-          borderColor: tokens.borderAlpha,
-          boxShadow: `${tokens.shadowGlow}, inset 0 1px 0 rgba(255,255,255,0.07)` 
+          background: theme === 'light' ? 'var(--surface-2)' : 'linear-gradient(145deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.012) 100%)',
+          borderColor: theme === 'light' ? 'rgba(0,0,0,0.08)' : tokens.borderAlpha,
+          boxShadow: theme === 'light' ? '0 10px 30px rgba(0,0,0,0.04)' : `${tokens.shadowGlow}, inset 0 1px 0 rgba(255,255,255,0.07)` 
         }}
       >
         {/* Background glow — design-spells: GPU-accelerated blur micro-interaction */}
@@ -103,7 +105,7 @@ export function AnimatedDashboardCard({
               {title}
             </motion.div>
             <motion.div 
-              className="text-4xl font-bold text-white tracking-tighter"
+              className="text-4xl font-bold text-[var(--on-surface)] tracking-tighter"
               initial={shouldAnimate ? { opacity: 0, scale: 0.9 } : {}}
               animate={shouldAnimate ? { opacity: 1, scale: 1 } : {}}
               transition={{ delay: delayOffset + 0.3, type: "spring" }}
@@ -116,7 +118,10 @@ export function AnimatedDashboardCard({
         {hasLowerThird && (
           <div
             className="relative px-5 pb-5 pt-4 flex justify-between w-full z-20 mt-4 border-t"
-            style={{ background: 'rgba(0,0,0,0.18)', borderColor: 'rgba(255,255,255,0.07)' }}
+            style={{ 
+              background: theme === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(0,0,0,0.18)', 
+              borderColor: theme === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)' 
+            }}
           >
             {/* Left Section */}
             {leftLabel && (
@@ -141,7 +146,7 @@ export function AnimatedDashboardCard({
                 </div>
                 <div className="pl-2.5 mt-0.5">
                   <motion.div
-                    className="text-sm font-semibold text-white tracking-tight leading-none"
+                    className="text-sm font-semibold text-[var(--on-surface)] tracking-tight leading-none"
                     style={{ fontFamily: 'var(--db-mono)' }}
                     initial={shouldAnimate ? { opacity: 0, y: 5 } : {}}
                     animate={shouldAnimate ? { opacity: 1, y: 0 } : {}}
@@ -185,7 +190,7 @@ export function AnimatedDashboardCard({
                 </div>
                 <div className="pr-2.5 mt-0.5 text-right">
                   <motion.div
-                    className="text-sm font-semibold text-white tracking-tight leading-none"
+                    className="text-sm font-semibold text-[var(--on-surface)] tracking-tight leading-none"
                     style={{ fontFamily: 'var(--db-mono)' }}
                     initial={shouldAnimate ? { opacity: 0, y: 5 } : {}}
                     animate={shouldAnimate ? { opacity: 1, y: 0 } : {}}

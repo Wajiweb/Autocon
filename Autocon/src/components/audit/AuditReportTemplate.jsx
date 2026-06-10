@@ -21,9 +21,9 @@ export default function AuditReportTemplate({ auditResult, dateStr }) {
                 position: 'fixed',
                 left: '-9999px',
                 top: '-9999px',
-                width: '800px', // Standard A4-ish width for canvas
-                minHeight: '1131px', // A4 proportion
-                backgroundColor: '#080c14', // Solid background (deep space variable)
+                width: '800px', 
+                minHeight: '1131px', 
+                backgroundColor: '#080c14', 
                 color: 'var(--surface)',
                 fontFamily: '"Inter", sans-serif',
                 padding: '40px',

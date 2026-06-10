@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useJobPoller } from '../hooks/useJobPoller';
 import { AnimatedCard } from '../components/ui/AnimatedCard';
-import { Download, FileText, ShieldAlert, ShieldCheck, RefreshCw, Clock, Cpu, Lightbulb, ChevronUp, ChevronDown, Bot, Sparkles, BrainCircuit, Zap, FileEdit } from 'lucide-react';
+import { Download, FileText, ShieldAlert, ShieldCheck, RefreshCw, Clock, Cpu, Lightbulb, ChevronUp, ChevronDown, Bot, Sparkles, BrainCircuit, Zap, FileEdit, ArrowLeft } from 'lucide-react';
+import { useWizardStore } from '../store/useWizardStore';
 import { usePDFExport } from '../hooks/useExport';
 import AuditReportTemplate from '../components/audit/AuditReportTemplate';
 import { Doughnut } from 'react-chartjs-2';
@@ -25,6 +27,8 @@ const LS_JOB_KEY = 'autocon_audit_jobId';   // localStorage key for session pers
 export default function AuditPage() {
   const { authFetch }  = useAuth();
   const { generatePDF, isGenerating: isExportingPDF } = usePDFExport();
+  const navigate = useNavigate();
+  const { session } = useWizardStore();
 
   const location = useLocation();
 
@@ -222,6 +226,19 @@ export default function AuditPage() {
 
       {/* ── Header ── */}
       <div className="pg-head db-enter db-enter-1">
+        <button
+          onClick={() => {
+            if (session.contractType) {
+              navigate(`/create?type=${session.contractType}`);
+            } else {
+              navigate('/create');
+            }
+          }}
+          className="flex items-center gap-2 text-xs text-on-surface-variant hover:text-primary mb-2 transition-all font-semibold"
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+        >
+          <ArrowLeft size={14} /> Back to Wizard
+        </button>
         <div className="pg-title">Security <em>Audit</em></div>
         <div className="pg-sub">
           Advanced scan powered by Slither static analysis + Gemini AI — the same engine used inside the generators.

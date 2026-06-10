@@ -42,11 +42,10 @@ const userSchema = new mongoose.Schema(
       audits:      { type: Number, default: 0, min: 0 },
     },
 
-    // API key for future machine-to-machine access (null by default)
+    // API key for future machine-to-machine access (sparse unique)
     apiKey: {
       type:    String,
-      default: null,
-      sparse:  true,   // Allow many null values but enforce uniqueness when set
+      sparse:  true,   // Only documents with a non-undefined apiKey are indexed
       unique:  true,
       index:   true,
     },

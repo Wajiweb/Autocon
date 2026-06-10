@@ -54,11 +54,11 @@ export default function ExportCenter({ contractName = 'Contract', abi = null, nf
                 </Button>
 
                 {isOpen && (
-                    <div className="absolute top-[110%] right-0 bg-[#0a0a0f] border border-[var(--outline-variant)] rounded-xl p-2 z-[100] flex flex-col gap-1 min-w-[200px] shadow-2xl">
-                        <button onClick={() => handleAction(() => downloadSol(contractName, generatedCode))} className="text-left px-3 py-2 text-xs font-semibold text-[var(--outline)] hover:bg-[color:var(--surface)] hover:text-[var(--on-surface)] rounded-md transition-colors w-full flex items-center gap-2">
+                    <div className="absolute top-[110%] right-0 bg-[var(--surface-high)] border border-[var(--outline)] rounded-xl p-2 z-[100] flex flex-col gap-1 min-w-[200px] shadow-2xl">
+                        <button onClick={() => handleAction(() => downloadSol(contractName, generatedCode))} className="text-left px-3 py-2 text-xs font-semibold text-[var(--on-surface-variant)] hover:bg-[color:var(--surface)] hover:text-[var(--on-surface)] rounded-md transition-colors w-full flex items-center gap-2">
                             <Save size={13} /> Download .sol
                         </button>
-                        <button onClick={() => handleAction(() => downloadABI(contractName, abi))} className="text-left px-3 py-2 text-xs font-semibold text-[var(--outline)] hover:bg-[color:var(--surface)] hover:text-[var(--on-surface)] rounded-md transition-colors w-full flex items-center gap-2">
+                        <button onClick={() => handleAction(() => downloadABI(contractName, abi))} className="text-left px-3 py-2 text-xs font-semibold text-[var(--on-surface-variant)] hover:bg-[color:var(--surface)] hover:text-[var(--on-surface)] rounded-md transition-colors w-full flex items-center gap-2">
                             <FileCode size={13} /> Export ABI
                         </button>
                         {contractType === 'NFT' && (

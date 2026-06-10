@@ -43,7 +43,7 @@ export default function DeploySuccessModal({
   const pollVerificationStatus = async (jobId) => {
     const maxAttempts = 30; // 30 * 4s = 120s timeout
     let attempts = 0;
-    const token = localStorage.getItem('autocon_token');
+    const token = sessionStorage.getItem('autocon_token');
 
     const poll = setInterval(async () => {
       attempts++;
@@ -96,7 +96,7 @@ export default function DeploySuccessModal({
 
     try {
       setVerifyState('submitting');
-      const token = localStorage.getItem('autocon_token');
+      const token = sessionStorage.getItem('autocon_token');
 
       const res = await fetch(`${API_BASE}/api/jobs/create`, {
         method: 'POST',

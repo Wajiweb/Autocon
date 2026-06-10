@@ -68,14 +68,18 @@ export default function ContractWizard() {
   useEffect(() => {
     const typeQuery = searchParams.get('type');
     if (typeQuery && CONTRACT_TYPES.find(t => t.id === typeQuery)) {
-      // Always apply the selected type + jump to params step,
-      // even if the wizard is already open mid-flow.
-      // This lets sidebar generator links act as independent entry points.
-      setContractType(typeQuery);
-      setStep(1, 'forward');
+      if (typeQuery !== contractType) {
+        setContractType(typeQuery);
+        setStep(1, 'forward');
+      }
+    } else {
+      if (contractType !== null) {
+        setContractType(null);
+        setStep(0, 'forward');
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams.get('type')]);  // only re-run when the type param itself changes
+  }, [searchParams, contractType]);
 
   // Auto-save draft on params or step change
   useEffect(() => {
@@ -87,8 +91,7 @@ export default function ContractWizard() {
   const goTo = (nextStep) => setStep(nextStep, nextStep > step ? 'forward' : 'back');
 
   const handleTypeSelect = (id) => {
-    setContractType(id);
-    goTo(1);
+    navigate(`/create?type=${id}`);
   };
 
   const handleNext = () => {
@@ -124,6 +127,7 @@ export default function ContractWizard() {
   const startNew = () => {
     resetSession();
     setShowDrafts(false);
+    navigate('/create');
   };
 
   return (
@@ -174,7 +178,7 @@ export default function ContractWizard() {
         <Stepper current={step} />
 
         <div className="wz-stage">
-          <div className={`wz-panel${direction === 'back' ? ' reverse' : ''}`} key={step}>
+          <div className={`wz-panel${direction === 'back' ? ' reverse' : ''}`} key={`${step}-${contractType || ''}`}>
             {step === 0 && <StepType selected={contractType} onSelect={handleTypeSelect} />}
             {step === 1 && <StepParams type={contractType} params={params} onChange={setParams} errors={validate(contractType, params)} />}
             {step === 2 && <StepReview type={contractType} params={params} code={generatedCode} isGenerating={isGenerating} onGenerate={handleGenerate} />}
@@ -188,8 +192,18 @@ export default function ContractWizard() {
           </Button>
           
           {step < 3 && (
-            <Button variant="primary" onClick={handleNext}>
-              {step === 2 && !generatedCode ? 'Generate First' : step === 2 ? 'Proceed to Deploy →' : 'Continue →'}
+            <Button
+              variant="primary"
+              onClick={handleNext}
+              disabled={step === 2 && (isGenerating || (generatedCode && !contractData?.abi))}
+            >
+              {step === 2 && isGenerating
+                ? 'Compiling...'
+                : step === 2 && !generatedCode
+                ? 'Generate First'
+                : step === 2
+                ? 'Proceed to Deploy →'
+                : 'Continue →'}
             </Button>
           )}
           

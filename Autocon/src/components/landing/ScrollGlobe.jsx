@@ -5,7 +5,7 @@
  * Globe position, progress bar, and nav visibility are set via direct DOM
  * mutation through refs, preventing React re-renders on every scroll frame.
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, ShieldCheck, Globe as GlobeIcon, Rocket, ArrowRight, CheckCircle2 } from 'lucide-react';
 import Globe from '../ui/Globe';
@@ -88,9 +88,6 @@ const GLOBE_POSITIONS = [
 const lerp = (a, b, t) => a + (b - a) * t;
 
 export default function ScrollGlobe({ onGetStarted }) {
-  // Only use React state for things that control JSX rendering (labels/section content)
-  const [activeSection, setActiveSection] = useState(0);
-
   const containerRef   = useRef(null);
   const sectionRefs    = useRef([]);
   const rafRef         = useRef(null);
@@ -101,7 +98,6 @@ export default function ScrollGlobe({ onGetStarted }) {
   const navWrapRef     = useRef(null);
   const dotRefs        = useRef([]);
   const labelRefs      = useRef([]);
-  const prevSectionRef = useRef(0);
 
   // ── Core scroll handler: 100% DOM mutation, zero React setState ────────
   const updateOnScroll = useCallback(() => {
@@ -115,48 +111,16 @@ export default function ScrollGlobe({ onGetStarted }) {
     const viewportH       = window.innerHeight;
     const containerBottom = containerTop + containerHeight;
 
-    // Show/hide progress bar and nav
+    // Show/hide progress bar
     const pastContainer = scrollTop > containerBottom - viewportH;
     const navOp = pastContainer ? '0' : '1';
     if (progressWrapRef.current) progressWrapRef.current.style.opacity = navOp;
-    if (navWrapRef.current) navWrapRef.current.style.opacity = navOp;
 
     // Progress bar fill
     const rawProg = (scrollTop - containerTop) / (containerHeight - viewportH);
     const progress = Math.min(Math.max(rawProg, 0), 1);
     if (progressBarRef.current) {
       progressBarRef.current.style.transform = `scaleX(${progress})`;
-    }
-
-    // Active section detection
-    const viewportCenter = viewportH / 2;
-    let closest = 0, minDist = Infinity;
-    sectionRefs.current.forEach((ref, i) => {
-      if (!ref) return;
-      const rect = ref.getBoundingClientRect();
-      const dist = Math.abs(rect.top + rect.height / 2 - viewportCenter);
-      if (dist < minDist) { minDist = dist; closest = i; }
-    });
-
-    // Update nav dots directly if section changed
-    if (closest !== prevSectionRef.current) {
-      prevSectionRef.current = closest;
-      setActiveSection(closest); // triggers label re-render only
-
-      dotRefs.current.forEach((dot, i) => {
-        if (!dot) return;
-        const active = i === closest;
-        dot.style.width  = active ? '10px' : '8px';
-        dot.style.height = active ? '10px' : '8px';
-        dot.style.borderColor = active ? 'var(--lp-accent)' : 'rgba(255,255,255,0.25)';
-        dot.style.background  = active ? 'var(--lp-accent)' : 'transparent';
-        dot.style.boxShadow   = active ? '0 0 12px hsla(25,100%,50%,0.5)' : 'none';
-      });
-
-      labelRefs.current.forEach((label, i) => {
-        if (!label) return;
-        label.style.opacity = i === closest ? '1' : '0';
-      });
     }
 
     // Globe position interpolation
@@ -375,16 +339,18 @@ export default function ScrollGlobe({ onGetStarted }) {
                 }}
               >
                 {/* Badge */}
-                <motion.span variants={fadeUp} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  padding: '6px 16px', borderRadius: '99px',
-                  background: 'var(--lp-accent-soft)', border: '1px solid hsla(14,100%,50%,0.25)',
-                  fontSize: '0.72rem', fontWeight: 700, color: 'var(--lp-accent)',
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                }}>
-                  {section.badgeIcon && <section.badgeIcon size={12} strokeWidth={2.5} />}
-                  {section.badge}
-                </motion.span>
+                {section.id !== 'hero' && (
+                  <motion.span variants={fadeUp} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    padding: '6px 16px', borderRadius: '99px',
+                    background: 'var(--lp-accent-soft)', border: '1px solid hsla(14,100%,50%,0.25)',
+                    fontSize: '0.72rem', fontWeight: 700, color: 'var(--lp-accent)',
+                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                  }}>
+                    {section.badgeIcon && <section.badgeIcon size={12} strokeWidth={2.5} />}
+                    {section.badge}
+                  </motion.span>
+                )}
 
                 {/* Title */}
                 <motion.h2 variants={fadeUp} style={{

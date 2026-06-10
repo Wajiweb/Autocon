@@ -1,7 +1,8 @@
 import { useAuth } from '../../context/AuthContext';
 import { useContractStore } from '../../store/useContractStore';
 import { usePlatformStore } from '../../store/usePlatformStore';
-import { Wallet, LogOut, Menu, Zap, LogOut as LogOutIcon, Calendar } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import { Wallet, LogOut, Menu, Zap, LogOut as LogOutIcon, Calendar, Sun, Moon } from 'lucide-react';
 import NetworkSwitcher from './NetworkSwitcher';
 import GasWidget from './GasWidget';
 import './styles/dashboard.css';
@@ -10,6 +11,7 @@ export default function Navbar({ onMenuClick }) {
   const { user, logout } = useAuth();
   const { isEditingEnabled, generatedCode } = useContractStore();
   const { isSyncing, lastSynced } = usePlatformStore();
+  const { theme, toggleTheme } = useTheme();
 
   const shortAddr = user?.walletAddress
     ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
@@ -67,6 +69,16 @@ export default function Navbar({ onMenuClick }) {
           <Wallet size={12} style={{ color: 'var(--db-acc)' }} /> {shortAddr}
         </div>
       )}
+
+      {/* Theme Toggler */}
+      <button 
+        onClick={toggleTheme}
+        className="db-tb-signout flex items-center justify-center" 
+        style={{ width: 34, height: 34, borderRadius: '50%', padding: 0, flexShrink: 0 }}
+        title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Theme`}
+      >
+        {theme === 'dark' ? <Sun size={15} style={{ color: 'var(--primary)' }} /> : <Moon size={15} />}
+      </button>
 
       {/* Sign out */}
       <button className="db-tb-signout flex items-center gap-1.5" onClick={logout}>

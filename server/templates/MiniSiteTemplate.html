@@ -528,9 +528,76 @@ async function silentRead() {
 }
 silentRead();
 
+async function handleAccountUpdate(account) {
+  const btn = document.getElementById('connectBtn');
+  const short = `${account.slice(0,6)}…${account.slice(-4)}`;
+  
+  btn.innerHTML = `✅ ${short}`;
+  btn.classList.add('connected');
+  document.getElementById('connectTitle').textContent = 'Wallet connected!';
+  
+  const sub = document.getElementById('connectSub');
+  sub.textContent = `You are connected as ${account.slice(0,10)}…${account.slice(-6)}`;
+  sub.style.color = '';
+  
+  // Re-initialise provider and signer
+  provider = new ethers.BrowserProvider(window.ethereum);
+  signer = await provider.getSigner();
+  rwContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+  roContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+  
+  // Enable all write buttons
+  document.querySelectorAll('[data-requires-wallet]').forEach(b => b.disabled = false);
+  loadHeroStats();
+}
+
+function handleWalletDisconnect() {
+  const btn = document.getElementById('connectBtn');
+  btn.innerHTML = '🔗 Connect';
+  btn.classList.remove('connected');
+  document.getElementById('connectTitle').textContent = 'Connect your MetaMask wallet';
+  document.getElementById('connectSub').textContent = 'You need MetaMask to send transactions. Reading info works without it.';
+  
+  rwContract = null;
+  signer = null;
+  
+  // Disable write buttons
+  document.querySelectorAll('[data-requires-wallet]').forEach(b => b.disabled = true);
+}
+
 async function connectWallet() {
   const btn = document.getElementById('connectBtn');
   if (!window.ethereum) { return alert('Please install MetaMask (metamask.io) to interact with this contract.'); }
+  
+  // Force MetaMask switch account select popup if already connected
+  if (btn.classList.contains('connected')) {
+    try {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spin"></span> Switch account…';
+      await window.ethereum.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }]
+      });
+      const tempProvider = new ethers.BrowserProvider(window.ethereum);
+      const accs = await tempProvider.send('eth_requestAccounts', []);
+      if (accs.length > 0) {
+        await ensureCorrectNetwork();
+        await handleAccountUpdate(accs[0]);
+      }
+    } catch (err) {
+      console.error('Switch account failed:', err);
+      // Restore state
+      if (window.ethereum.selectedAddress) {
+        handleAccountUpdate(window.ethereum.selectedAddress);
+      } else {
+        handleWalletDisconnect();
+      }
+    } finally {
+      btn.disabled = false;
+    }
+    return;
+  }
+
   try {
     btn.disabled = true;
     btn.innerHTML = '<span class="spin"></span> Connecting…';
@@ -541,24 +608,13 @@ async function connectWallet() {
     
     // Switch to correct network immediately
     await ensureCorrectNetwork();
-
-    const short = `${accs[0].slice(0,6)}…${accs[0].slice(-4)}`;
-    btn.innerHTML  = `✅ ${short}`;
-    btn.classList.add('connected');
-    document.getElementById('connectTitle').textContent = 'Wallet connected!';
-    
-    const sub = document.getElementById('connectSub');
-    sub.textContent   = `You are connected as ${accs[0].slice(0,10)}…${accs[0].slice(-6)}`;
-    sub.style.color   = '';
-
-    // Enable all write buttons
-    document.querySelectorAll('[data-requires-wallet]').forEach(b => b.disabled = false);
-    loadHeroStats();
+    await handleAccountUpdate(accs[0]);
   } catch(err) {
     btn.innerHTML = '🔗 Connect';
     alert('Could not connect: ' + (err.message || String(err)));
   } finally { btn.disabled = false; }
 }
+
 
 /* ── Network Guard — switches MetaMask to the correct chain before write txs ── */
 async function ensureCorrectNetwork() {
@@ -612,6 +668,22 @@ async function checkNetworkMismatch() {
   } catch(_) {}
 }
 checkNetworkMismatch();
+
+// EIP-1193 MetaMask Event Listeners for seamless account switching
+if (window.ethereum) {
+  window.ethereum.on('accountsChanged', (accounts) => {
+    if (accounts.length > 0) {
+      handleAccountUpdate(accounts[0]);
+    } else {
+      handleWalletDisconnect();
+    }
+  });
+
+  window.ethereum.on('chainChanged', () => {
+    // Reload page immediately to clear stale state
+    window.location.reload();
+  });
+}
 
 
 /* ── Copy address ── */

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWizardStore } from '../../store/useWizardStore';
 import { CONTRACT_TYPES } from '../../constants/contract';
 import { Zap, CheckCircle, Network } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 const Editor = lazy(() => import('@monaco-editor/react'));
 
@@ -18,6 +19,7 @@ function SummaryRow({ label, value }) {
 
 export function StepReview({ type, params, code, isGenerating, onGenerate }) {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { setGeneratedCode, session } = useWizardStore();
   const { contractData } = session;
   const [activeTab, setActiveTab] = useState('summary');
@@ -149,11 +151,11 @@ export function StepReview({ type, params, code, isGenerating, onGenerate }) {
       )}
 
       {activeTab === 'code' && code && (
-        <div className="wz-code-preview" style={{ padding: 0, overflow: 'hidden', height: 400, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, position: 'relative' }}>
+        <div className="wz-code-preview" style={{ padding: 0, overflow: 'hidden', height: 400, border: '1px solid var(--outline)', borderRadius: 12, position: 'relative' }}>
           <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, display: 'flex', gap: '8px' }}>
             <button 
               onClick={() => setIsEditing(!isEditing)} 
-              style={{ background: isEditing ? 'rgba(245,158,11,0.2)' : 'var(--surface)', border: isEditing ? '1px solid rgba(245,158,11,0.4)' : '1px solid var(--surface)', color: isEditing ? '#f59e0b' : '#e2e8f0', padding: '4px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'var(--db-font)', fontWeight: 600 }}
+              style={{ background: isEditing ? 'rgba(245,158,11,0.2)' : 'var(--surface)', border: isEditing ? '1px solid rgba(245,158,11,0.4)' : '1px solid var(--surface)', color: isEditing ? '#f59e0b' : 'var(--on-surface)', padding: '4px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'var(--db-font)', fontWeight: 600 }}
             >
               {isEditing ? 'Disable Edit Mode' : 'Developer Edit Mode'}
             </button>
@@ -162,7 +164,7 @@ export function StepReview({ type, params, code, isGenerating, onGenerate }) {
             <Editor
               height="400px"
               language="solidity"
-              theme="vs-dark"
+              theme={theme === 'dark' ? 'vs-dark' : 'light'}
               value={code}
               onChange={(val) => { if(isEditing) setGeneratedCode(val); }}
               onMount={handleEditorDidMount}

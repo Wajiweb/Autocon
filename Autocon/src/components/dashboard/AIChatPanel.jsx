@@ -56,7 +56,7 @@ export default function AIChatPanel({
 
   const location = useLocation();
   const deployments = usePlatformStore(s => s.deployments) || [];
-  const jobs = usePlatformStore(s => s.jobs) || [];
+  const jobs = uszxxxxxxxxxxePlatformStore(s => s.jobs) || [];
 
   // ── Sync Context Props ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -122,10 +122,10 @@ export default function AIChatPanel({
   // ── Initial greeting ────────────────────────────────────────────────────────
   useEffect(() => {
     if ((isOpen || inline) && messages.length === 0) {
-      if (activeContext && activeContextName !== 'Platform Context') {
-        setMessages([{
-          role: 'assistant',
-          content: `👋 **Contract Analysis Ready!**
+      const initialMessage = activeContext && activeContextName !== 'Platform Context'
+        ? {
+            role: 'assistant',
+            content: `👋 **Contract Analysis Ready!**
 
 I'm analyzing your smart contract. Ask me anything:
 
@@ -133,12 +133,11 @@ I'm analyzing your smart contract. Ask me anything:
 • "Is this contract secure?"
 • "Explain the mint function"
 • "Suggest gas optimizations"`,
-          timestamp: Date.now()
-        }]);
-      } else {
-        setMessages([{
-          role: 'assistant',
-          content: `👋 **Welcome to AutoCon AI Assistant!**
+            timestamp: Date.now()
+          }
+        : {
+            role: 'assistant',
+            content: `👋 **Welcome to AutoCon AI Assistant!**
 
 I'm your specialized **Web3 & Smart Contract expert**. I can help you with:
 
@@ -151,9 +150,14 @@ I'm your specialized **Web3 & Smart Contract expert**. I can help you with:
 💡 **Tip:** Ask me anything about blockchain development!
 
 *Note: For real-time data (gas prices, token prices), I'll direct you to the best tools.*`,
-          timestamp: Date.now()
-        }]);
-      }
+            timestamp: Date.now()
+          };
+
+      const greetingTimer = setTimeout(() => {
+        setMessages(prev => prev.length === 0 ? [initialMessage] : prev);
+      }, 0);
+
+      return () => clearTimeout(greetingTimer);
     }
   }, [isOpen, inline, activeContext, activeContextName, messages.length]);
 

@@ -185,12 +185,19 @@ const getJobStatus = asyncHandler(async (req, res) => {
     const { jobId } = req.params;
     const ownerAddress = req.user.walletAddress;
 
-    const job = await Job.findOne({ jobId, ownerAddress })
-        .select('jobId type status attempts maxAttempts result error startedAt completedAt createdAt')
+    const job = await Job.findOne({ jobId })
+        .select('jobId type status ownerAddress attempts maxAttempts result error startedAt completedAt createdAt')
         .lean();
 
     if (!job) {
         throw new AppError('Job not found.', 404, 'NOT_FOUND');
+    }
+
+    // Verify ownership: must match req.user.walletAddress case-insensitively OR be the dummy address
+    if (job.ownerAddress &&
+        job.ownerAddress.toLowerCase() !== ownerAddress.toLowerCase() &&
+        job.ownerAddress !== '0x0000000000000000000000000000000000000001') {
+        throw new AppError('Access denied.', 403, 'FORBIDDEN');
     }
 
     // Compute processing duration if job has started
